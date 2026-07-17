@@ -77,7 +77,13 @@ Contains the actual pages and business modules. Each feature is self-contained.
 
 ## 4. Running the Application
 
-To start the local development server, run:
+First, ensure all required packages are installed by running:
+
+```bash
+npm install
+```
+
+Then, to start the local development server, run:
 
 ```bash
 npm run start
@@ -87,13 +93,4 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
----
 
-## 5. Building
-
-To build the project run:
-
-```bash
-ng build
-```
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.

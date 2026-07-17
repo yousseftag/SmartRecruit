@@ -19,14 +19,14 @@ git config --local commit.template .gitmessage
 ## 2. Daily Workflow: Step-by-Step
 
 ### Step 1: Get the latest code
-Always make sure you have the latest code from the main branch before starting new work:
+Always make sure you have the latest code from the develop branch before starting new work:
 ```bash
-git checkout main
-git pull origin main
+git checkout develop
+git pull origin develop
 ```
 
 ### Step 2: Create a new branch
-Never work directly on the `main` branch. Create a new branch for your feature or bugfix. Name it something descriptive:
+Never work directly on the `develop` branch. Create a new branch for your feature or bugfix. Name it something descriptive:
 ```bash
 # Example: git checkout -b frontend/login-page
 git checkout -b <folder>/<short-description>
@@ -59,4 +59,4 @@ git push -u origin <your-branch-name>
 1. Go to the repository in your web browser.
 2. You will see a green prompt to "Compare & pull request" for your recently pushed branch. Click it!
 3. Add a brief description of what you did and ask a team member to review it.
-4. Once reviewed and approved, your code will be merged into `main`!
+4. Once reviewed and approved, your code will be merged into `develop`!
