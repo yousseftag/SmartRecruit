@@ -22,7 +22,7 @@ To work efficiently in this project, here are the modern Angular concepts you ne
 *   **Signals:** This is Angular's new way of handling reactive data (state). Instead of complex RxJS observables, you wrap data in a `signal()`. When the signal's value changes, Angular surgically updates only the exact part of the HTML where that signal is used, leading to incredibly fast UI updates.
 *   **Services & Dependency Injection:** Business logic and API calls (like fetching Candidates) do not live in Components. They live in **Services** (e.g., `CandidateService`). Components then "inject" these services via the `inject(CandidateService)` function.
 *   **Lazy Loading:** We load the application in chunks. If a user visits the Dashboard, they only download the Dashboard code. The code for the Administration panel is fetched only if they navigate there. This is configured in `app.routes.ts` using `loadComponent`.
-*   **Tailwind v4:** There is no `tailwind.config.js` because version 4 is a major rewrite designed to be completely CSS-driven. Instead of writing JavaScript config objects, our custom colors (like our primary blue) and themes are defined directly in `src/styles.css` using the new `@theme` CSS directive.
+*   **Tailwind v4 (No CSS Files):** There is no `tailwind.config.js` because version 4 is a major rewrite designed to be completely CSS-driven. Furthermore, all component-specific `.css` files have been purged to strictly enforce utility-first styling directly in HTML templates. Our custom colors and themes are defined globally in `src/styles.css` using the `@theme` directive.
 
 ---
 
@@ -35,9 +35,9 @@ src/app/
  ├── core/                 # Global singletons: HTTP Interceptors, Guards, API Services
  ├── shared/               # Reusable dumb components: DataTable, StatusBadge, KanbanBoard
  ├── layout/               # Application shell: Sidebar, Header, Footer
- ├── features/             # The main business modules (Pages)
+ ├── pages/                # The main business modules (Pages)
  │    ├── dashboard/       # Main KPIs and charts
- │    ├── offers/          # Offer lists, creation, editing, and details
+ │    ├── offers/          # Offer lists, unified creation/editing form, and details
  │    ├── candidates/      # Candidate profiles, bulk import, manual dropzone
  │    ├── workflow/        # Kanban pipeline
  │    ├── administration/  # User & role management (Keycloak admin)
@@ -60,10 +60,10 @@ Contains reusable "dumb" components that only care about presentation. They take
 Contains the shell of the application that remains constant across different pages.
 *   **Components:** `Sidebar`, `Header`, `Footer`.
 
-### `features/` (The Pages)
+### `pages/` (The Pages)
 Contains the actual pages and business modules. Each feature is self-contained.
 *   `dashboard/`: Main KPIs and charts.
-*   `offers/`: Offer lists, creation form, editing, and candidate ranking.
+*   `offers/`: Offer lists, unified `offer-form` for creation/editing, and candidate ranking.
 *   `candidates/`: Candidate profiles, manual dropzone, and bulk ZIP import.
 *   `workflow/`: The Kanban pipeline board for moving candidates through interview stages.
 *   `administration/`: User & role management (Restricted to Keycloak admins).
