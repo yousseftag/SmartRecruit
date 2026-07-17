@@ -47,7 +47,7 @@ Now, save your changes to history. Run the commit command **without** the `-m` f
 ```bash
 git commit
 ```
-Your text editor will automatically open with our team template. Simply replace the top line with your summary (e.g., `[Frontend]: Added login page`), add any bullet points if needed, and save/close the file to complete the commit.
+Your text editor will automatically open with our team template. We strictly follow the **[Conventional Commits spec](https://www.conventionalcommits.org/en/v1.0.0/)**. Format your message as `type(scope): message` (e.g., `feat(frontend): add login page`), and save/close the file to complete the commit.
 
 ### Step 5: Push your branch
 Push your newly created branch up to the remote repository (GitHub/GitLab/Bitbucket):
