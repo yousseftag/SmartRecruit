@@ -80,13 +80,13 @@ Contains the actual pages and business modules. Each feature is self-contained.
 First, ensure all required packages are installed by running:
 
 ```bash
-npm install
+pnpm install
 ```
 
 Then, to start the local development server, run:
 
 ```bash
-npm run start
+pnpm start
 # or 
 ng serve
 ```
