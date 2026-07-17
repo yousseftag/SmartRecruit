@@ -4,6 +4,5 @@ import { Component } from '@angular/core';
   selector: 'app-file-dropzone',
   imports: [],
   templateUrl: './file-dropzone.html',
-  styleUrl: './file-dropzone.css',
 })
 export class FileDropzone {}

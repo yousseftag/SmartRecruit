@@ -7,7 +7,6 @@ import { Header } from './layout/header/header';
   selector: 'app-root',
   imports: [RouterOutlet, Sidebar, Header],
   templateUrl: './app.html',
-  styleUrl: './app.css'
 })
 export class App {
   protected readonly title = signal('SmartRecruit');

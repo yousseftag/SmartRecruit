@@ -4,6 +4,5 @@ import { Component } from '@angular/core';
   selector: 'app-kanban-board',
   imports: [],
   templateUrl: './kanban-board.html',
-  styleUrl: './kanban-board.css',
 })
 export class KanbanBoard {}
