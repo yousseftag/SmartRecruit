@@ -1,0 +1,29 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: smartrecruit-backend
+  
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/smartrecruit
+    username: postgres
+    password: postgres # Update with your local setup
+    driver-class-name: org.postgresql.Driver
+  
+  # Flyway Configuration
+  flyway:
+    enabled: true
+    baseline-on-migrate: true # Helpful when adopting Flyway on an existing DB
+  
+  # JPA Configuration
+  jpa:
+    hibernate:
+      # MUST be 'validate' (or 'none') when using Flyway. 
+      # Do not use 'update' because Flyway manages the schema now.
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true

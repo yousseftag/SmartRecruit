@@ -1,0 +1,59 @@
+version: '3.8'
+services:
+  postgres:
+    image: ankane/pgvector:v0.5.1
+    container_name: smartrecruit-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: smartrecruit-rabbitmq
+    ports:
+      - "5672:5672"   # AMQP protocol port
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+
+  minio:
+    image: minio/minio
+    container_name: smartrecruit-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.0
+    container_name: smartrecruit-keycloak
+    ports:
+      - "8081:8080" # Exposed on 8081 so it doesn't conflict with Spring Boot on 8080
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    command: start-dev
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: smartrecruit-mailpit
+    ports:
+      - "8025:8025" # Web UI to visually inspect caught emails
+      - "1025:1025" # Fake SMTP Port for Spring Boot to send emails to
+    environment:
+      MP_MAX_MESSAGES: 500
+
+volumes:
+  postgres-data:
+  minio-data:
