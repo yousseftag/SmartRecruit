@@ -1,0 +1,24 @@
+# <type>(<scope>): <subject>
+#
+# Types:
+#   feat:     A new feature
+#   fix:      A bug fix
+#   docs:     Documentation only changes
+#   style:    Changes that do not affect the meaning of the code
+#   refactor: A code change that neither fixes a bug nor adds a feature
+#   perf:     A code change that improves performance
+#   test:     Adding missing tests or correcting existing tests
+#   chore:    Changes to the build process or auxiliary tools
+#
+# Scopes (recommended):
+#   frontend, backend, nlp, core, shared, root
+#
+# Subject:
+#   Short, imperative summary (e.g., "add candidate parsing").
+#   No capital letter at start, no period at the end.
+#
+# Body:
+#   Detailed description of the change. Explain *what* and *why*, not *how*.
+#
+# Footer:
+#   Reference any Jira/Trello tickets or "Fixes #123".
