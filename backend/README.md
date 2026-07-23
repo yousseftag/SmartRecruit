@@ -16,10 +16,10 @@ docker compose up -d
 ```
 This spins up:
 - **PostgreSQL (pgvector)**: `localhost:5432`
-- **RabbitMQ**: `localhost:5672` (Management UI at `localhost:15672`)
-- **MinIO (S3 Storage)**: `localhost:9000` (Console at `localhost:9001`)
-- **Keycloak (Auth)**: `localhost:8081`
-- **Mailpit (Local Email Catcher)**: `localhost:1025` (Web UI at `localhost:8025`)
+- **RabbitMQ**: `localhost:5672` (Management UI at [`localhost:15672`](http://localhost:15672))
+- **MinIO (S3 Storage)**: `localhost:9000` (Console at [`localhost:9001`](http://localhost:9001))
+- **Keycloak (Auth)**: [`localhost:8081`](http://localhost:8081)
+- **Mailpit (Local Email Catcher)**: `localhost:1025` (Web UI at [`localhost:8025`](http://localhost:8025))
 
 ### 2. Run the Application
 You can run the application directly from your IDE, or via Maven:
@@ -27,7 +27,7 @@ You can run the application directly from your IDE, or via Maven:
 ./mvnw spring-boot:run
 ```
 Once running, the interactive API documentation (Swagger) is available at:
-👉 `http://localhost:8080/swagger-ui.html`
+👉 [`http://localhost:8080/swagger-ui.html`](http://localhost:8080/swagger-ui.html)
 
 ---
 
