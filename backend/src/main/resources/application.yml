@@ -15,7 +15,10 @@ spring:
   # Flyway Configuration
   flyway:
     enabled: true
-    baseline-on-migrate: true # Helpful when adopting Flyway on an existing DB
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    out-of-order: true
+    clean-disabled: true
   
   # JPA Configuration
   jpa:

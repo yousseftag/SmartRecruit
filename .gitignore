@@ -1,2 +1,6 @@
 # Ignore local environments
 .env
+# Ignore context documentation
+context/
+
+.idea/
