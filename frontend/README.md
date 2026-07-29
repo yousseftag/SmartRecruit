@@ -6,8 +6,8 @@ This document outlines the initial setup, architectural decisions, and technolog
 
 ## 1. Technology Stack
 
-*   **Framework:** Angular v18+ (Latest Stable)
-*   **Language:** TypeScript v5.x
+*   **Framework:** Angular v21+ (Latest Stable)
+*   **Language:** TypeScript v5.9+
 *   **Styling:** Tailwind CSS v4
 *   **State Management / Reactivity:** Angular Signals
 *   **Authentication:** Keycloak (OAuth2 / OIDC)

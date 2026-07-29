@@ -1,0 +1,120 @@
+# ==========================================
+# GLOBAL CONFIGURATION
+# ==========================================
+stages:
+  - lint
+  - test
+  - build
+
+variables:
+  # Instruct Maven to use a local repository in the CI workspace for caching
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
+  # Global CLI options for extensibility
+  MAVEN_CLI_OPTS: "--batch-mode"
+
+# Cache the downloaded dependencies so they aren't downloaded on every run
+cache:
+  paths:
+    - .m2/repository
+    - frontend/.pnpm-store
+
+# ==========================================
+# BACKEND JOBS (Java 21 + Spring Boot + Maven)
+# ==========================================
+
+# We define an "anchor" (a reusable block) for backend jobs 
+# so we don't repeat the image and rules configuration
+.backend_job:
+  image: maven:3.9.6-eclipse-temurin-21
+  before_script:
+    - cd backend # The pipeline runs from the root, so we must navigate to the backend
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "develop"'
+      changes:
+        - backend/**/* # Only run if backend files changed during MR or on develop
+
+# 1. LINT STAGE
+backend_lint:
+  extends: .backend_job
+  stage: lint
+  script:
+    # Runs the Spotless plugin we just added to pom.xml
+    - ./mvnw spotless:check
+  allow_failure: false # If code formatting is wrong, stop the pipeline!
+
+# 2. TEST STAGE
+backend_test:
+  extends: .backend_job
+  stage: test
+  services:
+    - name: postgres:16-alpine
+      alias: postgres
+  variables:
+    POSTGRES_DB: smartrecruit
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/smartrecruit
+  script:
+    # Runs standard JUnit tests with test profile and global CLI opts
+    - ./mvnw $MAVEN_CLI_OPTS test -Dspring.profiles.active=test
+
+# 3. BUILD STAGE
+backend_build:
+  extends: .backend_job
+  stage: build
+  script:
+    # Packages the code into a Jar. 
+    # We skip tests here (-DskipTests) because they already passed in the test stage.
+    - ./mvnw package -DskipTests
+  artifacts:
+    # Saves the built JAR file so it can be deployed or downloaded later
+    paths:
+      - backend/target/*.jar
+    expire_in: 1 week
+
+# ==========================================
+# FRONTEND JOBS (Angular 21 + Node 22 + pnpm)
+# ==========================================
+
+# We define an anchor for frontend jobs to avoid repetition
+.frontend_job:
+  image: node:22-alpine # Node 22 for Angular 21 compatibility
+  before_script:
+    - cd frontend
+    - corepack enable pnpm # Modern Node natively supports pnpm via corepack
+    - pnpm config set store-dir $CI_PROJECT_DIR/frontend/.pnpm-store
+    - pnpm install --frozen-lockfile # Strict lockfile installation (like npm ci)
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "develop"'
+      changes:
+        - frontend/**/* # Only run if frontend files changed during MR or on develop
+
+# 1. LINT STAGE
+frontend_lint:
+  extends: .frontend_job
+  stage: lint
+  script:
+    # Runs the Prettier check to enforce styling rules
+    - pnpm run format:check
+  allow_failure: false
+
+# 2. TEST STAGE
+frontend_test:
+  extends: .frontend_job
+  stage: test
+  script:
+    # --watch=false ensures the test runner exits immediately after passing
+    - pnpm run test --watch=false
+
+# 3. BUILD STAGE
+frontend_build:
+  extends: .frontend_job
+  stage: build
+  script:
+    # Compiles the Angular app for production
+    - pnpm run build
+  artifacts:
+    # Saves the production bundle so it can be served by Nginx or a CDN
+    paths:
+      - frontend/dist/
+    expire_in: 1 week

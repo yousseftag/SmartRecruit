@@ -33,7 +33,7 @@ Once running, the interactive API documentation (Swagger) is available at:
 
 ## 📦 Core Technologies & Dependencies
 - **Java 21 LTS**: Leveraging Virtual Threads for high-concurrency I/O.
-- **Spring Boot 3.3+**: The core framework.
+- **Spring Boot 4.1+**: The core framework.
 - **Flyway**: Strict SQL-based database migrations. *Note: Hibernate `ddl-auto` is set to `validate`. Do not change this; all schema changes must go through Flyway scripts.*
 - **Spring Security (OAuth2)**: Secures endpoints via Keycloak JWT validation.
 - **Spring Boot Quartz**: Handles robust, persistent scheduling for automated candidate follow-ups ("relances automatiques").
