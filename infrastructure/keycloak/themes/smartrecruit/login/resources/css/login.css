@@ -1,0 +1,158 @@
+/* 
+  WARNING: These variables are manually synced with the main frontend application.
+  If you change them here, make sure they match: frontend/src/styles.css 
+*/
+:root {
+    --blue: #2563eb;
+    --blue-d: #1d4ed8;
+    --ink: #0f172a;
+    --slate: #475569;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --bg: #f8fafc;
+    --white: #fff;
+    --r: 11px;
+}
+
+body {
+    background-color: var(--bg);
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* --- Carte  --- */
+.login-card {
+    background: var(--white);
+    width: 100%;
+    max-width: 420px;
+    padding: 48px 40px;
+    border-radius: 24px; /* Plus arrondi */
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+}
+
+/* --- En-tête --- */
+.brand-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+.brand-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--blue);
+    letter-spacing: -0.5px;
+}
+.logo-img {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+}
+.page-title {
+    text-align: center;
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 32px;
+    letter-spacing: -0.5px;
+}
+
+/* --- Champs de saisie --- */
+.field {
+    margin-bottom: 22px;
+}
+.label {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--slate);
+    margin-bottom: 8px;
+}
+.input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--r);
+    background: var(--bg);
+    font-size: 14.5px;
+    color: var(--ink);
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+.input:focus {
+    outline: none;
+    border-color: var(--blue);
+    background: var(--white);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+/* --- Ligne Remember / Forgot --- */
+.row-between {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+    margin-top: 10px;
+}
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--slate);
+    cursor: pointer;
+}
+.custom-checkbox {
+    width: 18px;
+    height: 18px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border);
+    accent-color: var(--blue);
+    cursor: pointer;
+}
+.forgot-link {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--blue);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+.forgot-link:hover {
+    color: var(--blue-d);
+    text-decoration: underline;
+}
+
+/* --- Bouton Dynamique --- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 20px;
+    border: none;
+    border-radius: var(--r);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.btn-primary {
+    background: var(--blue);
+    color: var(--white);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+.btn-primary:hover {
+    background: var(--blue-d);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+    transform: translateY(-1px);
+}
+.btn-block {
+    width: 100%;
+}

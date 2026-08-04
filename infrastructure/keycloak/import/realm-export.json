@@ -1,0 +1,156 @@
+{
+  "realm": "smartrecruit",
+  "enabled": true,
+  "loginTheme": "smartrecruit",
+  "accountTheme": "smartrecruit",
+  "registrationAllowed": false,
+  "rememberMe": true,
+  "ssoSessionIdleTimeoutRememberMe": 2592000,
+  "ssoSessionMaxLifespanRememberMe": 2592000,
+  "ssoSessionIdleTimeout": 1800,
+  "resetPasswordAllowed": true,
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "noreply@smartrecruit.com",
+    "fromDisplayName": "Smart Recruit Security",
+    "replyTo": "",
+    "replyToDisplayName": "",
+    "envelopeFrom": "",
+    "auth": "false",
+    "ssl": "false",
+    "starttls": "false"
+  },
+  "roles": {
+    "realm": [
+      {
+        "name": "ADMIN_RH",
+        "description": "Human Resources Administrator"
+      },
+      {
+        "name": "RECRUTEUR",
+        "description": "Recruiter"
+      },
+      {
+        "name": "VIEWER",
+        "description": "Read-only access"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "smartrecruit-frontend",
+      "name": "Smart Recruit",
+      "baseUrl": "http://localhost:4200",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "redirectUris": [
+        "http://localhost:4200/*"
+      ],
+      "webOrigins": [
+        "http://localhost:4200",
+        "+"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "email": "admin@smartrecruit.com",
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "RH",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "ADMIN_RH"
+      ],
+      "clientRoles": {
+        "account": [
+          "view-profile",
+          "manage-account"
+        ]
+      }
+    },
+    {
+      "username": "recruteur",
+      "enabled": true,
+      "email": "recruteur@smartrecruit.com",
+      "emailVerified": true,
+      "firstName": "Test",
+      "lastName": "Recruteur",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "recruteur",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "RECRUTEUR"
+      ],
+      "clientRoles": {
+        "account": [
+          "view-profile",
+          "manage-account"
+        ]
+      }
+    },
+    {
+      "username": "viewer",
+      "enabled": true,
+      "email": "viewer@smartrecruit.com",
+      "emailVerified": true,
+      "firstName": "Test",
+      "lastName": "Viewer",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "viewer",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "VIEWER"
+      ],
+      "clientRoles": {
+        "account": [
+          "view-profile",
+          "manage-account"
+        ]
+      }
+    },
+    {
+      "username": "testuser",
+      "enabled": true,
+      "emailVerified": false,
+      "requiredActions": [
+        "UPDATE_PROFILE"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "testuser",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "VIEWER"
+      ],
+      "clientRoles": {
+        "account": [
+          "view-profile",
+          "manage-account"
+        ]
+      }
+    }
+  ]
+}

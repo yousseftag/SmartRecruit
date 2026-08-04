@@ -1,1 +1,32 @@
-<p>sidebar works!</p>
+<!-- Sidebar container -->
+<div class="sidebar">
+  <!-- Brand Header -->
+  <div class="brand">
+    <div class="brand-badge">
+      <!-- Official logo image -->
+      <img src="/favicon.ico" alt="Smart Recruit Logo" style="height: 24px" />
+    </div>
+    <!-- Brand name -->
+    <div class="brand-name">Smart Recruit</div>
+  </div>
+
+  <!-- Navigation Links -->
+  <nav class="nav">
+    @for (item of navItems; track item.route) {
+      @if (!item.requiresAdmin || (item.requiresAdmin && isAdmin())) {
+        <!-- Navigation item -->
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: false }"
+          class="nav-item"
+        >
+          <!-- Dynamic Lucide Icon -->
+          <i [attr.data-lucide]="item.icon"></i>
+
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    }
+  </nav>
+</div>
