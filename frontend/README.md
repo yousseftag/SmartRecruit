@@ -40,9 +40,10 @@ src/app/
  │    ├── offers/          # Offer lists, unified creation/editing form, and details
  │    ├── candidates/      # Candidate profiles, bulk import, manual dropzone
  │    ├── workflow/        # Kanban pipeline
+ │    ├── reporting/       # Data analytics, reporting, and exports
  │    ├── administration/  # User & role management (Keycloak admin)
  │    └── settings/        # Workspace rules and email templates
- ├── app.component.ts      # The root shell container
+ ├── app.ts                # The root shell container
  └── app.routes.ts         # Global routing definition
 ```
 
@@ -66,11 +67,12 @@ Contains the actual pages and business modules. Each feature is self-contained.
 *   `offers/`: Offer lists, unified `offer-form` for creation/editing, and candidate ranking.
 *   `candidates/`: Candidate profiles, manual dropzone, and bulk ZIP import.
 *   `workflow/`: The Kanban pipeline board for moving candidates through interview stages.
+*   `reporting/`: Data analytics, reporting, and exports.
 *   `administration/`: User & role management (Restricted to Keycloak admins).
 *   `settings/`: Workspace rules and email template editor.
 
 ### Root Files
-*   `app.component.ts`: The root container holding the layout and the `<router-outlet>`.
+*   `app.ts`: The root container holding the layout and the `<router-outlet>`.
 *   `app.routes.ts`: Defines the lazy-loaded paths linking URLs to Feature components.
 
 ---

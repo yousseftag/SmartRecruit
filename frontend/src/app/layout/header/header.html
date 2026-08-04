@@ -1,1 +1,76 @@
-<p>header works!</p>
+<header class="topbar">
+  <!-- Dynamic Page Title mapped to the router -->
+  <div class="topbar-title">{{ pageTitle() }}</div>
+
+  <div class="topbar-right">
+    <div class="topbar-user topbar-trigger" (click)="toggleDropdown($event)">
+      <div class="txt">
+        <div class="nm">{{ userName() }}</div>
+        <div class="rl">{{ userRole() }}</div>
+      </div>
+
+      <!-- Avatar relies on dynamic 2-letter initials -->
+      <img
+        [src]="
+          'https://ui-avatars.com/api/?name=' +
+          userInitials() +
+          '&background=e2e8f0&color=0f172a&bold=true'
+        "
+        alt="User Avatar"
+        class="avatar avatar-38"
+      />
+
+      @if (isDropdownOpen()) {
+        <!-- The dropdown uses global CSS variables to support theme switching seamlessly -->
+        <div class="dropdown-menu" (click)="$event.stopPropagation()">
+          <div class="dropdown-header">
+            <img
+              [src]="
+                'https://ui-avatars.com/api/?name=' +
+                userInitials() +
+                '&background=e2e8f0&color=0f172a&bold=true'
+              "
+              alt="Avatar"
+              class="avatar avatar-38"
+            />
+            <div class="dropdown-user-info">
+              <span class="dropdown-user-name">{{ userName() }}</span>
+              <span class="dropdown-user-email">{{ userEmail() }}</span>
+            </div>
+          </div>
+
+          <div class="dropdown-body">
+            <a (click)="manageAccount()" class="dropdown-item">
+              <i data-lucide="user"></i> Edit profile info
+            </a>
+
+            <div class="dropdown-divider"></div>
+
+            <a (click)="changePassword()" class="dropdown-item">
+              <i data-lucide="key"></i> Change password
+            </a>
+
+            <div (click)="toggleDarkMode($event)" class="dropdown-item toggle-item">
+              <div class="toggle-label"><i data-lucide="moon"></i> Night mode</div>
+
+              <!-- Angular class binding replaces inline conditional styles -->
+              <div class="toggle-switch" [class.on]="isDarkMode()">
+                <div class="toggle-dot"></div>
+              </div>
+            </div>
+
+            <div class="dropdown-divider"></div>
+
+            <a class="dropdown-item"> <i data-lucide="help-circle"></i> Help center </a>
+
+            <div class="dropdown-footer">
+              <a (click)="logout()" class="dropdown-btn">
+                <i data-lucide="log-out"></i> Sign out
+              </a>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</header>

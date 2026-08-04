@@ -42,7 +42,12 @@ services:
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-    command: start-dev
+    command: start-dev --import-realm
+    volumes:
+      # This line mounts your local directory into Keycloak's internal directory
+      - ./infrastructure/keycloak/themes/smartrecruit:/opt/keycloak/themes/smartrecruit
+      # Mount the folder where you will place your realm-export.json
+      - ./infrastructure/keycloak/import:/opt/keycloak/data/import
 
   mailpit:
     image: axllent/mailpit

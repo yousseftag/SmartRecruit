@@ -20,6 +20,7 @@
     "@angular/router": "^21.2.0",
     "keycloak-angular": "^21.0.0",
     "keycloak-js": "^26.2.4",
+    "lucide": "^1.26.0",
     "rxjs": "~7.8.0",
     "tailwindcss": "^4.3.2",
     "tslib": "^2.3.0"

@@ -2,11 +2,11 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'app-dashboard',
+  selector: 'app-reporting',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './dashboard.html',
+  templateUrl: './reporting.html',
 })
-export class Dashboard {
+export class Reporting {
   // Logic for the reporting dashboard will be implemented here
 }
