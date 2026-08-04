@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Update Profile - Smart Recruit</title>
+    <title>Mettre à jour le profil - Smart Recruit</title>
     <link rel="stylesheet" href="${url.resourcesPath}/css/login.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
@@ -15,7 +15,7 @@
         <div class="brand-name">Smart Recruit</div>
     </div>
 
-    <h1 class="page-title">Update Profile</h1>
+    <h1 class="page-title">Mettre à jour le profil</h1>
 
     <#if message?has_content && message.type == 'error'>
         <div class="alert alert-error" style="margin-bottom: 15px; padding: 10px; border-radius: 6px; background-color: #fee2e2; color: #991b1b; font-size: 13px;">
@@ -31,20 +31,20 @@
         </div>
 
         <div class="field">
-            <label for="firstName" class="label">First Name</label>
+            <label for="firstName" class="label">Prénom</label>
             <input id="firstName" name="firstName" type="text" class="input" value="${(user.firstName!'')}" required>
         </div>
 
         <div class="field">
-            <label for="lastName" class="label">Last Name</label>
+            <label for="lastName" class="label">Nom de famille</label>
             <input id="lastName" name="lastName" type="text" class="input" value="${(user.lastName!'')}" required>
         </div>
 
         <div style="display: flex; gap: 12px; margin-top: 20px;">
             <#if isAppInitiatedAction?? && isAppInitiatedAction>
-                <button type="submit" name="cancel-aia" value="true" class="btn" style="flex: 1; background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;" formnovalidate>Cancel</button>
+                <button type="submit" name="cancel-aia" value="true" class="btn" style="flex: 1; background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;" formnovalidate>Annuler</button>
             </#if>
-            <button type="submit" class="btn btn-primary" style="flex: 2;">Save Profile</button>
+            <button type="submit" class="btn btn-primary" style="flex: 2;">Enregistrer le profil</button>
         </div>
     </form>
 </div>

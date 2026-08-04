@@ -21,7 +21,7 @@ export class AuthService {
   constructor() {
     this.isAuthenticated.set(!!this.keycloak.authenticated);
     if (this.keycloak.authenticated) {
-      this.isAdmin.set(this.hasRole('ADMIN_RH'));
+      this.isAdmin.set(this.hasRole('HR_ADMIN'));
     }
   }
 

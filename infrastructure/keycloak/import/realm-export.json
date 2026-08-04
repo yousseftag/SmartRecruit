@@ -9,6 +9,12 @@
   "ssoSessionMaxLifespanRememberMe": 2592000,
   "ssoSessionIdleTimeout": 1800,
   "resetPasswordAllowed": true,
+  "internationalizationEnabled": true,
+  "supportedLocales": [
+    "fr",
+    "en"
+  ],
+  "defaultLocale": "fr",
   "smtpServer": {
     "host": "mailpit",
     "port": "1025",
@@ -24,11 +30,11 @@
   "roles": {
     "realm": [
       {
-        "name": "ADMIN_RH",
+        "name": "HR_ADMIN",
         "description": "Human Resources Administrator"
       },
       {
-        "name": "RECRUTEUR",
+        "name": "RECRUITER",
         "description": "Recruiter"
       },
       {
@@ -71,7 +77,7 @@
         }
       ],
       "realmRoles": [
-        "ADMIN_RH"
+        "HR_ADMIN"
       ],
       "clientRoles": {
         "account": [
@@ -95,7 +101,7 @@
         }
       ],
       "realmRoles": [
-        "RECRUTEUR"
+        "RECRUITER"
       ],
       "clientRoles": {
         "account": [
