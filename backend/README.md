@@ -36,7 +36,7 @@ Once running, the interactive API documentation (Swagger) is available at:
 - **Spring Boot 4.1+**: The core framework.
 - **Flyway**: Strict SQL-based database migrations. *Note: Hibernate `ddl-auto` is set to `validate`. Do not change this; all schema changes must go through Flyway scripts.*
 - **Spring Security (OAuth2)**: Secures endpoints via Keycloak JWT validation.
-- **Spring Boot Quartz**: Handles robust, persistent scheduling for automated candidate follow-ups ("relances automatiques").
+- **Spring Boot Quartz**: Handles robust, persistent scheduling for automated candidate follow-ups.
 - **Springdoc OpenAPI**: Automatically generates the Swagger documentation.
 - **Hibernate Types**: Used to map complex `JSONB` database columns (e.g., `category_weights`) to Java Objects.
 

@@ -41,17 +41,17 @@
 
           <div class="dropdown-body">
             <a (click)="manageAccount()" class="dropdown-item">
-              <i data-lucide="user"></i> Edit profile info
+              <i data-lucide="user"></i> Modifier le profil
             </a>
 
             <div class="dropdown-divider"></div>
 
             <a (click)="changePassword()" class="dropdown-item">
-              <i data-lucide="key"></i> Change password
+              <i data-lucide="key"></i> Changer le mot de passe
             </a>
 
             <div (click)="toggleDarkMode($event)" class="dropdown-item toggle-item">
-              <div class="toggle-label"><i data-lucide="moon"></i> Night mode</div>
+              <div class="toggle-label"><i data-lucide="moon"></i> Mode nuit</div>
 
               <!-- Angular class binding replaces inline conditional styles -->
               <div class="toggle-switch" [class.on]="isDarkMode()">
@@ -61,11 +61,11 @@
 
             <div class="dropdown-divider"></div>
 
-            <a class="dropdown-item"> <i data-lucide="help-circle"></i> Help center </a>
+            <a class="dropdown-item"> <i data-lucide="help-circle"></i> Centre d'aide </a>
 
             <div class="dropdown-footer">
               <a (click)="logout()" class="dropdown-btn">
-                <i data-lucide="log-out"></i> Sign out
+                <i data-lucide="log-out"></i> Déconnexion
               </a>
             </div>
           </div>

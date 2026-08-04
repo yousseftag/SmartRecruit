@@ -10,7 +10,7 @@ export const routes: Routes = [
     component: MainLayout,
     canActivateChild: [authGuard],
     children: [
-      // --- Read-Only / General Routes (Accessible to ADMIN_RH, RECRUTEUR, VIEWER) ---
+      // --- Read-Only / General Routes (Accessible to HR_ADMIN, RECRUITER, VIEWER) ---
       {
         path: 'dashboard',
         loadComponent: () => import('./pages/dashboard/dashboard').then((c) => c.Dashboard),
@@ -49,18 +49,18 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/reporting/reporting').then((c) => c.Reporting),
       },
 
-      // --- Write/Action Routes (Accessible ONLY to ADMIN_RH and RECRUTEUR) ---
+      // --- Write/Action Routes (Accessible ONLY to HR_ADMIN and RECRUITER) ---
       {
         path: 'offers/new',
         loadComponent: () =>
           import('./pages/offers/offer-form/offer-form').then((c) => c.OfferForm),
-        data: { roles: ['ADMIN_RH', 'RECRUTEUR'] },
+        data: { roles: ['HR_ADMIN', 'RECRUITER'] },
       },
       {
         path: 'offers/:id/edit',
         loadComponent: () =>
           import('./pages/offers/offer-form/offer-form').then((c) => c.OfferForm),
-        data: { roles: ['ADMIN_RH', 'RECRUTEUR'] },
+        data: { roles: ['HR_ADMIN', 'RECRUITER'] },
       },
       {
         path: 'candidates/dropzone',
@@ -68,7 +68,7 @@ export const routes: Routes = [
           import('./pages/candidates/candidate-dropzone/candidate-dropzone').then(
             (c) => c.CandidateDropzone,
           ),
-        data: { roles: ['ADMIN_RH', 'RECRUTEUR'] },
+        data: { roles: ['HR_ADMIN', 'RECRUITER'] },
       },
       {
         path: 'candidates/import',
@@ -76,17 +76,17 @@ export const routes: Routes = [
           import('./pages/candidates/candidate-import/candidate-import').then(
             (c) => c.CandidateImport,
           ),
-        data: { roles: ['ADMIN_RH', 'RECRUTEUR'] },
+        data: { roles: ['HR_ADMIN', 'RECRUITER'] },
       },
 
-      // --- Admin/Settings Routes (Accessible ONLY to ADMIN_RH) ---
+      // --- Admin/Settings Routes (Accessible ONLY to HR_ADMIN) ---
       {
         path: 'administration',
         loadComponent: () =>
           import('./pages/administration/user-management/user-management').then(
             (c) => c.UserManagement,
           ),
-        data: { roles: ['ADMIN_RH'] },
+        data: { roles: ['HR_ADMIN'] },
       },
       {
         path: 'settings/general',
@@ -94,7 +94,7 @@ export const routes: Routes = [
           import('./pages/settings/general-settings/general-settings').then(
             (c) => c.GeneralSettings,
           ),
-        data: { roles: ['ADMIN_RH'] },
+        data: { roles: ['HR_ADMIN'] },
       },
       {
         path: 'settings/templates',
@@ -102,7 +102,7 @@ export const routes: Routes = [
           import('./pages/settings/template-settings/template-settings').then(
             (c) => c.TemplateSettings,
           ),
-        data: { roles: ['ADMIN_RH'] },
+        data: { roles: ['HR_ADMIN'] },
       },
     ],
   },

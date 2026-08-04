@@ -78,9 +78,9 @@ export class Header implements OnInit, AfterViewInit {
       }
       this.userInitials.set(initials);
 
-      if (this.authService.hasRole('ADMIN_RH')) {
+      if (this.authService.hasRole('HR_ADMIN')) {
         this.userRole.set('Admin RH');
-      } else if (this.authService.hasRole('RECRUTEUR')) {
+      } else if (this.authService.hasRole('RECRUITER')) {
         this.userRole.set('Recruteur');
       } else {
         this.userRole.set('Consultation');

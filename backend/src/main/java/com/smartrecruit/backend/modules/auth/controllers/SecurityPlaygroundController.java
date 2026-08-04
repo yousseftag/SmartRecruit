@@ -23,12 +23,12 @@ public class SecurityPlaygroundController {
     return response;
   }
 
-  // 2. Requires the ADMIN_RH role
+  // 2. Requires the HR_ADMIN role
   @GetMapping("/admin-only")
-  @PreAuthorize("hasRole('ADMIN_RH')")
+  @PreAuthorize("hasRole('HR_ADMIN')")
   public Map<String, String> getAdminData(Principal principal) {
     Map<String, String> response = new HashMap<>();
-    response.put("message", "Success! You have the ADMIN_RH role.");
+    response.put("message", "Success! You have the HR_ADMIN role.");
     response.put("user", principal.getName());
     return response;
   }
