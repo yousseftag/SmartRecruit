@@ -36,20 +36,20 @@ public class SecurityPlaygroundIntegrationTest {
 
   @Test
   @WithMockUser(
-      username = "admin",
+      username = "admin_user",
       roles = {"HR_ADMIN"})
   public void adminRhShouldAccessAdminEndpoint() throws Exception {
     mockMvc
         .perform(get("/api/v1/security-playground/admin-only"))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.message").value("Success! You have the HR_ADMIN role."))
-        .andExpect(jsonPath("$.user").value("admin"));
+        .andExpect(jsonPath("$.user").value("admin_user"));
   }
 
   @Test
   @WithMockUser(
       username = "user",
-      roles = {"CANDIDATE"})
+      roles = {"VIEWER"})
   public void nonAdminUserShouldGetForbiddenOnAdminEndpoint() throws Exception {
     mockMvc
         .perform(get("/api/v1/security-playground/admin-only"))
