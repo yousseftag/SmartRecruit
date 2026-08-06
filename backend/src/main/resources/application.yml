@@ -10,9 +10,9 @@ spring:
   
   # Database Configuration
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/${POSTGRES_DB:smartrecruit}}
-    username: ${SPRING_DATASOURCE_USER:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/${POSTGRES_DB:smartrecruit}}
+    username: ${SPRING_DATASOURCE_USER:${POSTGRES_USER:postgres}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${POSTGRES_PASSWORD:postgres}}
     driver-class-name: org.postgresql.Driver
   
   # Flyway Configuration
@@ -54,7 +54,7 @@ spring:
             enable: false
 
   rabbitmq:
-    host: localhost
+    host: ${RABBITMQ_HOST:localhost}
     port: 5672
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASS:guest}
@@ -71,8 +71,7 @@ keycloak:
 
 # Custom MinIO properties
 minio:
-  url: http://localhost:9000
+  url: ${MINIO_URL:http://localhost:9000}
   access-key: ${MINIO_ROOT_USER:minioadmin}
   secret-key: ${MINIO_ROOT_PASSWORD:minioadmin}
   bucket: resumes
-  
