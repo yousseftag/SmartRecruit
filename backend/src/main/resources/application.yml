@@ -38,6 +38,17 @@ spring:
           issuer-uri: ${keycloak.url}
           jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
 
+  # Mail Configuration (Mailpit for dev)
+  mail:
+    host: ${SPRING_MAIL_HOST:localhost}
+    port: ${SPRING_MAIL_PORT:1025}
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
 keycloak:
   realm: smartrecruit
   url: ${KEYCLOAK_URL:http://localhost:8081}/realms/${keycloak.realm}

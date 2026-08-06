@@ -1,12 +1,16 @@
 package com.smartrecruit.backend.integration.keycloak;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import jakarta.ws.rs.core.Response;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.RealmResource;
 import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
+import org.keycloak.representations.idm.CredentialRepresentation;
+import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -66,6 +70,66 @@ public class KeycloakAdminService {
     } catch (Exception e) {
       throw new KeycloakIntegrationException(
           "Failed to fetch user by username from Keycloak: " + e.getMessage(), e);
+    }
+  }
+
+  public String createUser(String username, String firstName, String lastName, String email, String password) {
+    try {
+      UserRepresentation user = new UserRepresentation();
+      user.setUsername(username);
+      user.setFirstName(firstName);
+      user.setLastName(lastName);
+      user.setEmail(email);
+      user.setEnabled(true);
+      user.setEmailVerified(true);
+
+      CredentialRepresentation credential = new CredentialRepresentation();
+      credential.setType(CredentialRepresentation.PASSWORD);
+      credential.setValue(password);
+      credential.setTemporary(true);
+      user.setCredentials(Collections.singletonList(credential));
+
+      Response response = getRealmResource().users().create(user);
+      
+      if (response.getStatus() != 201) {
+        throw new KeycloakIntegrationException("Failed to create user in Keycloak, status: " + response.getStatus(), null);
+      }
+      
+      String path = response.getLocation().getPath();
+      return path.substring(path.lastIndexOf('/') + 1);
+    } catch (Exception e) {
+      if (e instanceof KeycloakIntegrationException) throw e;
+      throw new KeycloakIntegrationException("Failed to create user in Keycloak: " + e.getMessage(), e);
+    }
+  }
+
+  public void assignRealmRole(String userId, String roleName) {
+    try {
+      RoleRepresentation role = getRealmResource().roles().get(roleName).toRepresentation();
+      getRealmResource().users().get(userId).roles().realmLevel().add(Collections.singletonList(role));
+    } catch (Exception e) {
+      throw new KeycloakIntegrationException("Failed to assign role in Keycloak: " + e.getMessage(), e);
+    }
+  }
+
+  public void removeRealmRole(String userId, String roleName) {
+    try {
+      RoleRepresentation role = getRealmResource().roles().get(roleName).toRepresentation();
+      getRealmResource().users().get(userId).roles().realmLevel().remove(Collections.singletonList(role));
+    } catch (Exception e) {
+      throw new KeycloakIntegrationException("Failed to remove role in Keycloak: " + e.getMessage(), e);
+    }
+  }
+
+  public void deleteUser(String userId) {
+    try {
+      Response response = getRealmResource().users().delete(userId);
+      if (response.getStatus() != 204 && response.getStatus() != 200) {
+        throw new KeycloakIntegrationException("Failed to delete user in Keycloak, status: " + response.getStatus(), null);
+      }
+    } catch (Exception e) {
+      if (e instanceof KeycloakIntegrationException) throw e;
+      throw new KeycloakIntegrationException("Failed to delete user in Keycloak: " + e.getMessage(), e);
     }
   }
 }
