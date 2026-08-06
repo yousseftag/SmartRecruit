@@ -1,4 +1,4 @@
-package com.smartrecruit.backend.modules.user.dtos;
+package com.smartrecruit.backend.modules.auth.dtos;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
