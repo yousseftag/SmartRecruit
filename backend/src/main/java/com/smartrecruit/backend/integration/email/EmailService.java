@@ -21,12 +21,15 @@ public class EmailService {
         "Bonjour,\n\n"
             + "Votre compte SmartRecruit a été créé avec succès.\n\n"
             + "Voici vos informations de connexion :\n"
-            + "Nom d'utilisateur : " + username + "\n"
-            + "Mot de passe temporaire : " + generatedPassword + "\n\n"
+            + "Nom d'utilisateur : "
+            + username
+            + "\n"
+            + "Mot de passe temporaire : "
+            + generatedPassword
+            + "\n\n"
             + "Veuillez vous connecter à l'application et changer votre mot de passe dès que possible.\n\n"
             + "Cordialement,\n"
-            + "L'équipe SmartRecruit"
-    );
+            + "L'équipe SmartRecruit");
 
     mailSender.send(message);
   }

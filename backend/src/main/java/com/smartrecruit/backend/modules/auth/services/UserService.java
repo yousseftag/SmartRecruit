@@ -26,7 +26,10 @@ public class UserService {
   private final KeycloakAdminService keycloakAdminService;
   private final EmailService emailService;
 
-  public UserService(AppUserRepository userRepository, KeycloakAdminService keycloakAdminService, EmailService emailService) {
+  public UserService(
+      AppUserRepository userRepository,
+      KeycloakAdminService keycloakAdminService,
+      EmailService emailService) {
     this.userRepository = userRepository;
     this.keycloakAdminService = keycloakAdminService;
     this.emailService = emailService;
@@ -88,18 +91,21 @@ public class UserService {
     String firstName = request.getFirstName() != null ? request.getFirstName() : "";
     String lastName = request.getLastName() != null ? request.getLastName() : "";
 
-    String sub = keycloakAdminService.createUser(request.getUsername(), firstName, lastName, request.getEmail(), password);
+    String sub =
+        keycloakAdminService.createUser(
+            request.getUsername(), firstName, lastName, request.getEmail(), password);
     keycloakAdminService.assignRealmRole(sub, request.getRole());
 
-    AppUser user = AppUser.builder()
-        .keycloakSub(sub)
-        .username(request.getUsername())
-        .email(request.getEmail())
-        .firstName(firstName)
-        .lastName(lastName)
-        .role(UserRole.valueOf(request.getRole()))
-        .build();
-    
+    AppUser user =
+        AppUser.builder()
+            .keycloakSub(sub)
+            .username(request.getUsername())
+            .email(request.getEmail())
+            .firstName(firstName)
+            .lastName(lastName)
+            .role(UserRole.valueOf(request.getRole()))
+            .build();
+
     AppUser savedUser = userRepository.save(user);
 
     emailService.sendWelcomeEmail(request.getEmail(), request.getUsername(), password);
@@ -109,8 +115,8 @@ public class UserService {
 
   @Transactional
   public UserResponse updateUser(UUID id, UpdateUserRequest request, Jwt jwt) {
-    AppUser user = userRepository.findById(id)
-        .orElseThrow(() -> new UserNotFoundException("User not found"));
+    AppUser user =
+        userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found"));
 
     String currentSub = jwt.getSubject();
     if (user.getKeycloakSub().equals(currentSub)) {
@@ -145,8 +151,8 @@ public class UserService {
 
   @Transactional
   public void deleteUser(UUID id, Jwt jwt) {
-    AppUser user = userRepository.findById(id)
-        .orElseThrow(() -> new UserNotFoundException("User not found"));
+    AppUser user =
+        userRepository.findById(id).orElseThrow(() -> new UserNotFoundException("User not found"));
 
     String currentSub = jwt.getSubject();
     if (user.getKeycloakSub().equals(currentSub)) {
