@@ -16,25 +16,55 @@ public class GlobalExceptionHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-  @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
-  public ResponseEntity<ApiErrorResponse> handleValidationException(
-      org.springframework.web.bind.MethodArgumentNotValidException ex) {
-    ApiErrorResponse body =
-        new ApiErrorResponse(
-            LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(), "Bad Request", "Validation error");
-    return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+  @ExceptionHandler(ResourceNotFoundException.class)
+  public ResponseEntity<ApiErrorResponse> handleResourceNotFoundException(
+      ResourceNotFoundException ex) {
+    logger.warn("Resource Not Found", ex);
+    return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+  }
+
+  @ExceptionHandler(DuplicateResourceException.class)
+  public ResponseEntity<ApiErrorResponse> handleDuplicateResourceException(
+      DuplicateResourceException ex) {
+    logger.warn("Conflict: Duplicate Resource", ex);
+    return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
+  }
+
+  @ExceptionHandler({
+    org.springframework.web.bind.MethodArgumentNotValidException.class,
+    org.springframework.validation.BindException.class
+  })
+  public ResponseEntity<ApiErrorResponse> handleValidationException(Exception ex) {
+    org.springframework.validation.BindingResult bindingResult = null;
+
+    if (ex instanceof org.springframework.web.bind.MethodArgumentNotValidException manve) {
+      bindingResult = manve.getBindingResult();
+    } else if (ex instanceof org.springframework.validation.BindException be) {
+      bindingResult = be.getBindingResult();
+    }
+
+    String message = "Validation failed";
+    if (bindingResult != null && bindingResult.hasFieldErrors()) {
+      message =
+          bindingResult.getFieldErrors().stream()
+              .map(error -> error.getField() + ": " + error.getDefaultMessage())
+              .collect(java.util.stream.Collectors.joining(", "));
+    }
+
+    return buildResponse(HttpStatus.BAD_REQUEST, message);
   }
 
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ApiErrorResponse> handleGlobalException(Exception ex) {
     logger.error("Internal Server Error", ex);
+    return buildResponse(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+  }
+
+  private ResponseEntity<ApiErrorResponse> buildResponse(HttpStatus status, String message) {
     ApiErrorResponse body =
         new ApiErrorResponse(
-            LocalDateTime.now(),
-            HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            "Internal Server Error",
-            "An unexpected error occurred");
-    return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
+            LocalDateTime.now(), status.value(), status.getReasonPhrase(), message);
+    return new ResponseEntity<>(body, status);
   }
 
   @ExceptionHandler(UserAlreadyExistsException.class)
