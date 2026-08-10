@@ -1,4 +1,4 @@
-package com.smartrecruit.backend.integration.modules.candidate;
+package com.smartrecruit.backend.integration.modules.application;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -17,7 +17,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class CandidateControllerTest {
+class ApplicationControllerTest {
 
   @Autowired private MockMvc mockMvc;
 
@@ -30,7 +30,7 @@ class CandidateControllerTest {
 
     mockMvc
         .perform(
-            multipart("/api/v1/public/candidates/apply")
+            multipart("/api/v1/public/applications/apply")
                 .file(file)
                 .param("firstName", "John")
                 .param("lastName", "Doe")
@@ -46,7 +46,7 @@ class CandidateControllerTest {
 
     mockMvc
         .perform(
-            multipart("/api/v1/public/candidates/apply")
+            multipart("/api/v1/public/applications/apply")
                 .file(file)
                 .param("firstName", "John")
                 .param("lastName", "Doe")
@@ -59,7 +59,7 @@ class CandidateControllerTest {
   void shouldReturn400WhenFileIsMissing() throws Exception {
     mockMvc
         .perform(
-            multipart("/api/v1/public/candidates/apply")
+            multipart("/api/v1/public/applications/apply")
                 // Missing file
                 .param("firstName", "John")
                 .param("lastName", "Doe")

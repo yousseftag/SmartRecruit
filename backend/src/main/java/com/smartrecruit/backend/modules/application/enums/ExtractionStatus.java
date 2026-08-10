@@ -1,4 +1,4 @@
-package com.smartrecruit.backend.modules.candidate.enums;
+package com.smartrecruit.backend.modules.application.enums;
 
 public enum ExtractionStatus {
   PENDING,

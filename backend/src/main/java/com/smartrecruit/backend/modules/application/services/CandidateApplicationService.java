@@ -6,13 +6,14 @@ import com.smartrecruit.backend.integration.messaging.CvIngestionProducer;
 import com.smartrecruit.backend.integration.storage.FileStorageService;
 import com.smartrecruit.backend.modules.application.dtos.ApplyRequest;
 import com.smartrecruit.backend.modules.application.entities.Application;
+import com.smartrecruit.backend.modules.application.entities.Candidate;
+import com.smartrecruit.backend.modules.application.entities.CvFile;
 import com.smartrecruit.backend.modules.application.enums.ApplicationStatus;
+import com.smartrecruit.backend.modules.application.enums.ExtractionStatus;
+import com.smartrecruit.backend.modules.application.mappers.CandidateMapper;
 import com.smartrecruit.backend.modules.application.repositories.ApplicationRepository;
-import com.smartrecruit.backend.modules.candidate.entities.Candidate;
-import com.smartrecruit.backend.modules.candidate.entities.CvFile;
-import com.smartrecruit.backend.modules.candidate.enums.ExtractionStatus;
-import com.smartrecruit.backend.modules.candidate.repositories.CandidateRepository;
-import com.smartrecruit.backend.modules.candidate.repositories.CvFileRepository;
+import com.smartrecruit.backend.modules.application.repositories.CandidateRepository;
+import com.smartrecruit.backend.modules.application.repositories.CvFileRepository;
 import com.smartrecruit.backend.modules.offer.entities.Offer;
 import com.smartrecruit.backend.modules.offer.repositories.OfferRepository;
 import java.io.InputStream;
@@ -39,20 +40,16 @@ public class CandidateApplicationService {
 
   @Transactional
   public void applyToOffer(ApplyRequest request) {
-    // 1. Validate Offer
     Offer offer =
         offerRepository
             .findById(request.offerId())
             .orElseThrow(() -> new ResourceNotFoundException("Job offer not found."));
 
-    // 2. Find or Create Candidate
     Candidate candidate =
         candidateRepository
             .findByEmail(request.email())
             .map(
                 existing -> {
-                  // Candidate exists: overwrite personal info with the latest submission (if not
-                  // null)
                   existing.setFirstName(request.firstName());
                   existing.setLastName(request.lastName());
                   if (request.phone() != null && !request.phone().isBlank()) {
@@ -62,17 +59,42 @@ public class CandidateApplicationService {
                 })
             .orElseGet(
                 () -> {
-                  Candidate newCandidate =
-                      Candidate.builder()
-                          .firstName(request.firstName())
-                          .lastName(request.lastName())
-                          .email(request.email())
-                          .phone(request.phone())
-                          .build();
+                  Candidate newCandidate = CandidateMapper.toEntity(request);
                   return candidateRepository.save(newCandidate);
                 });
 
-    // 3. Check for Duplicate Application
+    processApplicationAndFile(offer, candidate, request.file());
+  }
+
+  @Transactional
+  public java.util.List<UUID> importCandidates(UUID offerId, java.util.List<MultipartFile> files) {
+    Offer offer =
+        offerRepository
+            .findById(offerId)
+            .orElseThrow(() -> new ResourceNotFoundException("Job offer not found."));
+
+    java.util.List<UUID> applicationIds = new java.util.ArrayList<>();
+
+    for (MultipartFile file : files) {
+      String fileHash = calculateHash(file);
+
+      // If CV already exists, reuse its candidate to prevent orphans.
+      // Otherwise, create a stub candidate.
+      Candidate candidate =
+          cvFileRepository
+              .findByChecksumSha256(fileHash)
+              .map(CvFile::getCandidate)
+              .orElseGet(() -> candidateRepository.save(Candidate.builder().build()));
+
+      Application app = processApplicationAndFile(offer, candidate, file);
+      applicationIds.add(app.getId());
+    }
+    return applicationIds;
+  }
+
+  private Application processApplicationAndFile(
+      Offer offer, Candidate candidate, MultipartFile file) {
+    // Check for duplicate application
     applicationRepository
         .findByCandidateIdAndOfferId(candidate.getId(), offer.getId())
         .ifPresent(
@@ -82,35 +104,32 @@ public class CandidateApplicationService {
               throw new DuplicateResourceException("You have already applied to this job offer.");
             });
 
-    // 4. Calculate SHA-256 Hash of CV
-    String fileHash = calculateHash(request.file());
+    String fileHash = calculateHash(file);
 
-    // 5. Find or Create CvFile
     CvFile cvFile =
         cvFileRepository
             .findByChecksumSha256(fileHash)
             .orElseGet(
                 () -> {
-                  String originalFilename = request.file().getOriginalFilename();
+                  String originalFilename = file.getOriginalFilename();
                   String extension = "";
                   if (originalFilename != null && originalFilename.lastIndexOf(".") > 0) {
                     extension = originalFilename.substring(originalFilename.lastIndexOf("."));
                   }
                   String storageKey = "resumes/" + UUID.randomUUID() + extension;
-                  fileStorageService.uploadFile(request.file(), storageKey);
+                  fileStorageService.uploadFile(file, storageKey);
 
                   CvFile newCvFile =
                       CvFile.builder()
                           .candidate(candidate)
                           .storageKey(storageKey)
-                          .originalFilename(request.file().getOriginalFilename())
+                          .originalFilename(file.getOriginalFilename())
                           .checksumSha256(fileHash)
                           .extractionStatus(ExtractionStatus.PENDING)
                           .build();
                   return cvFileRepository.save(newCvFile);
                 });
 
-    // 6. Create Application
     Application application =
         Application.builder()
             .candidate(candidate)
@@ -120,9 +139,10 @@ public class CandidateApplicationService {
             .build();
     application = applicationRepository.save(application);
 
-    // 7. Dispatch to RabbitMQ for AI Scoring & Extraction
     cvIngestionProducer.sendCvForProcessing(
         application.getId(), offer.getId(), cvFile.getId(), cvFile.getStorageKey());
+
+    return application;
   }
 
   private String calculateHash(MultipartFile file) {

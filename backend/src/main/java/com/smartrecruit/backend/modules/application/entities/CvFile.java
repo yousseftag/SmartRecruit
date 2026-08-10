@@ -1,6 +1,7 @@
-package com.smartrecruit.backend.modules.candidate.entities;
+package com.smartrecruit.backend.modules.application.entities;
 
-import com.smartrecruit.backend.modules.candidate.enums.ExtractionStatus;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.smartrecruit.backend.modules.application.enums.ExtractionStatus;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -42,7 +43,7 @@ public class CvFile {
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "extracted_data", columnDefinition = "jsonb")
-  private String extractedData;
+  private JsonNode extractedData;
 
   @CreationTimestamp
   @Column(name = "uploaded_at", nullable = false, updatable = false)
