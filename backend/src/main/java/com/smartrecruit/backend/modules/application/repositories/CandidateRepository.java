@@ -1,6 +1,6 @@
-package com.smartrecruit.backend.modules.candidate.repositories;
+package com.smartrecruit.backend.modules.application.repositories;
 
-import com.smartrecruit.backend.modules.candidate.entities.Candidate;
+import com.smartrecruit.backend.modules.application.entities.Candidate;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;

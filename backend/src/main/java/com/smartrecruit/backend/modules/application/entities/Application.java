@@ -1,8 +1,7 @@
 package com.smartrecruit.backend.modules.application.entities;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.smartrecruit.backend.modules.application.enums.ApplicationStatus;
-import com.smartrecruit.backend.modules.candidate.entities.Candidate;
-import com.smartrecruit.backend.modules.candidate.entities.CvFile;
 import com.smartrecruit.backend.modules.offer.entities.Offer;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -54,11 +53,11 @@ public class Application {
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "category_scores", columnDefinition = "jsonb")
-  private String categoryScores;
+  private JsonNode categoryScores;
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "extracted_matching", columnDefinition = "jsonb")
-  private String extractedMatching;
+  private JsonNode extractedMatching;
 
   @Column(name = "scored_at")
   private OffsetDateTime scoredAt;
