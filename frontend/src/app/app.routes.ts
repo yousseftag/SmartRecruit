@@ -6,6 +6,15 @@ export const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
 
   {
+    path: 'careers',
+    loadComponent: () => import('./pages/public/careers-list/careers-list').then((c) => c.CareersList),
+  },
+  {
+    path: 'careers/:id',
+    loadComponent: () => import('./pages/public/career-detail/career-detail').then((c) => c.CareerDetail),
+  },
+
+  {
     path: '',
     component: MainLayout,
     canActivateChild: [authGuard],
@@ -60,14 +69,6 @@ export const routes: Routes = [
         path: 'offers/:id/edit',
         loadComponent: () =>
           import('./pages/offers/offer-form/offer-form').then((c) => c.OfferForm),
-        data: { roles: ['HR_ADMIN', 'RECRUITER'] },
-      },
-      {
-        path: 'candidates/dropzone',
-        loadComponent: () =>
-          import('./pages/candidates/candidate-dropzone/candidate-dropzone').then(
-            (c) => c.CandidateDropzone,
-          ),
         data: { roles: ['HR_ADMIN', 'RECRUITER'] },
       },
       {
