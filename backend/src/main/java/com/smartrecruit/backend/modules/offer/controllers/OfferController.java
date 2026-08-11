@@ -43,6 +43,7 @@ public class OfferController {
 
   // --- INTERNAL HR ENDPOINTS ---
 
+  // Kept for future use: Full list of offers for internal HR management dashboard
   /*
   @GetMapping("/offers")
   public ResponseEntity<List<OfferInternalResponse>> getAllInternalOffers() {
@@ -52,6 +53,7 @@ public class OfferController {
   }
   */
 
+  // Lightweight endpoint optimized for dropdowns in the HR CV import UI
   @GetMapping("/offers/summary")
   public ResponseEntity<List<OfferSummaryResponse>> getActiveOfferSummaries() {
     return ResponseEntity.ok(offerRepository.findActiveOfferSummaries());

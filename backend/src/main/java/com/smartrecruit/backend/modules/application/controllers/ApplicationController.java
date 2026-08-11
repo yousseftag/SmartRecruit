@@ -41,6 +41,7 @@ public class ApplicationController {
     return ResponseEntity.ok(ApplicationMapper.toDto(application));
   }
 
+  // Lightweight endpoint optimized for rapid frontend polling during CV extraction
   @GetMapping("/api/v1/applications/{id}/status")
   public ResponseEntity<ApplicationStatusResponse> getApplicationStatus(@PathVariable UUID id) {
     ApplicationStatusResponse statusResponse =
