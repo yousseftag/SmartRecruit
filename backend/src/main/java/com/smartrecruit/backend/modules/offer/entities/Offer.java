@@ -1,8 +1,8 @@
 package com.smartrecruit.backend.modules.offer.entities;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.smartrecruit.backend.modules.auth.entities.AppUser;
 import jakarta.persistence.*;
+import java.util.Map;
 import java.util.UUID;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -38,11 +38,11 @@ public class Offer {
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "category_weights", columnDefinition = "jsonb", nullable = false)
-  private JsonNode categoryWeights;
+  private Map<String, Object> categoryWeights;
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "category_criteria", columnDefinition = "jsonb")
-  private JsonNode categoryCriteria;
+  private Map<String, Object> categoryCriteria;
 
   @Column(name = "min_score")
   private Integer minScore;
@@ -55,7 +55,7 @@ public class Offer {
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "extracted_requirements", columnDefinition = "jsonb")
-  private JsonNode extractedRequirements;
+  private Map<String, Object> extractedRequirements;
 
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)

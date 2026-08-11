@@ -22,7 +22,7 @@ public class ApplicationMapper {
               candidate.getPhone());
     }
 
-    com.fasterxml.jackson.databind.JsonNode cvExtractedData = null;
+    java.util.Map<String, Object> cvExtractedData = null;
     if (application.getCvFile() != null) {
       cvExtractedData = application.getCvFile().getExtractedData();
     }
