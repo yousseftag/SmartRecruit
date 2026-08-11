@@ -1,11 +1,11 @@
 package com.smartrecruit.backend.modules.application.entities;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.smartrecruit.backend.modules.application.enums.ApplicationStatus;
 import com.smartrecruit.backend.modules.offer.entities.Offer;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.UUID;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -53,11 +53,11 @@ public class Application {
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "category_scores", columnDefinition = "jsonb")
-  private JsonNode categoryScores;
+  private Map<String, Object> categoryScores;
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "extracted_matching", columnDefinition = "jsonb")
-  private JsonNode extractedMatching;
+  private Map<String, Object> extractedMatching;
 
   @Column(name = "scored_at")
   private OffsetDateTime scoredAt;

@@ -1,5 +1,6 @@
 package com.smartrecruit.backend.modules.application.services;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartrecruit.backend.exceptions.ResourceNotFoundException;
 import com.smartrecruit.backend.modules.application.dtos.SyncRequestDto;
@@ -11,6 +12,7 @@ import com.smartrecruit.backend.modules.application.repositories.ApplicationRepo
 import com.smartrecruit.backend.modules.application.repositories.CandidateRepository;
 import com.smartrecruit.backend.modules.application.repositories.CvFileRepository;
 import java.time.OffsetDateTime;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,14 +45,17 @@ public class SyncService {
                         "CvFile not found with id: " + requestDto.getCvId()));
 
     try {
+      TypeReference<Map<String, Object>> mapType = new TypeReference<>() {};
       // Update Application
       application.setTotalScore(requestDto.getTotalScore());
-      application.setCategoryScores(objectMapper.valueToTree(requestDto.getCategoryScores()));
-      application.setExtractedMatching(objectMapper.valueToTree(requestDto.getExtractedMatching()));
+      application.setCategoryScores(
+          objectMapper.convertValue(requestDto.getCategoryScores(), mapType));
+      application.setExtractedMatching(
+          objectMapper.convertValue(requestDto.getExtractedMatching(), mapType));
       application.setScoredAt(OffsetDateTime.now());
 
       // Update CvFile
-      cvFile.setExtractedData(objectMapper.valueToTree(requestDto.getExtractedData()));
+      cvFile.setExtractedData(objectMapper.convertValue(requestDto.getExtractedData(), mapType));
       cvFile.setExtractionStatus(ExtractionStatus.SUCCESS);
       cvFile.setProcessedAt(OffsetDateTime.now());
 
