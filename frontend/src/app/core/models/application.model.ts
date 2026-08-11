@@ -1,3 +1,11 @@
+export interface CandidateResponse {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+}
+
 export interface ExtractedData {
   candidate_info: {
     first_name: string;
@@ -7,7 +15,7 @@ export interface ExtractedData {
   };
   description_markdown: string;
   skills: string[];
-  experience: number; // in months
+  experience: number;
   coursework: string[];
   languages: string[];
   localization: string;
@@ -27,21 +35,20 @@ export interface CategoryScores {
   localization: number;
 }
 
-export interface Application {
+export interface ApplicationResponse {
   id: string;
-  candidate_id: string;
-  offer_id: string;
+  candidate: CandidateResponse;
+  offerId: string;
   status: 'NEW' | 'SHORTLISTED' | 'INTERVIEWING' | 'FOLLOW_UP' | 'HIRED' | 'REJECTED' | 'ARCHIVED';
-  total_score?: number;
-  category_scores?: CategoryScores;
-  extracted_matching?: ExtractedMatching;
-  applied_at: string;
-  cv_file?: CvFile;
+  totalScore?: number;
+  categoryScores?: CategoryScores;
+  extractedMatching?: ExtractedMatching;
+  cvExtractedData?: ExtractedData;
+  appliedAt: string;
+  scoredAt?: string;
 }
 
-export interface CvFile {
+export interface ApplicationStatusResponse {
   id: string;
-  extraction_status: 'PENDING' | 'SUCCESS' | 'FAILED';
-  extracted_data?: ExtractedData;
-  original_filename: string;
+  extractionStatus: 'PENDING' | 'SUCCESS' | 'FAILED';
 }

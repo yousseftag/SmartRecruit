@@ -4,6 +4,10 @@ import { MainLayout } from './layout/main-layout/main-layout';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  {
+    path: 'sandbox',
+    loadComponent: () => import('./pages/sandbox/sandbox').then((c) => c.Sandbox),
+  },
 
   {
     path: 'careers',
