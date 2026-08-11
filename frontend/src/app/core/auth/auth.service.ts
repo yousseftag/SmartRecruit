@@ -3,13 +3,7 @@ import Keycloak from 'keycloak-js';
 import { Observable, from, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
-export interface UserProfile {
-  firstName: string;
-  lastName: string;
-  fullName: string;
-  email: string;
-  preferredUsername: string;
-}
+import { UserProfile } from '../models/user.model';
 
 @Injectable({
   providedIn: 'root',
@@ -39,6 +33,7 @@ export class AuthService {
       const firstName = token.given_name || '';
       const lastName = token.family_name || '';
       return {
+        sub: token.sub || '',
         firstName,
         lastName,
         fullName: `${firstName} ${lastName}`.trim(),

@@ -1,1 +1,171 @@
-<p>user-management works!</p>
+<div class="page page-wide" style="width: 100%">
+  <div class="page-head" style="display: flex; justify-content: space-between; width: 100%">
+    <div>
+      <h1 class="h1">Gestion des Utilisateurs</h1>
+      <p class="subtitle">Gérez les comptes, rôles et accès de votre équipe.</p>
+    </div>
+    <div>
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        <svg lucidePlus></svg> Ajouter un compte
+      </button>
+    </div>
+  </div>
+
+  <div class="card card-pad-lg" style="width: 100%">
+    <div
+      class="toolbar"
+      style="display: flex; justify-content: space-between; width: 100%; padding: 0 24px"
+    >
+      <div class="search-lg" style="flex: 1; max-width: 450px">
+        <i class="search-icon-wrap"><svg lucideSearch></svg></i>
+        <input
+          type="text"
+          placeholder="Rechercher par nom, prénom ou nom d'utilisateur..."
+          [value]="searchQuery()"
+          (input)="onSearchChange($event)"
+        />
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0">
+        <label for="roleFilter" class="faint" style="font-size: 13.5px; font-weight: 500"
+          >Filtrer par rôle :</label
+        >
+        <select
+          id="roleFilter"
+          class="role-select"
+          [value]="selectedRole()"
+          (change)="onRoleChange($event)"
+        >
+          <option value="ALL">Tous les rôles</option>
+          <option value="HR_ADMIN">Admin RH</option>
+          <option value="RECRUITER">Recruteur</option>
+          <option value="VIEWER">Consultation</option>
+        </select>
+      </div>
+    </div>
+
+    @if (isLoading()) {
+      <div class="loading-state">Chargement des utilisateurs...</div>
+    } @else if (errorMessage()) {
+      <div class="error-state">{{ errorMessage() }}</div>
+    } @else {
+      <div class="table" style="width: 100%">
+        <div
+          class="thead"
+          style="
+            display: grid;
+            grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(
+                0,
+                1.2fr
+              ) minmax(0, 2fr) 120px;
+            gap: 16px;
+            width: 100%;
+          "
+        >
+          <div>Utilisateur</div>
+          <div>Nom</div>
+          <div>Prénom</div>
+          <div style="padding-left: 11px">Rôle</div>
+          <div>Email</div>
+          <div style="text-align: center">Actions</div>
+        </div>
+
+        @for (user of paginatedUsers(); track user.id) {
+          <div
+            class="trow"
+            style="
+              display: grid;
+              grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(
+                  0,
+                  1.2fr
+                ) minmax(0, 2fr) 120px;
+              gap: 16px;
+              width: 100%;
+            "
+          >
+            <div
+              class="cell-title"
+              style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap"
+            >
+              {{ user.username }}
+            </div>
+            <div
+              class="cell"
+              style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap"
+            >
+              {{ user.lastName }}
+            </div>
+            <div
+              class="cell"
+              style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap"
+            >
+              {{ user.firstName }}
+            </div>
+            <div class="cell">
+              <span
+                class="badge"
+                [ngClass]="{
+                  'badge-blue': user.role === 'HR_ADMIN',
+                  'badge-green': user.role === 'RECRUITER',
+                  'badge-gray': user.role === 'VIEWER',
+                }"
+              >
+                {{ formatRole(user.role) }}
+              </span>
+            </div>
+            <div
+              class="cell"
+              style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap"
+            >
+              {{ user.email }}
+            </div>
+
+            <div class="cell-actions" style="display: flex; justify-content: center; gap: 16px">
+              <button class="btn-icon" (click)="openEditModal(user)" title="Modifier">
+                <svg lucidePencil></svg>
+              </button>
+              @if (user.keycloakSub !== currentUserSub()) {
+                <button class="btn-icon text-red" (click)="openDeleteModal(user)" title="Supprimer">
+                  <svg lucideTrash2></svg>
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        @if (filteredUsers().length === 0) {
+          <div class="empty-state">Aucun utilisateur trouvé.</div>
+        }
+      </div>
+
+      <div class="pager-container">
+        <div class="page-size">
+          <label>Lignes par page :</label>
+          <select [value]="pageSize()" (change)="onPageSizeChange($event)">
+            <option value="10">10</option>
+            <option value="20">20</option>
+            <option value="30">30</option>
+          </select>
+        </div>
+
+        <div class="pager-controls">
+          <button class="pg-btn" [disabled]="currentPage() === 1" (click)="prevPage()">
+            <svg lucideChevronLeft></svg>
+          </button>
+          <span class="pg-info">Page {{ currentPage() }} sur {{ totalPages() }}</span>
+          <button
+            class="pg-btn"
+            [disabled]="currentPage() === totalPages() || totalPages() === 0"
+            (click)="nextPage()"
+          >
+            <svg lucideChevronRight></svg>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+@if (isOwnProfileModalOpen()) {
+  <app-edit-profile (closeModal)="onOwnProfileModalClose($event)"></app-edit-profile>
+}

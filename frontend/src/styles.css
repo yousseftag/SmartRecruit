@@ -636,6 +636,21 @@
     max-width: 520px;
     position: relative;
   }
+  .search-lg .search-icon-wrap {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    color: var(--faint);
+  }
+  .search-lg .search-icon-wrap svg {
+    width: 17px;
+    height: 17px;
+  }
   .search-lg i {
     width: 17px;
     height: 17px;
@@ -1577,5 +1592,78 @@
       background-color 0.3s ease,
       border-color 0.3s ease,
       color 0.3s ease;
+  }
+
+  /* ---- user management ---- */
+  .role-select {
+    padding: 11px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    background: #fff;
+    font-size: 13.5px;
+    color: var(--ink);
+    min-width: 160px;
+    cursor: pointer;
+  }
+  .loading-state,
+  .error-state,
+  .empty-state {
+    padding: 40px;
+    text-align: center;
+    font-size: 14.5px;
+    color: var(--muted);
+  }
+  .error-state {
+    color: var(--red-d);
+  }
+  .btn-icon {
+    background: none;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    color: var(--slate);
+    border-radius: 6px;
+    transition: background 0.1s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-icon:hover {
+    background: var(--line);
+    color: var(--ink);
+  }
+  .btn-icon.text-red:hover {
+    color: var(--red-d);
+  }
+  .pager-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-top: 1px solid var(--line-2);
+  }
+  .page-size {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .page-size select {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--ink);
+  }
+  .pager-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .pg-info {
+    font-size: 13px;
+    color: var(--slate);
+    font-weight: 500;
   }
 }

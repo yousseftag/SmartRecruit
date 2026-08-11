@@ -14,3 +14,27 @@ export interface UpdateProfileRequest {
   lastName: string;
   email: string;
 }
+
+export interface CreateUserRequest {
+  username: string;
+  email: string;
+  role: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+export interface UpdateUserRequest {
+  email: string;
+  role: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+export interface UserProfile {
+  sub: string;
+  firstName: string;
+  lastName: string;
+  fullName: string;
+  email: string;
+  preferredUsername: string;
+}

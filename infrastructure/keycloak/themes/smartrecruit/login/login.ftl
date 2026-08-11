@@ -26,7 +26,7 @@
     <form action="${url.loginAction}" method="post">
 
         <div class="field">
-            <label for="username" class="label">Nom d'utilisateur</label>
+            <label for="username" class="label">Nom d'utilisateur / email</label>
             <input id="username" name="username" type="text" class="input" value="${(login.username!'')}" autofocus required>
         </div>
 
