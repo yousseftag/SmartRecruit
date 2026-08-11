@@ -1,5 +1,8 @@
 package com.smartrecruit.backend.exceptions;
 
+import com.smartrecruit.backend.integration.keycloak.KeycloakIntegrationException;
+import com.smartrecruit.backend.modules.auth.exceptions.UserAlreadyExistsException;
+import com.smartrecruit.backend.modules.auth.exceptions.UserNotFoundException;
 import java.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,5 +26,32 @@ public class GlobalExceptionHandler {
             "Internal Server Error",
             "An unexpected error occurred");
     return new ResponseEntity<>(body, HttpStatus.INTERNAL_SERVER_ERROR);
+  }
+
+  @ExceptionHandler(UserAlreadyExistsException.class)
+  public ResponseEntity<ApiErrorResponse> handleUserAlreadyExistsException(
+      UserAlreadyExistsException ex) {
+    ApiErrorResponse body =
+        new ApiErrorResponse(
+            LocalDateTime.now(), HttpStatus.CONFLICT.value(), "Conflict", ex.getMessage());
+    return new ResponseEntity<>(body, HttpStatus.CONFLICT);
+  }
+
+  @ExceptionHandler(UserNotFoundException.class)
+  public ResponseEntity<ApiErrorResponse> handleUserNotFoundException(UserNotFoundException ex) {
+    ApiErrorResponse body =
+        new ApiErrorResponse(
+            LocalDateTime.now(), HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage());
+    return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(KeycloakIntegrationException.class)
+  public ResponseEntity<ApiErrorResponse> handleKeycloakIntegrationException(
+      KeycloakIntegrationException ex) {
+    logger.error("Keycloak Integration Error", ex);
+    ApiErrorResponse body =
+        new ApiErrorResponse(
+            LocalDateTime.now(), HttpStatus.BAD_GATEWAY.value(), "Bad Gateway", ex.getMessage());
+    return new ResponseEntity<>(body, HttpStatus.BAD_GATEWAY);
   }
 }

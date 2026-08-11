@@ -17,7 +17,7 @@ CREATE TABLE offer (
     created_by UUID REFERENCES app_user(id) ON DELETE SET NULL,
     title VARCHAR(255) NOT NULL,
     description_markdown TEXT,
-    status VARCHAR(50) NOT NULL DEFAULT 'DRAFT' 
+    status VARCHAR(50) NOT NULL DEFAULT 'DRAFT'
         CHECK (status IN ('ACTIVE', 'DRAFT', 'CLOSED')),
     -- Expected JSON Structure:
     -- { "skills": 20, "experience": 20, "coursework": 20, "languages": 20, "localization": 20 }

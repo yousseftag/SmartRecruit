@@ -5,4 +5,5 @@ export const environment = {
     realm: 'smartrecruit',
     clientId: 'smartrecruit-frontend',
   },
+  apiUrl: 'http://localhost:8080',
 };

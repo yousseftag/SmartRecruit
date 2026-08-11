@@ -1,11 +1,11 @@
-import { Component, AfterViewInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { createIcons, icons } from 'lucide';
+import { LucideCircleAlert, LucideArrowLeft } from '@lucide/angular';
 
 @Component({
   selector: 'app-not-found',
   standalone: true,
-  imports: [RouterModule],
+  imports: [RouterModule, LucideCircleAlert, LucideArrowLeft],
   template: `
     <div class="min-h-screen flex items-center justify-center bg-slate-50 font-sans p-4">
       <div
@@ -14,7 +14,7 @@ import { createIcons, icons } from 'lucide';
         <div
           class="inline-flex items-center justify-center w-20 h-20 bg-red-50 text-red-500 rounded-full mb-6"
         >
-          <i data-lucide="alert-circle" class="w-10 h-10"></i>
+          <svg lucideCircleAlert class="w-10 h-10"></svg>
         </div>
 
         <h1
@@ -34,15 +34,11 @@ import { createIcons, icons } from 'lucide';
           routerLink="/dashboard"
           class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-full transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-500/30"
         >
-          <i data-lucide="arrow-left" class="w-5 h-5"></i>
+          <svg lucideArrowLeft class="w-5 h-5"></svg>
           Tableau de bord
         </a>
       </div>
     </div>
   `,
 })
-export class NotFoundComponent implements AfterViewInit {
-  ngAfterViewInit() {
-    createIcons({ icons: icons as any });
-  }
-}
+export class NotFoundComponent {}

@@ -41,17 +41,17 @@
 
           <div class="dropdown-body">
             <a (click)="manageAccount()" class="dropdown-item">
-              <i data-lucide="user"></i> Modifier le profil
+              <svg lucideUser></svg> Modifier le profil
             </a>
 
             <div class="dropdown-divider"></div>
 
             <a (click)="changePassword()" class="dropdown-item">
-              <i data-lucide="key"></i> Changer le mot de passe
+              <svg lucideKey></svg> Changer le mot de passe
             </a>
 
             <div (click)="toggleDarkMode($event)" class="dropdown-item toggle-item">
-              <div class="toggle-label"><i data-lucide="moon"></i> Mode nuit</div>
+              <div class="toggle-label"><svg lucideMoon></svg> Mode nuit</div>
 
               <!-- Angular class binding replaces inline conditional styles -->
               <div class="toggle-switch" [class.on]="isDarkMode()">
@@ -61,12 +61,10 @@
 
             <div class="dropdown-divider"></div>
 
-            <a class="dropdown-item"> <i data-lucide="help-circle"></i> Centre d'aide </a>
+            <a class="dropdown-item"> <svg lucideCircleQuestionMark></svg> Centre d'aide </a>
 
             <div class="dropdown-footer">
-              <a (click)="logout()" class="dropdown-btn">
-                <i data-lucide="log-out"></i> Déconnexion
-              </a>
+              <a (click)="logout()" class="dropdown-btn"> <svg lucideLogOut></svg> Déconnexion </a>
             </div>
           </div>
         </div>
@@ -74,3 +72,16 @@
     </div>
   </div>
 </header>
+
+<!-- Edit Profile Modal -->
+@if (isProfileModalOpen()) {
+  <app-edit-profile (closeModal)="onProfileModalClose($event)"></app-edit-profile>
+}
+
+<!-- Toast Notification -->
+@if (profileSuccessMessage()) {
+  <div class="toast-notification">
+    <svg lucideCircleCheck style="width: 20px; height: 20px"></svg>
+    <span>{{ profileSuccessMessage() }}</span>
+  </div>
+}

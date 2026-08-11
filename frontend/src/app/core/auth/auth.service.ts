@@ -1,5 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import Keycloak from 'keycloak-js';
+import { Observable, from, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 export interface UserProfile {
   firstName: string;
@@ -47,10 +49,6 @@ export class AuthService {
     return null;
   }
 
-  manageAccount(): void {
-    this.keycloak.login({ action: 'UPDATE_PROFILE' });
-  }
-
   changePassword(): void {
     this.keycloak.login({
       action: 'UPDATE_PASSWORD',
@@ -58,7 +56,16 @@ export class AuthService {
     });
   }
 
-  logout(redirectUri: string = window.location.origin): Promise<void> {
-    return this.keycloak.logout({ redirectUri });
+  logout(redirectUri: string = window.location.origin): Observable<void> {
+    return from(this.keycloak.logout({ redirectUri }));
+  }
+
+  forceTokenRefresh(): Observable<boolean> {
+    return from(this.keycloak.updateToken(-1)).pipe(
+      catchError((error) => {
+        console.error('Failed to refresh token', error);
+        return of(false);
+      }),
+    );
   }
 }

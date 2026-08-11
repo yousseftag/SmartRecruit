@@ -1,17 +1,34 @@
-import { Component, OnInit, signal, HostListener, inject, AfterViewInit } from '@angular/core';
+import { Component, OnInit, signal, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd, Event as RouterEvent } from '@angular/router';
 import { filter } from 'rxjs/operators';
-import { createIcons, User, Moon, HelpCircle, LogOut, Key } from 'lucide';
+import {
+  LucideUser,
+  LucideMoon,
+  LucideCircleQuestionMark,
+  LucideLogOut,
+  LucideKey,
+  LucideCircleCheck,
+} from '@lucide/angular';
 import { AuthService } from '../../core/auth/auth.service';
+import { EditProfile } from '../../pages/edit-profile/edit-profile';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule],
+  imports: [
+    CommonModule,
+    EditProfile,
+    LucideUser,
+    LucideMoon,
+    LucideCircleQuestionMark,
+    LucideLogOut,
+    LucideKey,
+    LucideCircleCheck,
+  ],
   templateUrl: './header.html',
 })
-export class Header implements OnInit, AfterViewInit {
+export class Header implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
 
@@ -26,13 +43,13 @@ export class Header implements OnInit, AfterViewInit {
   isDarkMode = signal<boolean>(false);
   pageTitle = signal<string>('Tableau de bord');
 
+  // Profile Modal State
+  isProfileModalOpen = signal<boolean>(false);
+  profileSuccessMessage = signal<string>('');
+
   ngOnInit() {
     this.setupRouterListener();
     this.loadUserData();
-  }
-
-  ngAfterViewInit() {
-    this.initIcons();
   }
 
   // Subscribes to router events to dynamically update the page title based on the current active route.
@@ -88,21 +105,9 @@ export class Header implements OnInit, AfterViewInit {
     }
   }
 
-  // Initializes Lucide icons used within the component template.
-
-  private initIcons() {
-    createIcons({
-      icons: { User, Moon, HelpCircle, LogOut, Key },
-    });
-  }
-
   toggleDropdown(event: Event) {
     event.stopPropagation();
     this.isDropdownOpen.update((val) => !val);
-
-    if (this.isDropdownOpen()) {
-      setTimeout(() => this.initIcons(), 0);
-    }
   }
 
   @HostListener('document:click')
@@ -125,14 +130,27 @@ export class Header implements OnInit, AfterViewInit {
   }
 
   manageAccount() {
-    this.authService.manageAccount();
+    this.isDropdownOpen.set(false);
+    this.isProfileModalOpen.set(true);
+  }
+
+  onProfileModalClose(success: boolean) {
+    this.isProfileModalOpen.set(false);
+    if (success) {
+      this.loadUserData();
+      this.profileSuccessMessage.set('Profil mis à jour avec succès');
+
+      setTimeout(() => {
+        this.profileSuccessMessage.set('');
+      }, 5000);
+    }
   }
 
   changePassword() {
     this.authService.changePassword();
   }
 
-  async logout() {
-    await this.authService.logout();
+  logout() {
+    this.authService.logout().subscribe();
   }
 }
