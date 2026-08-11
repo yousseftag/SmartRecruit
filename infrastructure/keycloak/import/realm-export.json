@@ -83,6 +83,11 @@
         "account": [
           "view-profile",
           "manage-account"
+        ],
+        "realm-management": [
+          "view-users",
+          "manage-users",
+          "query-users"
         ]
       }
     },

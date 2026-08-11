@@ -1,17 +1,26 @@
-import { Component, AfterViewInit, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { createIcons, icons } from 'lucide';
+import {
+  LucideDynamicIcon,
+  LucideLayoutDashboard,
+  LucideBriefcase,
+  LucideUsers,
+  LucideGitMerge,
+  LucideChartColumnBig,
+  LucideShieldCheck,
+  LucideSettings,
+} from '@lucide/angular';
 import { NavItem } from './models/nav-item.model';
 import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, LucideDynamicIcon],
   templateUrl: './sidebar.html',
 })
-export class Sidebar implements AfterViewInit {
+export class Sidebar {
   private authService = inject(AuthService);
 
   isAdmin = this.authService.isAdmin;
@@ -20,23 +29,19 @@ export class Sidebar implements AfterViewInit {
     {
       label: 'Tableau de bord',
       route: '/dashboard',
-      icon: 'layout-dashboard',
+      icon: LucideLayoutDashboard,
       requiresAdmin: false,
     },
-    { label: 'Offres', route: '/offers', icon: 'briefcase', requiresAdmin: false },
-    { label: 'Candidats', route: '/candidates', icon: 'users', requiresAdmin: false },
-    { label: 'Workflow', route: '/workflow', icon: 'git-merge', requiresAdmin: false },
-    { label: 'Reporting', route: '/reporting', icon: 'bar-chart-2', requiresAdmin: false },
+    { label: 'Offres', route: '/offers', icon: LucideBriefcase, requiresAdmin: false },
+    { label: 'Candidats', route: '/candidates', icon: LucideUsers, requiresAdmin: false },
+    { label: 'Workflow', route: '/workflow', icon: LucideGitMerge, requiresAdmin: false },
+    { label: 'Reporting', route: '/reporting', icon: LucideChartColumnBig, requiresAdmin: false },
     {
       label: 'Administration',
       route: '/administration',
-      icon: 'shield-check',
+      icon: LucideShieldCheck,
       requiresAdmin: true,
     },
-    { label: 'Paramètres', route: '/settings/general', icon: 'settings', requiresAdmin: true },
+    { label: 'Paramètres', route: '/settings/general', icon: LucideSettings, requiresAdmin: true },
   ];
-
-  ngAfterViewInit() {
-    createIcons({ icons: icons as any });
-  }
 }

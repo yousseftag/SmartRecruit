@@ -1,0 +1,79 @@
+<div class="modal-backdrop">
+  <div class="card card-pad modal-content" (click)="$event.stopPropagation()">
+    <div class="page-head" style="margin-bottom: 20px">
+      <h1 class="h1" style="margin: 0">Modifier mon profil</h1>
+    </div>
+
+    <!-- Skeleton loader or spinner could go here when isLoading is true -->
+    @if (isLoading) {
+      <div style="text-align: center; padding: 40px 0">
+        <span class="muted">Chargement de votre profil...</span>
+      </div>
+    } @else {
+      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+        <!-- Notifications -->
+        @if (successMessage) {
+          <div class="alert-success">
+            {{ successMessage }}
+          </div>
+        }
+
+        @if (errorMessage) {
+          <div class="alert-error">
+            {{ errorMessage }}
+          </div>
+        }
+
+        <!-- Disabled Fields (Visual Only) -->
+        <div class="two-col" style="margin-bottom: 20px">
+          <div class="field">
+            <label class="label">Nom d'utilisateur</label>
+            <!-- Using standard HTML disabled attribute -->
+            <input type="text" class="input input-disabled" [value]="username" disabled />
+          </div>
+          <div class="field">
+            <label class="label">Rôle</label>
+            <input type="text" class="input input-disabled" [value]="role" disabled />
+          </div>
+        </div>
+
+        <!-- Editable Fields -->
+        <div class="two-col" style="margin-bottom: 20px">
+          <div class="field">
+            <label class="label">Prénom</label>
+            <input
+              type="text"
+              class="input"
+              formControlName="firstName"
+              placeholder="Votre prénom"
+            />
+          </div>
+          <div class="field">
+            <label class="label">Nom</label>
+            <input type="text" class="input" formControlName="lastName" placeholder="Votre nom" />
+          </div>
+        </div>
+
+        <div class="field" style="margin-bottom: 28px">
+          <label class="label">Adresse e-mail</label>
+          <input
+            type="email"
+            class="input"
+            formControlName="email"
+            placeholder="votre.email@exemple.com"
+          />
+        </div>
+
+        <div
+          class="footer-bar"
+          style="padding: 0; border: none; display: flex; gap: 12px; justify-content: flex-end"
+        >
+          <button type="button" class="btn btn-outline" (click)="onCancel()">Annuler</button>
+          <button type="submit" class="btn btn-primary" [disabled]="isSaving">
+            {{ isSaving ? 'Enregistrement...' : 'Enregistrer les modifications' }}
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</div>
