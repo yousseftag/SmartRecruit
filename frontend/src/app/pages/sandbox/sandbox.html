@@ -1,0 +1,71 @@
+<div class="p-10 max-w-7xl mx-auto min-h-screen bg-bg">
+  <div class="mb-10 border-b border-line pb-6">
+    <h1 class="h1 text-ink">UI Sandbox Playground</h1>
+    <p class="subtitle">Test area for SmartRecruit Shared Components</p>
+  </div>
+
+  <div class="flex flex-col gap-12">
+    
+    <!-- Score Gauge Testing -->
+    <section>
+      <div class="section-head mb-6">
+        <h2 class="h2 text-ink">Score Gauge component</h2>
+      </div>
+      
+      <div class="grid-3">
+        <!-- High Score -->
+        <div class="card p-6 bg-white">
+          <h3 class="font-bold text-ink mb-4 text-center">Score: 85% (Green)</h3>
+          <app-score-gauge [score]="85"></app-score-gauge>
+        </div>
+
+        <!-- Medium Score -->
+        <div class="card p-6 bg-white">
+          <h3 class="font-bold text-ink mb-4 text-center">Score: 65% (Amber)</h3>
+          <app-score-gauge [score]="65"></app-score-gauge>
+        </div>
+
+        <!-- Low Score -->
+        <div class="card p-6 bg-white">
+          <h3 class="font-bold text-ink mb-4 text-center">Score: 40% (Red)</h3>
+          <app-score-gauge [score]="40"></app-score-gauge>
+        </div>
+      </div>
+    </section>
+
+    <!-- File Dropzone Testing -->
+    <section>
+      <div class="section-head mb-6">
+        <h2 class="h2 text-ink">File Dropzone component</h2>
+      </div>
+
+      <div class="grid-2">
+        <!-- Single Mode -->
+        <div class="card p-6 bg-white">
+          <h3 class="font-bold text-ink mb-2">Single File Mode</h3>
+          <p class="text-sm text-faint mb-6">Configured for Public Candidates (Max 1 file)</p>
+          
+          <app-file-dropzone 
+            [allowMultiple]="false" 
+            [maxFiles]="1"
+            [acceptedFormats]="'.pdf,.docx'"
+            (filesDropped)="onFilesDropped($event, 'Public Candidate Form')">
+          </app-file-dropzone>
+        </div>
+
+        <!-- Bulk Mode -->
+        <div class="card p-6 bg-white">
+          <h3 class="font-bold text-ink mb-2">Unified HR Import Mode</h3>
+          <p class="text-sm text-faint mb-6">Configured for HRs (Single CV, Multiple CVs, & ZIPs)</p>
+          
+          <app-file-dropzone 
+            [allowMultiple]="true" 
+            [maxFiles]="50"
+            (filesDropped)="onFilesDropped($event, 'HR Unified Import')">
+          </app-file-dropzone>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
