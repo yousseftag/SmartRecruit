@@ -54,10 +54,9 @@
           class="thead"
           style="
             display: grid;
-            grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(
-                0,
-                1.2fr
-              ) minmax(0, 2fr) 120px;
+            grid-template-columns:
+              minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1.2fr)
+              minmax(0, 2fr) 120px;
             gap: 16px;
             width: 100%;
           "
@@ -75,10 +74,9 @@
             class="trow"
             style="
               display: grid;
-              grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(
-                  0,
-                  1.2fr
-                ) minmax(0, 2fr) 120px;
+              grid-template-columns:
+                minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1.2fr)
+                minmax(0, 2fr) 120px;
               gap: 16px;
               width: 100%;
             "
@@ -124,7 +122,7 @@
               <button class="btn-icon" (click)="openEditModal(user)" title="Modifier">
                 <svg lucidePencil></svg>
               </button>
-              @if (user.keycloakSub !== currentUserSub()) {
+              @if (user.username !== currentUsername()) {
                 <button class="btn-icon text-red" (click)="openDeleteModal(user)" title="Supprimer">
                   <svg lucideTrash2></svg>
                 </button>
@@ -168,4 +166,27 @@
 
 @if (isOwnProfileModalOpen()) {
   <app-edit-profile (closeModal)="onOwnProfileModalClose($event)"></app-edit-profile>
+}
+
+@if (isCreateModalOpen()) {
+  <app-create-user-modal (closeModal)="closeCreateModal()" (save)="onCreateUser($event)">
+  </app-create-user-modal>
+}
+
+@if (selectedUserForEdit()) {
+  <app-edit-user-modal
+    [user]="selectedUserForEdit()!"
+    (closeModal)="closeEditModal()"
+    (save)="onEditUser($event)"
+  >
+  </app-edit-user-modal>
+}
+
+@if (selectedUserForDelete()) {
+  <app-confirm-delete-modal
+    [user]="selectedUserForDelete()!"
+    (closeModal)="closeDeleteModal()"
+    (confirm)="onDeleteUser($event)"
+  >
+  </app-confirm-delete-modal>
 }

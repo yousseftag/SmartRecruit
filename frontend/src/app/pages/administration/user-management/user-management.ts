@@ -5,15 +5,17 @@ import {
   LucideSearch,
   LucidePlus,
   LucidePencil,
-  LucideTrash2,
   LucideChevronLeft,
   LucideChevronRight,
+  LucideTrash2,
 } from '@lucide/angular';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { UserResponse } from '../../../core/models/user.model';
 import { EditProfile } from '../../edit-profile/edit-profile';
-
+import { CreateUserModalComponent } from './components/create-user-modal/create-user-modal';
+import { EditUserModalComponent } from './components/edit-user-modal/edit-user-modal';
+import { ConfirmDeleteModalComponent } from './components/confirm-delete-modal/confirm-delete-modal';
 @Component({
   selector: 'app-user-management',
   standalone: true,
@@ -27,6 +29,9 @@ import { EditProfile } from '../../edit-profile/edit-profile';
     LucideChevronLeft,
     LucideChevronRight,
     EditProfile,
+    CreateUserModalComponent,
+    EditUserModalComponent,
+    ConfirmDeleteModalComponent,
   ],
   templateUrl: './user-management.html',
 })
@@ -43,9 +48,12 @@ export class UserManagement implements OnInit {
   pageSize = signal<number>(10);
   currentPage = signal<number>(1);
 
-  currentUserSub = signal<string>('');
+  currentUsername = signal<string>('');
 
   isOwnProfileModalOpen = signal<boolean>(false);
+  isCreateModalOpen = signal<boolean>(false);
+  selectedUserForEdit = signal<UserResponse | null>(null);
+  selectedUserForDelete = signal<UserResponse | null>(null);
 
   // Computed signal to filter and paginate
   filteredUsers = computed(() => {
@@ -84,8 +92,8 @@ export class UserManagement implements OnInit {
 
   ngOnInit() {
     const profile = this.authService.getUserProfile();
-    if (profile && profile.sub) {
-      this.currentUserSub.set(profile.sub);
+    if (profile && profile.preferredUsername) {
+      this.currentUsername.set(profile.preferredUsername);
     }
     this.loadUsers();
   }
@@ -142,16 +150,51 @@ export class UserManagement implements OnInit {
     }
   }
 
-  openCreateModal() {}
+  openCreateModal() {
+    this.isCreateModalOpen.set(true);
+  }
 
   openEditModal(user: UserResponse) {
-    if (user.keycloakSub === this.currentUserSub()) {
+    if (user.username === this.currentUsername()) {
       this.isOwnProfileModalOpen.set(true);
     } else {
+      this.selectedUserForEdit.set(user);
     }
   }
 
-  openDeleteModal(user: UserResponse) {}
+  openDeleteModal(user: UserResponse) {
+    this.selectedUserForDelete.set(user);
+  }
+
+  closeCreateModal() {
+    this.isCreateModalOpen.set(false);
+  }
+
+  onCreateUser(data: any) {
+    // Will be implemented in Step 4
+    console.log('Save user:', data);
+    this.closeCreateModal();
+  }
+
+  closeEditModal() {
+    this.selectedUserForEdit.set(null);
+  }
+
+  onEditUser(data: any) {
+    // Will be implemented in Step 4
+    console.log('Edit user:', data);
+    this.closeEditModal();
+  }
+
+  closeDeleteModal() {
+    this.selectedUserForDelete.set(null);
+  }
+
+  onDeleteUser(userId: string) {
+    // Will be implemented in Step 4
+    console.log('Delete user ID:', userId);
+    this.closeDeleteModal();
+  }
 
   onOwnProfileModalClose(success: boolean) {
     this.isOwnProfileModalOpen.set(false);
