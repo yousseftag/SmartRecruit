@@ -190,3 +190,10 @@
   >
   </app-confirm-delete-modal>
 }
+
+@if (successMessage()) {
+  <div class="toast-notification">
+    <svg lucideCircleCheck size="20"></svg>
+    <span>{{ successMessage() }}</span>
+  </div>
+}

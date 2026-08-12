@@ -8,10 +8,15 @@ import {
   LucideChevronLeft,
   LucideChevronRight,
   LucideTrash2,
+  LucideCircleCheck,
 } from '@lucide/angular';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/auth/auth.service';
-import { UserResponse } from '../../../core/models/user.model';
+import {
+  UserResponse,
+  CreateUserRequest,
+  UpdateUserRequest,
+} from '../../../core/models/user.model';
 import { EditProfile } from '../../edit-profile/edit-profile';
 import { CreateUserModalComponent } from './components/create-user-modal/create-user-modal';
 import { EditUserModalComponent } from './components/edit-user-modal/edit-user-modal';
@@ -28,6 +33,7 @@ import { ConfirmDeleteModalComponent } from './components/confirm-delete-modal/c
     LucideTrash2,
     LucideChevronLeft,
     LucideChevronRight,
+    LucideCircleCheck,
     EditProfile,
     CreateUserModalComponent,
     EditUserModalComponent,
@@ -54,6 +60,13 @@ export class UserManagement implements OnInit {
   isCreateModalOpen = signal<boolean>(false);
   selectedUserForEdit = signal<UserResponse | null>(null);
   selectedUserForDelete = signal<UserResponse | null>(null);
+
+  successMessage = signal<string>('');
+
+  showToast(message: string) {
+    this.successMessage.set(message);
+    setTimeout(() => this.successMessage.set(''), 5000);
+  }
 
   // Computed signal to filter and paginate
   filteredUsers = computed(() => {
@@ -170,20 +183,34 @@ export class UserManagement implements OnInit {
     this.isCreateModalOpen.set(false);
   }
 
-  onCreateUser(data: any) {
-    // Will be implemented in Step 4
-    console.log('Save user:', data);
-    this.closeCreateModal();
+  onCreateUser(data: CreateUserRequest) {
+    this.userService.createUser(data).subscribe({
+      next: () => {
+        this.closeCreateModal();
+        this.loadUsers();
+        this.showToast('Utilisateur créé avec succès');
+      },
+      error: () => {
+        alert("Erreur lors de la création de l'utilisateur.");
+      },
+    });
   }
 
   closeEditModal() {
     this.selectedUserForEdit.set(null);
   }
 
-  onEditUser(data: any) {
-    // Will be implemented in Step 4
-    console.log('Edit user:', data);
-    this.closeEditModal();
+  onEditUser(event: { id: string; data: UpdateUserRequest }) {
+    this.userService.updateUser(event.id, event.data).subscribe({
+      next: () => {
+        this.closeEditModal();
+        this.loadUsers();
+        this.showToast('Utilisateur mis à jour avec succès');
+      },
+      error: () => {
+        alert('Erreur lors de la mise à jour.');
+      },
+    });
   }
 
   closeDeleteModal() {
@@ -191,15 +218,24 @@ export class UserManagement implements OnInit {
   }
 
   onDeleteUser(userId: string) {
-    // Will be implemented in Step 4
-    console.log('Delete user ID:', userId);
-    this.closeDeleteModal();
+    this.userService.deleteUser(userId).subscribe({
+      next: () => {
+        this.closeDeleteModal();
+        this.loadUsers();
+        this.showToast('Utilisateur supprimé avec succès');
+      },
+      error: () => {
+        alert('Erreur lors de la suppression.');
+      },
+    });
   }
 
   onOwnProfileModalClose(success: boolean) {
     this.isOwnProfileModalOpen.set(false);
     if (success) {
+      this.authService.profileUpdated.next();
       this.loadUsers();
+      this.showToast('Profil mis à jour avec succès');
     }
   }
 }

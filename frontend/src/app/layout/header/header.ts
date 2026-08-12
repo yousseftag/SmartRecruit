@@ -50,6 +50,9 @@ export class Header implements OnInit {
   ngOnInit() {
     this.setupRouterListener();
     this.loadUserData();
+    this.authService.profileUpdated.subscribe(() => {
+      this.loadUserData();
+    });
   }
 
   // Subscribes to router events to dynamically update the page title based on the current active route.

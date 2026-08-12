@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import Keycloak from 'keycloak-js';
-import { Observable, from, of } from 'rxjs';
+import { Observable, from, of, Subject } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { UserProfile } from '../models/user.model';
@@ -13,6 +13,7 @@ export class AuthService {
 
   isAuthenticated = signal<boolean>(false);
   isAdmin = signal<boolean>(false);
+  profileUpdated = new Subject<void>();
 
   constructor() {
     this.isAuthenticated.set(!!this.keycloak.authenticated);
