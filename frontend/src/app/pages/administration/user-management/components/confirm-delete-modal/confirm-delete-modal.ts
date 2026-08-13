@@ -19,7 +19,7 @@ import { UserResponse } from '../../../../../core/models/user.model';
         </div>
 
         <h2 class="h2" style="margin-bottom: 12px;">Supprimer l'utilisateur</h2>
-        <p class="faint" style="margin-bottom: 24px;">
+        <p style="margin-bottom: 24px; line-height: 1.5;">
           Êtes-vous sûr de vouloir supprimer définitivement l'utilisateur
           <strong>{{ user.username }}</strong> ? Cette action est irréversible.
         </p>

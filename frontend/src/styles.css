@@ -504,13 +504,13 @@
     background: var(--blue-d);
   }
   .btn-outline {
-    background: #fff;
+    background: var(--white);
     border: 1px solid var(--border);
-    color: #334155;
+    color: var(--ink);
   }
   .btn-outline-blue {
-    background: #fff;
-    border: 1px solid #cdd9ec;
+    background: var(--white);
+    border: 1px solid var(--line);
     color: var(--blue);
   }
   .btn-danger {
@@ -571,7 +571,7 @@
     color: var(--red-d);
   }
   .badge-gray {
-    background: #eef2f7;
+    background: var(--line-2);
     color: var(--muted);
   }
   .badge-blue {
@@ -606,7 +606,7 @@
     margin-left: auto;
     display: flex;
     gap: 4px;
-    background: #fff;
+    background: var(--white);
     border: 1px solid var(--line);
     border-radius: var(--r);
     padding: 5px;
@@ -665,8 +665,9 @@
     padding: 12px 14px 12px 40px;
     border: 1px solid var(--line);
     border-radius: var(--r);
-    background: #fff;
+    background: var(--white);
     font-size: 13.5px;
+    color: var(--ink);
   }
 
   /* ---- table ---- */
@@ -689,10 +690,10 @@
   }
   .trow {
     padding: 16px 24px;
-    border-bottom: 1px solid #f5f7fa;
+    border-bottom: 1px solid var(--line-2);
   }
   .trow:hover {
-    background: #fbfcfe;
+    background: var(--bg);
   }
   .trow.clickable {
     cursor: pointer;
@@ -766,7 +767,7 @@
     justify-content: center;
     border: 1px solid var(--border);
     border-radius: 8px;
-    color: #cbd5e1;
+    color: var(--muted);
   }
   .pg-btn.on {
     background: var(--blue);
@@ -848,7 +849,7 @@
     display: block;
     font-size: 13px;
     font-weight: 600;
-    color: #334155;
+    color: var(--ink);
   }
   .input,
   .textarea,
@@ -858,8 +859,13 @@
     border: 1px solid var(--border);
     border-radius: var(--r);
     font-size: 14px;
-    color: #334155;
-    background: #fbfcfe;
+    color: var(--ink);
+    background: var(--bg);
+  }
+  .input::placeholder,
+  .textarea::placeholder,
+  .search-lg input::placeholder {
+    color: var(--muted);
   }
   .textarea {
     min-height: 230px;
@@ -900,7 +906,7 @@
     gap: 14px;
     padding: 18px 34px;
     border-top: 1px solid var(--line);
-    background: #fff;
+    background: var(--white);
   }
 
   /* ---- chips ---- */
@@ -1255,9 +1261,9 @@
   }
   .modal {
     width: 100%;
-    background: #fff;
+    background: var(--white);
     border-radius: 18px;
-    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
     position: relative;
   }
   .modal-x {
@@ -1587,7 +1593,17 @@
   .topbar,
   .card,
   .pro-card,
-  .footer {
+  .footer,
+  .modal,
+  .input,
+  .textarea,
+  .select,
+  .btn-outline,
+  .trow,
+  .footer-bar,
+  .tabs,
+  .role-select,
+  .page-size select {
     transition:
       background-color 0.3s ease,
       border-color 0.3s ease,
@@ -1599,7 +1615,7 @@
     padding: 11px 14px;
     border: 1px solid var(--line);
     border-radius: var(--r);
-    background: #fff;
+    background: var(--white);
     font-size: 13.5px;
     color: var(--ink);
     min-width: 160px;
@@ -1653,7 +1669,7 @@
     padding: 6px 10px;
     border: 1px solid var(--border);
     border-radius: 6px;
-    background: #fff;
+    background: var(--white);
     color: var(--ink);
   }
   .pager-controls {

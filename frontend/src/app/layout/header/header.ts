@@ -53,6 +53,12 @@ export class Header implements OnInit {
     this.authService.profileUpdated.subscribe(() => {
       this.loadUserData();
     });
+
+    const savedMode = localStorage.getItem('darkMode');
+    if (savedMode === 'true') {
+      this.isDarkMode.set(true);
+      document.documentElement.classList.add('dark');
+    }
   }
 
   // Subscribes to router events to dynamically update the page title based on the current active route.
@@ -120,15 +126,16 @@ export class Header implements OnInit {
     }
   }
 
-  // Toggles the global dark mode class on the HTML document element.
   toggleDarkMode(event: Event) {
     event.stopPropagation();
     this.isDarkMode.update((val) => !val);
 
     if (this.isDarkMode()) {
       document.documentElement.classList.add('dark');
+      localStorage.setItem('darkMode', 'true');
     } else {
       document.documentElement.classList.remove('dark');
+      localStorage.setItem('darkMode', 'false');
     }
   }
 
