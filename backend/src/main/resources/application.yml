@@ -42,6 +42,7 @@ spring:
   mail:
     host: ${SPRING_MAIL_HOST:localhost}
     port: ${SPRING_MAIL_PORT:1025}
+    from: ${SPRING_MAIL_FROM:noreply@smartrecruit.com}
     properties:
       mail:
         smtp:

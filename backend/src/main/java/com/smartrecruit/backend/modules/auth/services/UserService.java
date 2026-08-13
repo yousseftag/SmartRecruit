@@ -15,12 +15,16 @@ import com.smartrecruit.backend.modules.auth.repositories.AppUserRepository;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserService {
+
+  private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
   private final AppUserRepository userRepository;
   private final KeycloakAdminService keycloakAdminService;
@@ -108,7 +112,11 @@ public class UserService {
 
     AppUser savedUser = userRepository.save(user);
 
-    emailService.sendWelcomeEmail(request.getEmail(), request.getUsername(), password);
+    try {
+      emailService.sendWelcomeEmail(request.getEmail(), request.getUsername(), password);
+    } catch (Exception e) {
+      log.warn("Welcome email failed for user {}: {}", request.getUsername(), e.getMessage());
+    }
 
     return UserMapper.toResponse(savedUser);
   }
