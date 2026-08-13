@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, Output, inject, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { LucideX } from '@lucide/angular';
 import { UserResponse, UpdateUserRequest } from '../../../../../core/models/user.model';
@@ -7,7 +6,7 @@ import { UserResponse, UpdateUserRequest } from '../../../../../core/models/user
 @Component({
   selector: 'app-edit-user-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, LucideX],
+  imports: [ReactiveFormsModule, LucideX],
   template: `
     <div class="modal-backdrop">
       <div class="modal modal-content" style="padding: 24px;">
@@ -22,6 +21,16 @@ import { UserResponse, UpdateUserRequest } from '../../../../../core/models/user
             <div class="form-group">
               <label>Adresse Email <span class="text-red">*</span></label>
               <input type="email" formControlName="email" class="input" />
+              @if (userForm.get('email')?.invalid && userForm.get('email')?.touched) {
+                <div style="color: #ef4444; font-size: 0.875rem; margin-top: 4px;">
+                  @if (userForm.get('email')?.errors?.['required']) {
+                    <span>Ce champ est requis.</span>
+                  }
+                  @if (userForm.get('email')?.errors?.['email']) {
+                    <span>Veuillez entrer une adresse email valide.</span>
+                  }
+                </div>
+              }
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
@@ -47,9 +56,7 @@ import { UserResponse, UpdateUserRequest } from '../../../../../core/models/user
 
           <div class="modal-actions" style="margin-top: 32px;">
             <button type="button" class="btn btn-secondary" (click)="onClose()">Annuler</button>
-            <button type="submit" class="btn btn-primary" [disabled]="userForm.invalid">
-              Enregistrer
-            </button>
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
           </div>
         </form>
       </div>
@@ -89,6 +96,8 @@ export class EditUserModalComponent implements OnInit {
         id: this.user.id,
         data: this.userForm.value as UpdateUserRequest,
       });
+    } else {
+      this.userForm.markAllAsTouched();
     }
   }
 }

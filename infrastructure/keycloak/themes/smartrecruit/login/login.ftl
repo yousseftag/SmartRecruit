@@ -44,7 +44,9 @@
             <a href="${url.loginResetCredentialsUrl}" class="forgot-link">Mot de passe oublié ?</a>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block">Connexion</button>
+        <div style="display: flex; justify-content: center; margin-top: 8px;">
+            <button type="submit" class="btn btn-primary">Se connecter</button>
+        </div>
     </form>
 
 </div>
