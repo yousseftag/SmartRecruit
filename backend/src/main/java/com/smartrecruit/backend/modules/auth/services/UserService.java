@@ -112,13 +112,15 @@ public class UserService {
 
     AppUser savedUser = userRepository.save(user);
 
+    String warning = null;
     try {
       emailService.sendWelcomeEmail(request.getEmail(), request.getUsername(), password);
     } catch (Exception e) {
       log.warn("Welcome email failed for user {}: {}", request.getUsername(), e.getMessage());
+      warning = "L'utilisateur a été créé, mais l'envoi de l'email a échoué.";
     }
 
-    return UserMapper.toResponse(savedUser);
+    return UserMapper.toResponse(savedUser, warning);
   }
 
   @Transactional

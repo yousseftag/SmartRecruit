@@ -197,3 +197,23 @@
     <span>{{ successMessage() }}</span>
   </div>
 }
+
+@if (warningMessage()) {
+  <div
+    class="toast-notification toast-warning"
+    style="bottom: 80px; background-color: #fffbeb; color: #b45309; border-left: 4px solid #f59e0b"
+  >
+    <svg lucideAlertTriangle size="20"></svg>
+    <span>{{ warningMessage() }}</span>
+  </div>
+}
+
+@if (errorToastMessage()) {
+  <div
+    class="toast-notification"
+    style="background-color: #fef2f2; color: #991b1b; border-left: 4px solid #ef4444"
+  >
+    <svg lucideXCircle size="20"></svg>
+    <span>{{ errorToastMessage() }}</span>
+  </div>
+}

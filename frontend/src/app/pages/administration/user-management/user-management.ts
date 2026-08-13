@@ -9,7 +9,10 @@ import {
   LucideChevronRight,
   LucideTrash2,
   LucideCircleCheck,
+  LucideAlertTriangle,
+  LucideXCircle,
 } from '@lucide/angular';
+import { HttpErrorResponse } from '@angular/common/http';
 import { UserService } from '../../../core/services/user.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import {
@@ -34,6 +37,8 @@ import { ConfirmDeleteModalComponent } from './components/confirm-delete-modal/c
     LucideChevronLeft,
     LucideChevronRight,
     LucideCircleCheck,
+    LucideAlertTriangle,
+    LucideXCircle,
     EditProfile,
     CreateUserModalComponent,
     EditUserModalComponent,
@@ -62,10 +67,22 @@ export class UserManagement implements OnInit {
   selectedUserForDelete = signal<UserResponse | null>(null);
 
   successMessage = signal<string>('');
+  warningMessage = signal<string>('');
+  errorToastMessage = signal<string>('');
 
   showToast(message: string) {
     this.successMessage.set(message);
     setTimeout(() => this.successMessage.set(''), 5000);
+  }
+
+  showWarning(message: string) {
+    this.warningMessage.set(message);
+    setTimeout(() => this.warningMessage.set(''), 7000);
+  }
+
+  showErrorToast(message: string) {
+    this.errorToastMessage.set(message);
+    setTimeout(() => this.errorToastMessage.set(''), 5000);
   }
 
   // Computed signal to filter and paginate
@@ -185,13 +202,17 @@ export class UserManagement implements OnInit {
 
   onCreateUser(data: CreateUserRequest) {
     this.userService.createUser(data).subscribe({
-      next: () => {
+      next: (response) => {
         this.closeCreateModal();
         this.loadUsers();
         this.showToast('Utilisateur créé avec succès');
+        if (response.warning) {
+          this.showWarning(response.warning);
+        }
       },
-      error: () => {
-        alert("Erreur lors de la création de l'utilisateur.");
+      error: (err: HttpErrorResponse) => {
+        const errorMsg = err.error?.message || "Erreur lors de la création de l'utilisateur.";
+        this.showErrorToast(errorMsg);
       },
     });
   }
@@ -207,8 +228,9 @@ export class UserManagement implements OnInit {
         this.loadUsers();
         this.showToast('Utilisateur mis à jour avec succès');
       },
-      error: () => {
-        alert('Erreur lors de la mise à jour.');
+      error: (err: HttpErrorResponse) => {
+        const errorMsg = err.error?.message || 'Erreur lors de la mise à jour.';
+        this.showErrorToast(errorMsg);
       },
     });
   }
@@ -225,7 +247,8 @@ export class UserManagement implements OnInit {
         this.showToast('Utilisateur supprimé avec succès');
       },
       error: () => {
-        alert('Erreur lors de la suppression.');
+        this.closeDeleteModal();
+        this.showErrorToast("Erreur lors de la suppression de l'utilisateur.");
       },
     });
   }

@@ -7,6 +7,7 @@ export interface UserResponse {
   email: string;
   role: string;
   createdAt: string;
+  warning?: string;
 }
 
 export interface UpdateProfileRequest {
