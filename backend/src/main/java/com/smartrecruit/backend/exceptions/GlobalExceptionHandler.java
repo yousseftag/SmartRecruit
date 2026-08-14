@@ -16,6 +16,15 @@ public class GlobalExceptionHandler {
 
   private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+  @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+  public ResponseEntity<ApiErrorResponse> handleValidationException(
+      org.springframework.web.bind.MethodArgumentNotValidException ex) {
+    ApiErrorResponse body =
+        new ApiErrorResponse(
+            LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(), "Bad Request", "Validation error");
+    return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+  }
+
   @ExceptionHandler(Exception.class)
   public ResponseEntity<ApiErrorResponse> handleGlobalException(Exception ex) {
     logger.error("Internal Server Error", ex);
