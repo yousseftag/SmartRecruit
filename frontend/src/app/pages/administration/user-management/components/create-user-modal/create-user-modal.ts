@@ -39,7 +39,7 @@ import { CreateUserRequest } from '../../../../../core/models/user.model';
                 type="email"
                 formControlName="email"
                 class="input"
-                placeholder="jean.dupont@norsys.fr"
+                placeholder="yassine.elidrissi@norsys.fr"
               />
               @if (userForm.get('email')?.invalid && userForm.get('email')?.touched) {
                 <div style="color: #ef4444; font-size: 0.875rem; margin-top: 4px;">

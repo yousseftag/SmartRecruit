@@ -2,10 +2,13 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { signal } from '@angular/core';
 
+import { Subject } from 'rxjs';
+
 import { Header } from './header';
 import { AuthService } from '../../core/auth/auth.service';
 
 const mockAuthService = {
+  profileUpdated: new Subject<void>(),
   isAuthenticated: signal(true),
   isAdmin: signal(true),
   hasRole: () => true,

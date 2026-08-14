@@ -5,7 +5,6 @@ import { filter } from 'rxjs/operators';
 import {
   LucideUser,
   LucideMoon,
-  LucideCircleQuestionMark,
   LucideLogOut,
   LucideKey,
   LucideCircleCheck,
@@ -21,7 +20,6 @@ import { EditProfile } from '../../pages/edit-profile/edit-profile';
     EditProfile,
     LucideUser,
     LucideMoon,
-    LucideCircleQuestionMark,
     LucideLogOut,
     LucideKey,
     LucideCircleCheck,
