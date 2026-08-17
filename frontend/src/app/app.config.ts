@@ -10,6 +10,7 @@ import {
   IncludeBearerTokenCondition,
 } from 'keycloak-angular';
 import { environment } from '../environments/environment';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -17,6 +18,7 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes),
 
     provideHttpClient(withInterceptors([includeBearerTokenInterceptor])),
+    provideCharts(withDefaultRegisterables()),
 
     {
       provide: INCLUDE_BEARER_TOKEN_INTERCEPTOR_CONFIG,
