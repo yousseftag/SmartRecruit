@@ -75,16 +75,18 @@ When a candidate applies, Spring Boot calculates the PDF's hash. If the CV is ne
 
 ```json
 {
-  "application_id": "uuid",
-  "offer_id": "uuid",
-  "cv_id": "uuid",
+  "applicationId": "b1b82c3c-8a02-4d2a-a92c-55c3c1e21b77",
+  "offerId": "f9a82b3d-1e4a-4b9e-a89c-5d3c2e1f4b55",
+  "cvId": "e3a82b3d-1e4a-4b9e-a89c-5d3c2e1f4b99",
+  "extractionStatus": "SUCCESS",
   
-  "extracted_data": {
+  "extractedData": {
     "candidate_info": {
       "first_name": "John",
       "last_name": "Doe",
       "email": "john.doe@email.com",
-      "phone": "+123456789"
+      "phone": "+123456789",
+      "current_job_title": "Backend Developer"
     },
     "description_markdown": "Backend developer with 2 years of experience building APIs...",
     "skills": ["java", "spring boot", "postgres"],

@@ -63,3 +63,9 @@ minio:
   access-key: ${MINIO_ROOT_USER:minioadmin}
   secret-key: ${MINIO_ROOT_PASSWORD:minioadmin}
   bucket: resumes
+
+springdoc:
+  swagger-ui:
+    persist-authorization: true
+    oauth:
+      clientId: smartrecruit-frontend
