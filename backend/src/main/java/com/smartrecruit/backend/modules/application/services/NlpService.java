@@ -7,7 +7,6 @@ import com.smartrecruit.backend.modules.application.dtos.SyncRequestDto;
 import com.smartrecruit.backend.modules.application.entities.Application;
 import com.smartrecruit.backend.modules.application.entities.Candidate;
 import com.smartrecruit.backend.modules.application.entities.CvFile;
-import com.smartrecruit.backend.modules.application.enums.ExtractionStatus;
 import com.smartrecruit.backend.modules.application.repositories.ApplicationRepository;
 import com.smartrecruit.backend.modules.application.repositories.CandidateRepository;
 import com.smartrecruit.backend.modules.application.repositories.CvFileRepository;
@@ -19,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class SyncService {
+public class NlpService {
 
   private final ApplicationRepository applicationRepository;
   private final CvFileRepository cvFileRepository;
@@ -56,7 +55,7 @@ public class SyncService {
 
       // Update CvFile
       cvFile.setExtractedData(objectMapper.convertValue(requestDto.getExtractedData(), mapType));
-      cvFile.setExtractionStatus(ExtractionStatus.SUCCESS);
+      cvFile.setExtractionStatus(requestDto.getExtractionStatus());
       cvFile.setProcessedAt(OffsetDateTime.now());
 
       // Update Candidate if it's a stub
@@ -76,20 +75,26 @@ public class SyncService {
                       existing.setPhone(info.phone());
                     }
                     candidateRepository.save(existing);
-                    // We leave the empty stub candidate orphaned rather than risking a
-                    // ConstraintViolation deleting it here
+
+                    // Force flush the re-links before deleting the ghost to prevent FK constraint
+                    // errors
+                    applicationRepository.saveAndFlush(application);
+                    cvFileRepository.saveAndFlush(cvFile);
+                    candidateRepository.delete(candidate); // Properly clean up the ghost
                   },
                   () -> {
                     candidate.setFirstName(info.firstName());
                     candidate.setLastName(info.lastName());
                     candidate.setEmail(info.email());
-                    candidate.setPhone(info.phone());
+                    if (info.phone() != null) {
+                      candidate.setPhone(info.phone());
+                    }
                     candidateRepository.save(candidate);
                   });
         }
       }
     } catch (IllegalArgumentException e) {
-      throw new RuntimeException("Failed to serialize AI sync payload", e);
+      throw new IllegalStateException("Failed to parse AI payload into JSONB structures", e);
     }
 
     applicationRepository.save(application);

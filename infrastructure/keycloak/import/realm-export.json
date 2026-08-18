@@ -5,9 +5,12 @@
   "accountTheme": "smartrecruit",
   "registrationAllowed": false,
   "rememberMe": true,
+  "accessTokenLifespan": 86400,
+  "accessTokenLifespanForImplicitFlow": 86400,
+  "ssoSessionIdleTimeout": 86400,
+  "ssoSessionMaxLifespan": 86400,
   "ssoSessionIdleTimeoutRememberMe": 2592000,
   "ssoSessionMaxLifespanRememberMe": 2592000,
-  "ssoSessionIdleTimeout": 1800,
   "resetPasswordAllowed": true,
   "internationalizationEnabled": true,
   "supportedLocales": [
@@ -53,10 +56,12 @@
       "directAccessGrantsEnabled": true,
       "standardFlowEnabled": true,
       "redirectUris": [
-        "http://localhost:4200/*"
+        "http://localhost:4200/*",
+        "http://localhost:8080/*"
       ],
       "webOrigins": [
         "http://localhost:4200",
+        "http://localhost:8080",
         "+"
       ]
     }

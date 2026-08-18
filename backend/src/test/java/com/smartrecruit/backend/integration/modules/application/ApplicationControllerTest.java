@@ -3,7 +3,6 @@ package com.smartrecruit.backend.integration.modules.application;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.smartrecruit.backend.modules.application.services.CandidateApplicationService;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +10,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
@@ -20,8 +18,6 @@ import org.springframework.test.web.servlet.MockMvc;
 class ApplicationControllerTest {
 
   @Autowired private MockMvc mockMvc;
-
-  @MockitoBean private CandidateApplicationService applicationService;
 
   @Test
   void shouldReturn201WhenValidApplicationSubmitted() throws Exception {

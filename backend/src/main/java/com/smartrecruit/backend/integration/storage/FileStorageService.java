@@ -43,10 +43,18 @@ public class FileStorageService {
   /** Uploads a file to MinIO and returns the storage key. */
   public String uploadFile(MultipartFile file, String storageKey) {
     try {
+      return uploadFile(file.getInputStream(), file.getSize(), file.getContentType(), storageKey);
+    } catch (Exception e) {
+      log.error("Error reading file to upload with key: {}", storageKey, e);
+      throw new RuntimeException("Failed to read file", e);
+    }
+  }
+
+  public String uploadFile(InputStream stream, long size, String contentType, String storageKey) {
+    try {
       minioClient.putObject(
-          PutObjectArgs.builder().bucket(bucketName).object(storageKey).stream(
-                  file.getInputStream(), file.getSize(), -1)
-              .contentType(file.getContentType())
+          PutObjectArgs.builder().bucket(bucketName).object(storageKey).stream(stream, size, -1)
+              .contentType(contentType != null ? contentType : "application/octet-stream")
               .build());
       log.info("Successfully uploaded file to MinIO: {}", storageKey);
       return storageKey;
