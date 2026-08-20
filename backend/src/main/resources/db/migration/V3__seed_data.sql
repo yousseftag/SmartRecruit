@@ -1,9 +1,9 @@
--- V2__seed_data.sql
+-- V3__seed_data.sql
 
 -- 1. Create a Recruiter User 
-INSERT INTO app_user (id, keycloak_sub, first_name, last_name, email, role)
+INSERT INTO app_user (id, keycloak_sub, username, first_name, last_name, email, role)
 VALUES 
-('11111111-1111-1111-1111-111111111111', 'recruiter-sub-123', 'John', 'Recruiter', 'recruiter@smartrecruit.com', 'RECRUITER')
+('11111111-1111-1111-1111-111111111111', 'recruiter-sub-123', 'recruiter', 'John', 'Recruiter', 'recruiter@smartrecruit.com', 'RECRUITER')
 ON CONFLICT (email) DO NOTHING;
 
 -- 2. Create 3 Distinct Job Offers

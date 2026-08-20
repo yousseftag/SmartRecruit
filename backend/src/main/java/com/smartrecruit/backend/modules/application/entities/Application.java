@@ -65,4 +65,40 @@ public class Application {
   @CreationTimestamp
   @Column(name = "applied_at", nullable = false, updatable = false)
   private OffsetDateTime appliedAt;
+
+  public String getOfferTitle() {
+    return offer != null ? offer.getTitle() : null;
+  }
+
+  public UUID getOfferId() {
+    return offer != null ? offer.getId() : null;
+  }
+
+  public Integer getOfferMinScore() {
+    return offer != null ? offer.getMinScore() : null;
+  }
+
+  public java.util.List<String> getOfferRequiredSkills() {
+    return offer != null ? offer.getRequiredSkills() : java.util.Collections.emptyList();
+  }
+
+  public com.smartrecruit.backend.modules.application.enums.ExtractionStatus getExtractionStatus() {
+    return cvFile != null ? cvFile.getExtractionStatus() : null;
+  }
+
+  public UUID getCvFileId() {
+    return cvFile != null ? cvFile.getId() : null;
+  }
+
+  public String getCvOriginalFilename() {
+    return cvFile != null ? cvFile.getOriginalFilename() : null;
+  }
+
+  public Map<String, Object> getCvExtractedData() {
+    return cvFile != null ? cvFile.getExtractedData() : null;
+  }
+
+  public String getCandidateJobTitle() {
+    return cvFile != null ? cvFile.getCurrentJobTitle() : null;
+  }
 }

@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import {
   LucideDynamicIcon,
   LucideLayoutDashboard,
@@ -10,6 +10,7 @@ import {
   LucideChartColumnBig,
   LucideShieldCheck,
   LucideSettings,
+  LucideUpload,
 } from '@lucide/angular';
 import { NavItem } from './models/nav-item.model';
 import { AuthService } from '../../core/auth/auth.service';
@@ -22,26 +23,54 @@ import { AuthService } from '../../core/auth/auth.service';
 })
 export class Sidebar {
   private authService = inject(AuthService);
+  private router = inject(Router);
 
-  isAdmin = this.authService.isAdmin;
+  hasAccess(roles?: string[]): boolean {
+    if (!roles || roles.length === 0) return true;
+    return roles.some((role) => this.authService.hasRole(role));
+  }
 
   navItems: NavItem[] = [
+    { label: 'Tableau de bord', route: '/hr/dashboard', icon: LucideLayoutDashboard },
+    { label: 'Offres', route: '/hr/offers', icon: LucideBriefcase },
     {
-      label: 'Tableau de bord',
-      route: '/dashboard',
-      icon: LucideLayoutDashboard,
-      requiresAdmin: false,
+      label: 'Importer des CVs',
+      route: '/hr/candidates/import',
+      icon: LucideUpload,
+      roles: ['HR_ADMIN', 'RECRUITER'],
     },
-    { label: 'Offres', route: '/offers', icon: LucideBriefcase, requiresAdmin: false },
-    { label: 'Candidats', route: '/candidates', icon: LucideUsers, requiresAdmin: false },
-    { label: 'Workflow', route: '/workflow', icon: LucideGitMerge, requiresAdmin: false },
-    { label: 'Reporting', route: '/reporting', icon: LucideChartColumnBig, requiresAdmin: false },
+    { label: 'Candidats', route: '/hr/candidates', icon: LucideUsers },
+    { label: 'Workflow', route: '/hr/workflow', icon: LucideGitMerge },
+    { label: 'Reporting', route: '/hr/reporting', icon: LucideChartColumnBig },
     {
       label: 'Administration',
-      route: '/administration',
+      route: '/hr/administration',
       icon: LucideShieldCheck,
-      requiresAdmin: true,
+      roles: ['HR_ADMIN'],
     },
-    { label: 'Paramètres', route: '/settings/general', icon: LucideSettings, requiresAdmin: true },
+    {
+      label: 'Paramètres',
+      route: '/hr/settings/general',
+      icon: LucideSettings,
+      roles: ['HR_ADMIN'],
+    },
   ];
+
+  isRouteActive(route: string): boolean {
+    const current = this.router.url.split('?')[0];
+    if (route === '/hr/candidates/import') {
+      return current.startsWith('/hr/candidates/import');
+    }
+    if (route === '/hr/candidates') {
+      return (
+        current.startsWith('/hr/candidates') &&
+        !current.startsWith('/hr/candidates/import')
+      );
+    }
+    if (route === '/hr/dashboard') {
+      return current === '/hr/dashboard' || current === '/hr';
+    }
+    return current.startsWith(route);
+  }
 }
+

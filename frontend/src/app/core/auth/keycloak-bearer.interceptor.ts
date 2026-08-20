@@ -3,7 +3,7 @@ import { inject } from '@angular/core';
 import Keycloak from 'keycloak-js';
 import { from, switchMap } from 'rxjs';
 
-const securedApiPattern = /^\/api\/v1\/(?!public\/)/i;
+const securedApiPattern = /\/api\/v1\/(?!public\/)/i;
 
 /**
  * Adds a Keycloak token exclusively to protected API calls.

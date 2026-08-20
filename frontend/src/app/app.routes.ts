@@ -3,7 +3,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { MainLayout } from './layout/main-layout/main-layout';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  { path: '', redirectTo: 'careers', pathMatch: 'full' },
   {
     path: 'sandbox',
     loadComponent: () => import('./pages/sandbox/sandbox').then((c) => c.Sandbox),
@@ -19,50 +19,22 @@ export const routes: Routes = [
   },
 
   {
-    path: '',
+    path: 'hr',
     component: MainLayout,
     canActivateChild: [authGuard],
     children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       // --- Read-Only / General Routes (Accessible to HR_ADMIN, RECRUITER, VIEWER) ---
       {
         path: 'dashboard',
         loadComponent: () => import('./pages/dashboard/dashboard').then((c) => c.Dashboard),
       },
+      // --- Offers Routes ---
       {
         path: 'offers',
         loadComponent: () =>
           import('./pages/offers/offers-list/offers-list').then((c) => c.OffersList),
       },
-      {
-        path: 'offers/:id',
-        loadComponent: () =>
-          import('./pages/offers/offer-detail/offer-detail').then((c) => c.OfferDetail),
-      },
-      {
-        path: 'candidates',
-        loadComponent: () =>
-          import('./pages/candidates/candidates-list/candidates-list').then(
-            (c) => c.CandidatesList,
-          ),
-      },
-      {
-        path: 'candidates/:id',
-        loadComponent: () =>
-          import('./pages/candidates/candidate-profile/candidate-profile').then(
-            (c) => c.CandidateProfile,
-          ),
-      },
-      {
-        path: 'workflow',
-        loadComponent: () =>
-          import('./pages/workflow/workflow-board/workflow-board').then((c) => c.WorkflowBoard),
-      },
-      {
-        path: 'reporting',
-        loadComponent: () => import('./pages/reporting/reporting').then((c) => c.Reporting),
-      },
-
-      // --- Write/Action Routes (Accessible ONLY to HR_ADMIN and RECRUITER) ---
       {
         path: 'offers/new',
         loadComponent: () =>
@@ -76,6 +48,20 @@ export const routes: Routes = [
         data: { roles: ['HR_ADMIN', 'RECRUITER'] },
       },
       {
+        path: 'offers/:id',
+        loadComponent: () =>
+          import('./pages/offers/offer-detail/offer-detail').then((c) => c.OfferDetail),
+      },
+
+      // --- Candidates Routes ---
+      {
+        path: 'candidates',
+        loadComponent: () =>
+          import('./pages/candidates/candidates-list/candidates-list').then(
+            (c) => c.CandidatesList,
+          ),
+      },
+      {
         path: 'candidates/import',
         loadComponent: () =>
           import('./pages/candidates/candidate-import/candidate-import').then(
@@ -83,6 +69,25 @@ export const routes: Routes = [
           ),
         data: { roles: ['HR_ADMIN', 'RECRUITER'] },
       },
+      {
+        path: 'candidates/:id',
+        loadComponent: () =>
+          import('./pages/candidates/candidate-profile/candidate-profile').then(
+            (c) => c.CandidateProfile,
+          ),
+      },
+
+      // --- Workflow & Reporting Routes ---
+      {
+        path: 'workflow',
+        loadComponent: () =>
+          import('./pages/workflow/workflow-board/workflow-board').then((c) => c.WorkflowBoard),
+      },
+      {
+        path: 'reporting',
+        loadComponent: () => import('./pages/reporting/reporting').then((c) => c.Reporting),
+      },
+
 
       // --- Admin/Settings Routes (Accessible ONLY to HR_ADMIN) ---
       {

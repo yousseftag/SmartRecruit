@@ -7,4 +7,6 @@ public record OfferPublicSummaryResponse(
     String title,
     String contractType,
     Integer durationMonths,
+    String localization,
+    Integer experience,
     java.time.OffsetDateTime createdAt) {}

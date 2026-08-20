@@ -15,6 +15,8 @@ public class OfferMapper {
         offer.getTitle(),
         offer.getContractType(),
         offer.getDurationMonths(),
+        offer.getLocalization(),
+        offer.getExperience(),
         offer.getCreatedAt());
   }
 

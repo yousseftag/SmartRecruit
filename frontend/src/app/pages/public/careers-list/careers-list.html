@@ -1,64 +1,129 @@
 <div class="min-h-screen bg-bg flex flex-col">
   <!-- Public Header -->
-  <header class="bg-white border-b border-line px-8 py-5 flex items-center justify-between">
+  <header class="bg-white border-b border-line px-6 py-3.5 flex items-center justify-between sticky top-0 z-20 shadow-xs">
     <div class="flex items-center gap-3">
-      <img src="/favicon.ico" alt="SmartRecruit Logo" class="w-10 h-10 object-contain rounded-xl drop-shadow-sm">
-      <span class="text-xl font-bold text-ink tracking-tight">SmartRecruit Careers</span>
+      <img src="favicon.ico" alt="SmartRecruit Logo" class="w-8 h-8 object-contain rounded-lg">
+      <span class="text-lg font-extrabold text-ink tracking-tight">SmartRecruit</span>
     </div>
   </header>
 
-  <!-- Hero Section -->
-  <section class="bg-white border-b border-line px-8 py-20 text-center">
-    <h1 class="text-4xl md:text-5xl font-extrabold text-ink mb-6 tracking-tight">Rejoignez l'équipe Norsys</h1>
-    <p class="text-lg text-slate max-w-2xl mx-auto mb-10">
-      Nous recherchons des talents passionnés pour construire l'avenir du recrutement intelligent. 
-      Découvrez nos offres et postulez en un clic.
-    </p>
+  <!-- Compact Hero Section -->
+  <section class="bg-white border-b border-line px-6 py-8 text-center">
+    <div class="max-w-2xl mx-auto">
+      <h1 class="text-2xl md:text-3xl font-extrabold text-ink mb-2 tracking-tight">
+        Rejoignez l'équipe Norsys Afrique
+      </h1>
+      <p class="text-xs md:text-sm text-slate max-w-lg mx-auto mb-5 leading-relaxed">
+        Découvrez nos opportunités de stages et postes ouverts et postulez en quelques clics.
+      </p>
 
-    <!-- Search & Filter Bar -->
-    <div class="max-w-4xl mx-auto flex flex-col md:flex-row gap-4">
-      <div class="flex-1 relative">
-        <svg class="w-5 h-5 text-faint absolute left-4 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-        <input type="text" placeholder="Rechercher un poste, une compétence..." class="w-full pl-12 pr-4 py-3 bg-bg border border-line rounded-xl focus:border-blue focus:ring-2 focus:ring-blue-100 transition-all outline-none text-ink">
+      <!-- Search Bar -->
+      <div class="max-w-lg mx-auto relative">
+        <svg class="w-4 h-4 text-faint absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        <input
+          type="text"
+          [value]="searchQuery()"
+          (input)="setSearchQuery($event)"
+          placeholder="Rechercher un poste, mot-clé, contrat..."
+          class="w-full pl-10 pr-4 py-2 bg-bg border border-line rounded-lg focus:border-blue focus:ring-1 focus:ring-blue outline-none transition-all text-xs md:text-sm text-ink placeholder:text-faint"
+        />
+      </div>
+
+      <!-- Contract Type Filter Pills -->
+      <div class="flex items-center justify-center gap-1.5 mt-3 flex-wrap">
+        <button
+          (click)="selectedContract.set('ALL')"
+          class="px-3 py-1 rounded-full text-xs font-semibold transition-colors"
+          [ngClass]="selectedContract() === 'ALL' ? 'bg-ink text-white' : 'bg-bg text-slate hover:text-ink border border-line'"
+        >
+          Tous les contrats
+        </button>
+        <button
+          *ngFor="let ct of contractTypes"
+          (click)="selectedContract.set(ct.value)"
+          class="px-3 py-1 rounded-full text-xs font-semibold transition-colors"
+          [ngClass]="selectedContract() === ct.value ? 'bg-ink text-white' : 'bg-bg text-slate hover:text-ink border border-line'"
+        >
+          {{ ct.value }}
+        </button>
       </div>
     </div>
   </section>
 
   <!-- Job Listings Grid -->
-  <main class="flex-1 max-w-6xl w-full mx-auto px-8 py-12">
-    <div class="flex items-center justify-between mb-8">
-      <h2 class="text-xl font-bold text-ink">Offres Ouvertes <span *ngIf="!isLoading()">({{ offers().length }})</span></h2>
+  <main class="flex-1 max-w-6xl w-full mx-auto px-6 py-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-base md:text-lg font-bold text-ink flex items-center gap-2">
+        Offres disponibles
+        <span *ngIf="!isLoading()" class="text-xs font-semibold px-2 py-0.5 bg-bg border border-line rounded-full text-slate">
+          {{ filteredOffers().length }}
+        </span>
+      </h2>
     </div>
 
     <!-- Loading State -->
-    <div *ngIf="isLoading()" class="text-center py-20 text-slate">
-      Chargement des offres...
+    <div *ngIf="isLoading()" class="py-16 flex flex-col items-center justify-center text-slate">
+      <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue mb-3"></div>
+      <p class="text-xs font-medium">Chargement des opportunités...</p>
     </div>
 
     <!-- Error State -->
-    <div *ngIf="error()" class="text-center py-20 text-red font-semibold">
-      Une erreur s'est produite lors du chargement des offres. <br>
-      <span class="text-xs font-mono text-slate">{{ errorMessage() }}</span>
+    <div *ngIf="error()" class="card bg-red-bg border-red/20 p-6 text-center my-6">
+      <svg class="w-8 h-8 text-red-d mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+      <h3 class="font-bold text-ink text-sm mb-1">Impossible de charger les offres</h3>
+      <p class="text-xs text-slate mb-3">{{ errorMessage() }}</p>
+      <button (click)="ngOnInit()" class="btn btn-outline text-xs py-1.5 px-3">Réessayer</button>
     </div>
 
-    <div *ngIf="!isLoading() && !error()" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div *ngFor="let offer of offers()" class="card p-6 bg-white hover:border-blue transition-colors group cursor-pointer" [routerLink]="['/careers', offer.id]">
-        
-        <h3 class="text-lg font-bold text-ink mb-2 group-hover:text-blue transition-colors">{{ offer.title }}</h3>
-        
-        <div class="flex flex-col gap-2 mt-4">
-          <div class="flex items-center gap-2 text-sm text-slate">
-            <svg class="w-4 h-4 text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            {{ offer.categoryCriteria?.localization || 'Non spécifié' }}
+    <!-- Empty State -->
+    <div *ngIf="!isLoading() && !error() && filteredOffers().length === 0" class="card bg-white p-10 text-center my-6">
+      <svg class="w-10 h-10 text-faint mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+      <h3 class="font-bold text-ink text-sm mb-1">Aucune offre ne correspond à votre recherche</h3>
+      <p class="text-xs text-slate">Essayez de modifier votre terme de recherche ou vos filtres.</p>
+    </div>
+
+    <!-- Offers Grid -->
+    <div *ngIf="!isLoading() && !error() && filteredOffers().length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div
+        *ngFor="let offer of filteredOffers()"
+        [routerLink]="['/careers', offer.id]"
+        class="card p-5 bg-white hover:border-blue transition-all duration-200 group cursor-pointer flex flex-col justify-between hover:shadow-sm"
+      >
+        <div>
+          <!-- Tags Row -->
+          <div *ngIf="offer.contractType || offer.durationMonths" class="flex items-center gap-2 mb-2.5 flex-wrap">
+            <span *ngIf="offer.contractType" class="px-2 py-0.5 bg-blue-100 text-blue text-[11px] font-bold rounded-md">
+              {{ offer.contractType }}
+            </span>
+            <span *ngIf="offer.durationMonths" class="px-2 py-0.5 bg-bg text-slate text-[11px] font-medium rounded-md border border-line">
+              {{ offer.durationMonths }} mois
+            </span>
           </div>
-          <div class="flex items-center gap-2 text-sm text-slate">
-            <svg class="w-4 h-4 text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-            {{ offer.contractType || 'Contrat non spécifié' }} <span *ngIf="offer.durationMonths">({{ offer.durationMonths }} mois)</span>
+
+          <!-- Title -->
+          <h3 class="text-sm md:text-base font-bold text-ink mb-2 group-hover:text-blue transition-colors line-clamp-2">
+            {{ offer.title }}
+          </h3>
+
+          <!-- Location & Experience Meta Row -->
+          <div *ngIf="offer.localization || (offer.experience !== undefined && offer.experience !== null)" class="flex items-center gap-3 text-xs text-slate mt-2 flex-wrap">
+            <span *ngIf="offer.localization" class="flex items-center gap-1">
+              <svg class="w-3.5 h-3.5 text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              {{ offer.localization }}
+            </span>
+            <span *ngIf="offer.experience !== undefined && offer.experience !== null" class="flex items-center gap-1">
+              <svg class="w-3.5 h-3.5 text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              {{ offer.experience | experienceFormat:true }}
+            </span>
           </div>
         </div>
 
-        <div class="mt-6 pt-4 border-t border-line flex items-center justify-end">
-          <span class="text-sm font-semibold text-blue group-hover:underline">Voir l'offre &rarr;</span>
+        <!-- Card Footer -->
+        <div class="mt-4 pt-3 border-t border-line flex items-center justify-between text-[11px] text-slate">
+          <span>Publié le {{ offer.createdAt | date:'dd MMM yyyy' }}</span>
+          <span class="font-bold text-blue group-hover:translate-x-0.5 transition-transform flex items-center gap-0.5">
+            Postuler &rarr;
+          </span>
         </div>
       </div>
     </div>

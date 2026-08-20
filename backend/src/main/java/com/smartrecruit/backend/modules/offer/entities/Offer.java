@@ -64,4 +64,26 @@ public class Offer {
   @org.hibernate.annotations.UpdateTimestamp
   @Column(name = "updated_at", nullable = false)
   private java.time.OffsetDateTime updatedAt;
+
+  public String getLocalization() {
+    if (categoryCriteria != null && categoryCriteria.get("localization") instanceof String s) {
+      return s;
+    }
+    return null;
+  }
+
+  public Integer getExperience() {
+    if (categoryCriteria != null && categoryCriteria.get("experience") instanceof Number n) {
+      return n.intValue();
+    }
+    return null;
+  }
+
+  public java.util.List<String> getRequiredSkills() {
+    if (categoryCriteria != null
+        && categoryCriteria.get("skills") instanceof java.util.List<?> list) {
+      return list.stream().map(Object::toString).toList();
+    }
+    return java.util.Collections.emptyList();
+  }
 }
