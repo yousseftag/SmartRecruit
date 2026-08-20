@@ -8,26 +8,29 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * TEMPORARY SIMULATION SERVICE FOR MVP This class exists solely to fake the delayed processing of
- * CVs so the frontend can demonstrate its polling and loading states. Once the real Python NLP
- * worker is attached to the RabbitMQ queue, this entire file can be safely deleted.
+ * TEMPORARY SIMULATION SERVICE FOR MVP This class simulates asynchronous AI NLP extraction. It uses
+ * a deterministic 2-Success / 1-Fail cycle (Hit 1: Success, Hit 2: Success, Hit 3: Failed) for
+ * predictable testing of ingestion, failure states, and retry logic.
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class SimulationNlpService {
 
+  private final AtomicInteger requestCounter = new AtomicInteger(0);
+
   public void simulateNlpProcessing(Application application, CvFile cvFile) {
     CompletableFuture.runAsync(
         () -> {
           try {
-            int delaySeconds = 5 + new java.util.Random().nextInt(6); // 5 to 10 seconds
+            int delaySeconds = 4 + new java.util.Random().nextInt(4); // 4 to 7 seconds
             log.info(
                 "Simulating NLP extraction for CV {}, waiting {} seconds...",
                 cvFile.getId(),
@@ -67,8 +70,8 @@ public class SimulationNlpService {
             String lName = lastNames[rand.nextInt(lastNames.length)];
             String title = titles[rand.nextInt(titles.length)];
 
-            // Pick 3 to 5 random skills
-            int numSkills = 3 + rand.nextInt(3);
+            // Pick 3 to 6 random skills
+            int numSkills = 3 + rand.nextInt(4);
             List<String> selectedSkills = new java.util.ArrayList<>();
             while (selectedSkills.size() < numSkills) {
               String skill = skillsPool[rand.nextInt(skillsPool.length)];
@@ -118,28 +121,45 @@ public class SimulationNlpService {
                     List.of("Bonne expérience technique", "Correspond au profil recherché"),
                     List.of("Manque d'expérience sur certains outils cloud"));
 
-            // 5. Category Scores (randomize between 5.0 and 20.0)
-            BigDecimal sSkills = BigDecimal.valueOf(10 + rand.nextInt(11));
-            BigDecimal sExp = BigDecimal.valueOf(10 + rand.nextInt(11));
-            BigDecimal sCourse = BigDecimal.valueOf(15 + rand.nextInt(6));
-            BigDecimal sLang = BigDecimal.valueOf(10 + rand.nextInt(11));
-            BigDecimal sLoc = BigDecimal.valueOf(20); // usually matched
+            // 5. Category Scores: realistic spread between [5.0, 20.0]
+            BigDecimal sSkills = BigDecimal.valueOf(6 + rand.nextInt(15)); // [6, 20]
+            BigDecimal sExp = BigDecimal.valueOf(5 + rand.nextInt(16)); // [5, 20]
+            BigDecimal sCourse = BigDecimal.valueOf(10 + rand.nextInt(11)); // [10, 20]
+            BigDecimal sLang = BigDecimal.valueOf(8 + rand.nextInt(13)); // [8, 20]
+            BigDecimal sLoc = BigDecimal.valueOf(rand.nextBoolean() ? 20 : 12); // 20 or 12
 
             SyncRequestDto.CategoryScoresDto categoryScores =
                 new SyncRequestDto.CategoryScoresDto(sSkills, sExp, sCourse, sLang, sLoc);
 
             BigDecimal totalScore = sSkills.add(sExp).add(sCourse).add(sLang).add(sLoc);
 
+            // 6. Deterministic 2-Success / 1-Fail Cycle
+            int requestIndex = requestCounter.incrementAndGet();
+            boolean isSuccess =
+                (requestIndex % 3)
+                    != 0; // Hits 1, 2, 4, 5, 7... -> SUCCESS. Hits 3, 6, 9... -> FAILED.
+
+            log.info(
+                "Simulated AI Request #{} for CV {} -> Outcome: {}",
+                requestIndex,
+                cvFile.getId(),
+                isSuccess ? "SUCCESS (Score: " + totalScore + ")" : "FAILED");
+
             // Construct the exact request body FastAPI would send
             SyncRequestDto request = new SyncRequestDto();
             request.setApplicationId(application.getId());
             request.setOfferId(application.getOffer().getId());
             request.setCvId(cvFile.getId());
-            request.setExtractionStatus(ExtractionStatus.SUCCESS);
-            request.setExtractedData(extractedData);
-            request.setExtractedMatching(extractedMatching);
-            request.setCategoryScores(categoryScores);
-            request.setTotalScore(totalScore);
+
+            if (isSuccess) {
+              request.setExtractionStatus(ExtractionStatus.SUCCESS);
+              request.setExtractedData(extractedData);
+              request.setExtractedMatching(extractedMatching);
+              request.setCategoryScores(categoryScores);
+              request.setTotalScore(totalScore);
+            } else {
+              request.setExtractionStatus(ExtractionStatus.FAILED);
+            }
 
             log.info("Simulation sending webhook to POST /api/v1/internal/cv/sync");
             RestTemplate restTemplate = new RestTemplate();

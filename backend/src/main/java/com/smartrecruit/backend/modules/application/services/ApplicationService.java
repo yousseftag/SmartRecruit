@@ -8,15 +8,18 @@ import com.smartrecruit.backend.modules.application.repositories.ApplicationRepo
 import com.smartrecruit.backend.modules.application.repositories.WorkflowStatusHistoryRepository;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ApplicationService {
 
   private final ApplicationRepository applicationRepository;
   private final WorkflowStatusHistoryRepository workflowStatusHistoryRepository;
+  private final CvIngestionService cvIngestionService;
 
   @Transactional
   public void updateApplicationStatus(UUID applicationId, ApplicationStatus newStatus) {
@@ -39,6 +42,16 @@ public class ApplicationService {
       application.setStatus(newStatus);
       applicationRepository.save(application);
     }
+  }
+
+  @Transactional
+  public void reExtractCv(UUID applicationId) {
+    Application application =
+        applicationRepository
+            .findById(applicationId)
+            .orElseThrow(() -> new ResourceNotFoundException("Application not found."));
+
+    cvIngestionService.resetAndReExtract(application);
   }
 
   @Transactional

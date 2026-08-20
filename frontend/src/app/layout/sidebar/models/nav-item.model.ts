@@ -4,5 +4,6 @@ export interface NavItem {
   label: string;
   route: string;
   icon: LucideIconInput;
-  requiresAdmin: boolean;
+  roles?: ('HR_ADMIN' | 'RECRUITER' | 'VIEWER')[];
 }
+

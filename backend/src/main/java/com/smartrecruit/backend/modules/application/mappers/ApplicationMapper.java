@@ -5,51 +5,27 @@ import com.smartrecruit.backend.modules.application.dtos.ApplicationSummaryRespo
 import com.smartrecruit.backend.modules.application.dtos.CandidateResponse;
 import com.smartrecruit.backend.modules.application.entities.Application;
 import com.smartrecruit.backend.modules.application.entities.Candidate;
-import java.util.Map;
 
 public class ApplicationMapper {
 
   public static ApplicationResponse toDto(Application application) {
     if (application == null) return null;
 
-    Map<String, Object> cvExtractedData = null;
-    if (application.getCvFile() != null) {
-      cvExtractedData = application.getCvFile().getExtractedData();
-    }
-
-    String jobTitle = null;
-    if (cvExtractedData != null) {
-      @SuppressWarnings("unchecked")
-      Map<String, Object> candidateInfo =
-          (Map<String, Object>) cvExtractedData.get("candidate_info");
-      if (candidateInfo != null && candidateInfo.get("current_job_title") != null) {
-        jobTitle = candidateInfo.get("current_job_title").toString();
-      }
-    }
-
-    CandidateResponse candidateResponse = null;
-    Candidate candidate = application.getCandidate();
-    if (candidate != null) {
-      candidateResponse =
-          new CandidateResponse(
-              candidate.getId(),
-              candidate.getFirstName(),
-              candidate.getLastName(),
-              candidate.getEmail(),
-              candidate.getPhone(),
-              jobTitle);
-    }
-
     return new ApplicationResponse(
         application.getId(),
-        candidateResponse,
-        application.getOffer().getId(),
-        application.getOffer().getMinScore(),
+        toCandidateResponse(application.getCandidate(), application.getCandidateJobTitle()),
+        application.getOfferId(),
+        application.getOfferTitle(),
+        application.getOfferMinScore(),
+        application.getOfferRequiredSkills(),
         application.getStatus(),
+        application.getExtractionStatus(),
+        application.getCvFileId(),
+        application.getCvOriginalFilename(),
         application.getTotalScore(),
         application.getCategoryScores(),
         application.getExtractedMatching(),
-        cvExtractedData,
+        application.getCvExtractedData(),
         application.getAppliedAt(),
         application.getScoredAt());
   }
@@ -57,37 +33,26 @@ public class ApplicationMapper {
   public static ApplicationSummaryResponse toSummaryDto(Application application) {
     if (application == null) return null;
 
-    String jobTitle = null;
-    if (application.getCvFile() != null && application.getCvFile().getExtractedData() != null) {
-      @SuppressWarnings("unchecked")
-      Map<String, Object> candidateInfo =
-          (Map<String, Object>) application.getCvFile().getExtractedData().get("candidate_info");
-      if (candidateInfo != null && candidateInfo.get("current_job_title") != null) {
-        jobTitle = candidateInfo.get("current_job_title").toString();
-      }
-    }
-
-    CandidateResponse candidateResponse = null;
-    Candidate candidate = application.getCandidate();
-    if (candidate != null) {
-      candidateResponse =
-          new CandidateResponse(
-              candidate.getId(),
-              candidate.getFirstName(),
-              candidate.getLastName(),
-              candidate.getEmail(),
-              candidate.getPhone(),
-              jobTitle);
-    }
-
     return new ApplicationSummaryResponse(
         application.getId(),
-        candidateResponse,
-        application.getOffer().getId(),
-        application.getOffer().getTitle(),
-        application.getOffer().getMinScore(),
+        toCandidateResponse(application.getCandidate(), application.getCandidateJobTitle()),
+        application.getOfferId(),
+        application.getOfferTitle(),
+        application.getOfferMinScore(),
         application.getStatus(),
+        application.getExtractionStatus(),
         application.getTotalScore(),
         application.getAppliedAt());
+  }
+
+  private static CandidateResponse toCandidateResponse(Candidate candidate, String jobTitle) {
+    if (candidate == null) return null;
+    return new CandidateResponse(
+        candidate.getId(),
+        candidate.getFirstName(),
+        candidate.getLastName(),
+        candidate.getEmail(),
+        candidate.getPhone(),
+        jobTitle);
   }
 }

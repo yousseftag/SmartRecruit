@@ -30,7 +30,9 @@
   --color-red-d: #dc2626;
   --color-red-bg: #fef2f2;
 
-  --color-amber: #f59e0b;
+  --color-amber: #d97706;
+  --color-amber-d: #b45309;
+  --color-amber-bg: #fef3c7;
   --color-violet: #8b5cf6;
 
   --radius-sm: 9px;
@@ -71,6 +73,8 @@
   --red-bg: var(--color-red-bg);
 
   --amber: var(--color-amber);
+  --amber-d: var(--color-amber-d);
+  --amber-bg: var(--color-amber-bg);
   --violet: var(--color-violet);
 
   --r-sm: var(--radius-sm);
@@ -87,12 +91,15 @@
   --color-ink: #f8fafc;
   --color-slate: #94a3b8;
   --color-muted: #cbd5e1;
+  --color-faint: #64748b;
   --color-line: #334155;
   --color-line-2: #1e293b;
   --color-border: #334155;
   --color-blue-tint: #1e293b;
   --color-blue-50: #1e293b;
-  --color-blue-100: #1e293b;
+  --color-blue-100: rgba(37, 99, 235, 0.2);
+  --color-green-bg: rgba(5, 150, 105, 0.2);
+  --color-red-bg: rgba(239, 68, 68, 0.2);
 
   /* Legacy dark mode overrides */
   --bg: var(--color-bg);
@@ -100,12 +107,15 @@
   --ink: var(--color-ink);
   --slate: var(--color-slate);
   --muted: var(--color-muted);
+  --faint: var(--color-faint);
   --line: var(--color-line);
   --line-2: var(--color-line-2);
   --border: var(--color-border);
   --blue-tint: var(--color-blue-tint);
   --blue-50: var(--color-blue-50);
   --blue-100: var(--color-blue-100);
+  --green-bg: var(--color-green-bg);
+  --red-bg: var(--color-red-bg);
 }
 
 @layer base {

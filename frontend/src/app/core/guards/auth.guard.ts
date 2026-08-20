@@ -33,6 +33,6 @@ export const authGuard: CanActivateFn = async (route, state) => {
     return true;
   }
 
-  router.navigate(['/dashboard']);
+  router.navigate(['/hr/dashboard']);
   return false;
 };

@@ -13,12 +13,11 @@
   <!-- Navigation Links -->
   <nav class="nav">
     @for (item of navItems; track item.route) {
-      @if (!item.requiresAdmin || (item.requiresAdmin && isAdmin())) {
+      @if (hasAccess(item.roles)) {
         <!-- Navigation item -->
         <a
           [routerLink]="item.route"
-          routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: false }"
+          [class.active]="isRouteActive(item.route)"
           class="nav-item"
         >
           <!-- Dynamic Lucide Icon -->

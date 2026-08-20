@@ -51,4 +51,13 @@ public class CvFile {
 
   @Column(name = "processed_at")
   private OffsetDateTime processedAt;
+
+  public String getCurrentJobTitle() {
+    if (extractedData != null
+        && extractedData.get("candidate_info") instanceof Map<?, ?> candidateInfo) {
+      Object jobTitle = candidateInfo.get("current_job_title");
+      return jobTitle != null ? jobTitle.toString() : null;
+    }
+    return null;
+  }
 }

@@ -1,28 +1,36 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { OfferSummaryResponse, OfferPublicResponse } from '../models/offer.model';
+import {
+  OfferTitleResponse,
+  OfferPublicResponse,
+  OfferPublicSummaryResponse,
+} from '../models/offer.model';
 import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class OfferService {
+  private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/api/v1/offers`;
   private publicApiUrl = `${environment.apiUrl}/api/v1/public/offers`;
-  
-  constructor(private http: HttpClient) {}
 
   // --- Secured (HR internal) ---
-  getOfferSummaries(): Observable<OfferSummaryResponse[]> {
-    return this.http.get<OfferSummaryResponse[]>(`${this.apiUrl}/summary`);
+
+  /** Fetches lightweight active offer titles for dropdowns */
+  getOfferTitles(): Observable<OfferTitleResponse[]> {
+    return this.http.get<OfferTitleResponse[]>(`${this.apiUrl}/titles`);
   }
 
-  // --- Public (the interceptor immediately passes this URL through) ---
-  getPublicOffers(): Observable<OfferPublicResponse[]> {
-    return this.http.get<OfferPublicResponse[]>(this.publicApiUrl);
+  // --- Public (Careers Portal) ---
+
+  /** Fetches public active job offers list */
+  getPublicOffers(): Observable<OfferPublicSummaryResponse[]> {
+    return this.http.get<OfferPublicSummaryResponse[]>(this.publicApiUrl);
   }
 
+  /** Fetches single public offer details */
   getPublicOfferById(id: string): Observable<OfferPublicResponse> {
     return this.http.get<OfferPublicResponse>(`${this.publicApiUrl}/${id}`);
   }
