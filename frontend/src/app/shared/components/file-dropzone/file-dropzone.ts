@@ -10,7 +10,7 @@ import { CommonModule } from '@angular/common';
 export class FileDropzone {
   @Input() allowMultiple: boolean = true;
   @Input() maxFiles: number = 50;
-  
+
   // By default, we accept zip only if multiple is allowed.
   private _acceptedFormats?: string;
   @Input() set acceptedFormats(value: string) {
@@ -62,7 +62,7 @@ export class FileDropzone {
 
   private handleFiles(files: File[]) {
     if (!this.allowMultiple && files.length > 1) {
-      this.errorMsg = 'Vous ne pouvez sélectionner qu\'un seul fichier.';
+      this.errorMsg = "Vous ne pouvez sélectionner qu'un seul fichier.";
       return;
     }
     if (files.length > this.maxFiles) {

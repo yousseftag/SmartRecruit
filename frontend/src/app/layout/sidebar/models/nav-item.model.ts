@@ -6,4 +6,3 @@ export interface NavItem {
   icon: LucideIconInput;
   roles?: ('HR_ADMIN' | 'RECRUITER' | 'VIEWER')[];
 }
-

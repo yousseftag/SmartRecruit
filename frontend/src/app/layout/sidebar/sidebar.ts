@@ -62,10 +62,7 @@ export class Sidebar {
       return current.startsWith('/hr/candidates/import');
     }
     if (route === '/hr/candidates') {
-      return (
-        current.startsWith('/hr/candidates') &&
-        !current.startsWith('/hr/candidates/import')
-      );
+      return current.startsWith('/hr/candidates') && !current.startsWith('/hr/candidates/import');
     }
     if (route === '/hr/dashboard') {
       return current === '/hr/dashboard' || current === '/hr';
@@ -73,4 +70,3 @@ export class Sidebar {
     return current.startsWith(route);
   }
 }
-

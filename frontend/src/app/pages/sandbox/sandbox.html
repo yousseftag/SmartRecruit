@@ -1,41 +1,68 @@
 <div class="p-10 max-w-7xl mx-auto min-h-screen bg-bg">
-  <div class="mb-10 border-b border-line pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+  <div
+    class="mb-10 border-b border-line pb-6 flex flex-col md:flex-row md:items-center justify-between gap-4"
+  >
     <div>
       <h1 class="h1 text-ink">SmartRecruit UI Sandbox</h1>
       <p class="subtitle">Banc d'essai et validation des composants et services Step 1</p>
     </div>
     <div class="flex items-center gap-3">
-      <span class="text-xs font-semibold px-3 py-1 rounded-full border"
-        [ngClass]="authService.isAuthenticated() ? 'bg-green-bg text-green border-green/20' : 'bg-red-bg text-red border-red/20'">
+      <span
+        class="text-xs font-semibold px-3 py-1 rounded-full border"
+        [ngClass]="
+          authService.isAuthenticated()
+            ? 'bg-green-bg text-green border-green/20'
+            : 'bg-red-bg text-red border-red/20'
+        "
+      >
         {{ authService.isAuthenticated() ? 'Keycloak Authentifié' : 'Mode Public / Déconnecté' }}
       </span>
     </div>
   </div>
 
   <div class="flex flex-col gap-12">
-    
     <!-- 1. Status Badge Component Testing -->
     <section>
       <div class="section-head mb-4">
         <h2 class="h2 text-ink">1. Status Badge Component (Shared)</h2>
       </div>
-      
+
       <div class="card p-6 bg-white space-y-6">
         <div>
-          <h3 class="text-sm font-bold text-slate uppercase tracking-wider mb-3">Statuts Workflow (Tailles SM et MD)</h3>
+          <h3 class="text-sm font-bold text-slate uppercase tracking-wider mb-3">
+            Statuts Workflow (Tailles SM et MD)
+          </h3>
           <div class="flex flex-wrap gap-3 items-center">
-            <app-status-badge *ngFor="let s of workflowStatuses" [status]="s" size="sm"></app-status-badge>
+            <app-status-badge
+              *ngFor="let s of workflowStatuses"
+              [status]="s"
+              size="sm"
+            ></app-status-badge>
           </div>
           <div class="flex flex-wrap gap-3 items-center mt-3">
-            <app-status-badge *ngFor="let s of workflowStatuses" [status]="s" size="md"></app-status-badge>
+            <app-status-badge
+              *ngFor="let s of workflowStatuses"
+              [status]="s"
+              size="md"
+            ></app-status-badge>
           </div>
         </div>
 
         <div class="border-t border-line pt-4">
-          <h3 class="text-sm font-bold text-slate uppercase tracking-wider mb-3">Statuts Analyse IA (NLP)</h3>
+          <h3 class="text-sm font-bold text-slate uppercase tracking-wider mb-3">
+            Statuts Analyse IA (NLP)
+          </h3>
           <div class="flex flex-wrap gap-3 items-center">
-            <app-status-badge *ngFor="let s of extractionStatuses" [status]="s" size="sm"></app-status-badge>
-            <app-status-badge *ngFor="let s of extractionStatuses" [status]="s" size="md"></app-status-badge>
+            <app-status-badge
+              *ngFor="let s of extractionStatuses"
+              [status]="s"
+              size="sm"
+            ></app-status-badge>
+            <app-status-badge
+              *ngFor="let s of extractionStatuses"
+              [status]="s"
+              size="md"
+            ></app-status-badge>
           </div>
         </div>
       </div>
@@ -46,7 +73,7 @@
       <div class="section-head mb-4">
         <h2 class="h2 text-ink">2. Score Gauge Component (Shared)</h2>
       </div>
-      
+
       <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div class="card p-6 bg-white">
           <h3 class="font-bold text-ink mb-2 text-center text-sm">Score 92% (Green)</h3>
@@ -81,12 +108,13 @@
         <div class="card p-6 bg-white">
           <h3 class="font-bold text-ink mb-1">Mode Unique (Public Candidat)</h3>
           <p class="text-xs text-slate mb-4">Formats acceptés: PDF, DOCX (Max 1 fichier)</p>
-          
-          <app-file-dropzone 
-            [allowMultiple]="false" 
+
+          <app-file-dropzone
+            [allowMultiple]="false"
             [maxFiles]="1"
             [acceptedFormats]="'.pdf,.docx'"
-            (filesDropped)="onFilesDropped($event, 'Formulaire Candidat Public')">
+            (filesDropped)="onFilesDropped($event, 'Formulaire Candidat Public')"
+          >
           </app-file-dropzone>
         </div>
 
@@ -94,23 +122,26 @@
         <div class="card p-6 bg-white">
           <h3 class="font-bold text-ink mb-1">Mode Multiple (Import HR)</h3>
           <p class="text-xs text-slate mb-4">Formats acceptés: PDF, DOCX, ZIP (Max 50 fichiers)</p>
-          
-          <app-file-dropzone 
-            [allowMultiple]="true" 
+
+          <app-file-dropzone
+            [allowMultiple]="true"
             [maxFiles]="50"
             [acceptedFormats]="'.pdf,.docx,.zip'"
-            (filesDropped)="onFilesDropped($event, 'Import RH Multiple / ZIP')">
+            (filesDropped)="onFilesDropped($event, 'Import RH Multiple / ZIP')"
+          >
           </app-file-dropzone>
         </div>
       </div>
 
       <!-- Dropped Files Output Preview -->
       <div *ngIf="droppedFiles()" class="mt-4 card p-4 bg-white border-blue">
-        <h4 class="text-sm font-bold text-blue mb-2">Fichiers déposés depuis : {{ droppedFiles()!.source }}</h4>
+        <h4 class="text-sm font-bold text-blue mb-2">
+          Fichiers déposés depuis : {{ droppedFiles()!.source }}
+        </h4>
         <ul class="space-y-1 text-xs text-slate">
           <li *ngFor="let file of droppedFiles()!.files" class="flex items-center gap-2">
             <span class="font-semibold text-ink">{{ file.name }}</span>
-            <span>({{ (file.size / 1024) | number:'1.1-1' }} Ko)</span>
+            <span>({{ file.size / 1024 | number: '1.1-1' }} Ko)</span>
           </li>
         </ul>
       </div>
@@ -139,19 +170,27 @@
         <div *ngIf="apiResults() as res" class="p-4 bg-bg rounded-xl border border-line">
           <div class="flex items-center justify-between mb-2">
             <span class="font-bold text-sm text-ink">{{ res.action }}</span>
-            <span *ngIf="res.loading" class="text-xs text-blue animate-pulse">Chargement en cours...</span>
-            <span *ngIf="!res.loading && !res.error" class="text-xs font-semibold text-green">Succès ({{ res.data?.length || 0 }} items)</span>
-            <span *ngIf="!res.loading && res.error" class="text-xs font-semibold text-red">Erreur</span>
+            <span *ngIf="res.loading" class="text-xs text-blue animate-pulse"
+              >Chargement en cours...</span
+            >
+            <span *ngIf="!res.loading && !res.error" class="text-xs font-semibold text-green"
+              >Succès ({{ res.data?.length || 0 }} items)</span
+            >
+            <span *ngIf="!res.loading && res.error" class="text-xs font-semibold text-red"
+              >Erreur</span
+            >
           </div>
 
           <div *ngIf="res.error" class="text-xs text-red font-mono bg-red-bg p-3 rounded-lg mt-2">
             {{ res.error }}
           </div>
 
-          <pre *ngIf="res.data" class="text-xs font-mono bg-white p-3 rounded-lg border border-line overflow-x-auto max-h-64">{{ res.data | json }}</pre>
+          <pre
+            *ngIf="res.data"
+            class="text-xs font-mono bg-white p-3 rounded-lg border border-line overflow-x-auto max-h-64"
+            >{{ res.data | json }}</pre>
         </div>
       </div>
     </section>
-
   </div>
 </div>

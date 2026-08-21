@@ -26,9 +26,7 @@ export const keycloakBearerInterceptor: HttpInterceptorFn = (request, next) => {
     switchMap(() => {
       const token = keycloak.token;
       return next(
-        token
-          ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-          : request,
+        token ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } }) : request,
       );
     }),
   );

@@ -11,11 +11,13 @@ export const routes: Routes = [
 
   {
     path: 'careers',
-    loadComponent: () => import('./pages/public/careers-list/careers-list').then((c) => c.CareersList),
+    loadComponent: () =>
+      import('./pages/public/careers-list/careers-list').then((c) => c.CareersList),
   },
   {
     path: 'careers/:id',
-    loadComponent: () => import('./pages/public/career-detail/career-detail').then((c) => c.CareerDetail),
+    loadComponent: () =>
+      import('./pages/public/career-detail/career-detail').then((c) => c.CareerDetail),
   },
 
   {
@@ -87,7 +89,6 @@ export const routes: Routes = [
         path: 'reporting',
         loadComponent: () => import('./pages/reporting/reporting').then((c) => c.Reporting),
       },
-
 
       // --- Admin/Settings Routes (Accessible ONLY to HR_ADMIN) ---
       {

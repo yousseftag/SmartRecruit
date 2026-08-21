@@ -13,11 +13,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ApplicationService } from '../../../core/services/application.service';
-import {
-  ApplicationResponse,
-  ExtractedData,
-  ExtractedMatching,
-} from '../../../core/models';
+import { ApplicationResponse, ExtractedData, ExtractedMatching } from '../../../core/models';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ScoreGauge } from '../../../shared/components/score-gauge/score-gauge';
 import { ExperienceFormatPipe } from '../../../shared/pipes/experience-format.pipe';
@@ -51,7 +47,7 @@ export class CandidateProfile implements OnInit, OnDestroy {
       this.authService.hasRole('HR_ADMIN') ||
       this.authService.hasRole('RECRUITER') ||
       this.authService.hasRole('ADMIN') ||
-      this.authService.isAdmin()
+      this.authService.isAdmin(),
   );
 
   readonly application = signal<ApplicationResponse | null>(null);
@@ -121,11 +117,9 @@ export class CandidateProfile implements OnInit, OnDestroy {
 
   // --- Computed Extracted Properties ---
   readonly cvData = computed<ExtractedData | null>(
-    () => this.application()?.cvExtractedData || null
+    () => this.application()?.cvExtractedData || null,
   );
-  readonly candidateInfo = computed(
-    () => this.cvData()?.candidate_info || null
-  );
+  readonly candidateInfo = computed(() => this.cvData()?.candidate_info || null);
   readonly candidateFullName = computed(() => {
     const candidate = this.application()?.candidate;
     const info = this.candidateInfo();
@@ -135,52 +129,33 @@ export class CandidateProfile implements OnInit, OnDestroy {
     return full || 'Candidat';
   });
   readonly matchingData = computed<ExtractedMatching | null>(
-    () => this.application()?.extractedMatching || null
+    () => this.application()?.extractedMatching || null,
   );
-  readonly matchedCriteria = computed(
-    () => this.matchingData()?.matched_criteria || null
-  );
+  readonly matchedCriteria = computed(() => this.matchingData()?.matched_criteria || null);
 
   readonly offerRequiredSkills = computed<string[]>(
-    () => this.application()?.offerRequiredSkills || []
+    () => this.application()?.offerRequiredSkills || [],
   );
-  readonly matchedSkills = computed<string[]>(
-    () => this.matchedCriteria()?.skills || []
-  );
-  readonly allSkills = computed<string[]>(
-    () => this.cvData()?.skills || []
-  );
+  readonly matchedSkills = computed<string[]>(() => this.matchedCriteria()?.skills || []);
+  readonly allSkills = computed<string[]>(() => this.cvData()?.skills || []);
 
   // Skills required by offer but missing from candidate CV
   readonly missingSkills = computed<string[]>(() => {
-    const matched = new Set(
-      this.matchedSkills().map((s) => s.toLowerCase().trim())
-    );
-    return this.offerRequiredSkills().filter(
-      (s) => !matched.has(s.toLowerCase().trim())
-    );
+    const matched = new Set(this.matchedSkills().map((s) => s.toLowerCase().trim()));
+    return this.offerRequiredSkills().filter((s) => !matched.has(s.toLowerCase().trim()));
   });
 
   // Extra candidate skills not explicitly required by the offer
   readonly additionalSkills = computed<string[]>(() => {
-    const required = new Set(
-      this.offerRequiredSkills().map((s) => s.toLowerCase().trim())
-    );
-    const matched = new Set(
-      this.matchedSkills().map((s) => s.toLowerCase().trim())
-    );
+    const required = new Set(this.offerRequiredSkills().map((s) => s.toLowerCase().trim()));
+    const matched = new Set(this.matchedSkills().map((s) => s.toLowerCase().trim()));
     return this.allSkills().filter(
-      (s) =>
-        !required.has(s.toLowerCase().trim()) &&
-        !matched.has(s.toLowerCase().trim())
+      (s) => !required.has(s.toLowerCase().trim()) && !matched.has(s.toLowerCase().trim()),
     );
   });
 
   readonly isExtracting = computed(() => {
-    return (
-      this.isReExtracting() ||
-      this.application()?.extractionStatus === 'PENDING'
-    );
+    return this.isReExtracting() || this.application()?.extractionStatus === 'PENDING';
   });
 
   readonly hasExtractionSuccess = computed(() => {
@@ -192,9 +167,7 @@ export class CandidateProfile implements OnInit, OnDestroy {
   });
 
   readonly totalScore = computed(() => this.application()?.totalScore ?? null);
-  readonly minScore = computed(
-    () => this.application()?.offerMinScore ?? null
-  );
+  readonly minScore = computed(() => this.application()?.offerMinScore ?? null);
 
   readonly isScoreAdmissible = computed(() => {
     const score = this.totalScore();
@@ -307,11 +280,8 @@ export class CandidateProfile implements OnInit, OnDestroy {
 
     this.applicationService.updateApplicationStatus(app.id, newStatus).subscribe({
       next: () => {
-        this.application.update(
-          (curr) =>
-            curr
-              ? ({ ...curr, status: newStatus } as ApplicationResponse)
-              : null
+        this.application.update((curr) =>
+          curr ? ({ ...curr, status: newStatus } as ApplicationResponse) : null,
         );
         this.isUpdatingStatus.set(false);
         this.showToast('Statut mis à jour avec succès !', 'success');
@@ -342,7 +312,7 @@ export class CandidateProfile implements OnInit, OnDestroy {
             extractedMatching: null,
             cvExtractedData: null,
           } as ApplicationResponse)
-        : null
+        : null,
     );
 
     this.applicationService.reExtractCv(app.id).subscribe({
@@ -353,8 +323,7 @@ export class CandidateProfile implements OnInit, OnDestroy {
       error: (err) => {
         this.isReExtracting.set(false);
         this.fetchApplication(app.id);
-        const errMsg =
-          err?.error?.message || "Impossible de relancer l'analyse IA.";
+        const errMsg = err?.error?.message || "Impossible de relancer l'analyse IA.";
         this.showToast(errMsg, 'error');
       },
     });
@@ -421,14 +390,12 @@ export class CandidateProfile implements OnInit, OnDestroy {
         next: (blob) => {
           this.isLoadingCv.set(false);
           this.rawBlobUrl = URL.createObjectURL(blob);
-          this.cvPreviewUrl.set(
-            this.sanitizer.bypassSecurityTrustResourceUrl(this.rawBlobUrl)
-          );
+          this.cvPreviewUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(this.rawBlobUrl));
         },
         error: (err) => {
           this.isLoadingCv.set(false);
-          console.error("Erreur lors du chargement du CV :", err);
-          this.showToast("Impossible de charger le document CV.", 'error');
+          console.error('Erreur lors du chargement du CV :', err);
+          this.showToast('Impossible de charger le document CV.', 'error');
           this.closeCvModal();
         },
       });
@@ -470,4 +437,3 @@ export class CandidateProfile implements OnInit, OnDestroy {
     }
   }
 }
-

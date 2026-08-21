@@ -22,7 +22,6 @@ import { StatusBadge } from '../../../shared/components/status-badge/status-badg
 import { Subscription, interval, switchMap, takeWhile } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
-
 export type DatePeriod = 'ALL' | '24H' | '7D' | '30D';
 export type SortOption = 'NEWEST' | 'OLDEST' | 'SCORE_DESC' | 'SCORE_ASC';
 
@@ -41,7 +40,7 @@ export class CandidatesList implements OnInit, OnDestroy {
   private elementRef = inject(ElementRef);
 
   readonly canImport = computed(
-    () => this.authService.hasRole('HR_ADMIN') || this.authService.hasRole('RECRUITER')
+    () => this.authService.hasRole('HR_ADMIN') || this.authService.hasRole('RECRUITER'),
   );
 
   readonly offers = signal<OfferTitleResponse[]>([]);
@@ -92,8 +91,8 @@ export class CandidatesList implements OnInit, OnDestroy {
 
   // Sort options
   readonly sortOptions: { label: string; value: SortOption }[] = [
-    { label: 'Plus récents d\'abord', value: 'NEWEST' },
-    { label: 'Plus anciens d\'abord', value: 'OLDEST' },
+    { label: "Plus récents d'abord", value: 'NEWEST' },
+    { label: "Plus anciens d'abord", value: 'OLDEST' },
     { label: 'Score IA (Décroissant)', value: 'SCORE_DESC' },
     { label: 'Score IA (Croissant)', value: 'SCORE_ASC' },
   ];
@@ -137,7 +136,8 @@ export class CandidatesList implements OnInit, OnDestroy {
     const query = this.searchQuery().toLowerCase().trim();
     if (query) {
       list = list.filter((app) => {
-        const name = `${app.candidate?.firstName || ''} ${app.candidate?.lastName || ''}`.toLowerCase();
+        const name =
+          `${app.candidate?.firstName || ''} ${app.candidate?.lastName || ''}`.toLowerCase();
         const email = (app.candidate?.email || '').toLowerCase();
         const offer = (app.offerTitle || '').toLowerCase();
         const jobTitle = (app.candidate?.currentJobTitle || '').toLowerCase();
@@ -191,9 +191,7 @@ export class CandidatesList implements OnInit, OnDestroy {
 
   // Pagination Computations
   readonly totalCount = computed(() => this.filteredApplications().length);
-  readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.totalCount() / this.pageSize()))
-  );
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalCount() / this.pageSize())));
 
   readonly paginatedApplications = computed(() => {
     const list = this.filteredApplications();
@@ -361,9 +359,9 @@ export class CandidatesList implements OnInit, OnDestroy {
           pollCount++;
           const offerId = this.selectedOfferId();
           return this.applicationService.getAllApplications(
-            offerId === 'ALL' ? undefined : offerId
+            offerId === 'ALL' ? undefined : offerId,
           );
-        })
+        }),
       )
       .subscribe({
         next: (latestApps) => {
@@ -376,7 +374,6 @@ export class CandidatesList implements OnInit, OnDestroy {
       });
   }
 
-
   private stopPolling() {
     if (this.pollingSub) {
       this.pollingSub.unsubscribe();
@@ -385,9 +382,11 @@ export class CandidatesList implements OnInit, OnDestroy {
   }
 
   // Helper for Candidate Name display (Ghost Candidate support)
-  getCandidateDisplayName(
-    app: ApplicationSummaryResponse
-  ): { text: string; isGhost: boolean; isPending: boolean } {
+  getCandidateDisplayName(app: ApplicationSummaryResponse): {
+    text: string;
+    isGhost: boolean;
+    isPending: boolean;
+  } {
     if (app.candidate?.firstName || app.candidate?.lastName) {
       return {
         text: `${app.candidate.firstName || ''} ${app.candidate.lastName || ''}`.trim(),
@@ -417,7 +416,10 @@ export class CandidatesList implements OnInit, OnDestroy {
     return (fn + ln).toUpperCase() || '?';
   }
 
-  getScoreColorClass(score: number | null | undefined, minScore: number | null | undefined): string {
+  getScoreColorClass(
+    score: number | null | undefined,
+    minScore: number | null | undefined,
+  ): string {
     if (score === null || score === undefined) return 'text-slate';
     if (minScore !== null && minScore !== undefined) {
       return score >= minScore ? 'text-green' : 'text-red';

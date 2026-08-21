@@ -32,9 +32,7 @@ export class CareersList implements OnInit {
     const query = this.searchQuery().toLowerCase().trim();
 
     if (contract !== 'ALL') {
-      list = list.filter(
-        (o) => o.contractType?.toLowerCase() === contract.toLowerCase()
-      );
+      list = list.filter((o) => o.contractType?.toLowerCase() === contract.toLowerCase());
     }
 
     if (query) {
@@ -42,7 +40,7 @@ export class CareersList implements OnInit {
         (o) =>
           o.title.toLowerCase().includes(query) ||
           (o.contractType && o.contractType.toLowerCase().includes(query)) ||
-          (o.localization && o.localization.toLowerCase().includes(query))
+          (o.localization && o.localization.toLowerCase().includes(query)),
       );
     }
 

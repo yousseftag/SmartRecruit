@@ -29,7 +29,9 @@ export class ApplicationService {
 
   /** Polls the current NLP extraction status of an application */
   pollExtractionStatus(id: string): Observable<ApplicationExtractionStatusResponse> {
-    return this.http.get<ApplicationExtractionStatusResponse>(`${this.apiUrl}/${id}/extraction-status`);
+    return this.http.get<ApplicationExtractionStatusResponse>(
+      `${this.apiUrl}/${id}/extraction-status`,
+    );
   }
 
   /** Retrieves the full, detailed profile of a single application */
