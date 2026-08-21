@@ -13,11 +13,7 @@ import { RouterModule } from '@angular/router';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 import { OfferService } from '../../../core/services/offer.service';
 import { ApplicationService } from '../../../core/services/application.service';
-import {
-  OfferTitleResponse,
-  TaskStatus,
-  UploadTask,
-} from '../../../core/models';
+import { OfferTitleResponse, TaskStatus, UploadTask } from '../../../core/models';
 import { environment } from '../../../../environments/environment';
 
 interface StoredImportSession {
@@ -52,7 +48,7 @@ export class CandidateImport implements OnInit {
   // 1. Files ready to be processed (Pending or Failed with a valid File object)
   readonly tasksToProcess = computed(() => {
     return this.uploadTasks().filter(
-      (t) => (t.status === 'PENDING' || t.status === 'FAILED') && !!t.file
+      (t) => (t.status === 'PENDING' || t.status === 'FAILED') && !!t.file,
     );
   });
 
@@ -60,9 +56,7 @@ export class CandidateImport implements OnInit {
   readonly isProcessing = computed(() => {
     return (
       this.isUploading() ||
-      this.uploadTasks().some(
-        (t) => t.status === 'UPLOADING' || t.status === 'PARSING'
-      )
+      this.uploadTasks().some((t) => t.status === 'UPLOADING' || t.status === 'PARSING')
     );
   });
 
@@ -74,16 +68,16 @@ export class CandidateImport implements OnInit {
 
   // Counts
   readonly pendingCount = computed(
-    () => this.uploadTasks().filter((t) => t.status === 'PENDING').length
+    () => this.uploadTasks().filter((t) => t.status === 'PENDING').length,
   );
   readonly failedCount = computed(
-    () => this.uploadTasks().filter((t) => t.status === 'FAILED').length
+    () => this.uploadTasks().filter((t) => t.status === 'FAILED').length,
   );
   readonly duplicateCount = computed(
-    () => this.uploadTasks().filter((t) => t.status === 'DUPLICATE').length
+    () => this.uploadTasks().filter((t) => t.status === 'DUPLICATE').length,
   );
   readonly successCount = computed(
-    () => this.uploadTasks().filter((t) => t.status === 'SUCCESS').length
+    () => this.uploadTasks().filter((t) => t.status === 'SUCCESS').length,
   );
 
   readonly selectedOfferLabel = computed(() => {
@@ -135,10 +129,7 @@ export class CandidateImport implements OnInit {
         tasks: serializableTasks,
       };
 
-      sessionStorage.setItem(
-        this.SESSION_STORAGE_KEY,
-        JSON.stringify(sessionData)
-      );
+      sessionStorage.setItem(this.SESSION_STORAGE_KEY, JSON.stringify(sessionData));
     } catch (e) {
       console.warn('Could not save session to sessionStorage', e);
     }
@@ -171,7 +162,7 @@ export class CandidateImport implements OnInit {
                   progress: 0,
                   errorMessage: 'Téléchargement interrompu.',
                 }
-              : t
+              : t,
           );
 
           this.uploadTasks.set(sanitizedTasks);
@@ -232,7 +223,7 @@ export class CandidateImport implements OnInit {
           summaryMessage: undefined,
           subErrors: undefined,
           applicationId: undefined,
-        }))
+        })),
     );
     this.saveSession();
   }
@@ -246,7 +237,7 @@ export class CandidateImport implements OnInit {
 
       for (const file of files) {
         const existingIdx = updated.findIndex(
-          (t) => t.filename === file.name && t.size === file.size
+          (t) => t.filename === file.name && t.size === file.size,
         );
 
         const isZip = file.name.endsWith('.zip');
@@ -312,9 +303,7 @@ export class CandidateImport implements OnInit {
 
   clearCompletedTasks() {
     if (this.isProcessing()) return;
-    this.uploadTasks.update((tasks) =>
-      tasks.filter((t) => t.status !== 'SUCCESS')
-    );
+    this.uploadTasks.update((tasks) => tasks.filter((t) => t.status !== 'SUCCESS'));
     this.saveSession();
   }
 
@@ -327,9 +316,7 @@ export class CandidateImport implements OnInit {
 
     this.isUploading.set(true);
 
-    const filesToUpload = tasksToRun
-      .map((t) => t.file)
-      .filter((f): f is File => !!f);
+    const filesToUpload = tasksToRun.map((t) => t.file).filter((f): f is File => !!f);
 
     const filesSet = new Set(filesToUpload.map((f) => f.name));
 
@@ -345,8 +332,8 @@ export class CandidateImport implements OnInit {
               summaryMessage: undefined,
               subErrors: undefined,
             }
-          : t
-      )
+          : t,
+      ),
     );
     this.saveSession();
 
@@ -359,9 +346,7 @@ export class CandidateImport implements OnInit {
           current.map((t) => {
             if (!filesSet.has(t.filename)) return t;
 
-            const statusMatch = fileStatuses.find(
-              (s) => s.filename === t.filename
-            );
+            const statusMatch = fileStatuses.find((s) => s.filename === t.filename);
 
             if (!statusMatch) {
               return {
@@ -393,8 +378,7 @@ export class CandidateImport implements OnInit {
                 status: 'SUCCESS',
                 progress: 100,
                 summaryMessage:
-                  statusMatch.message ||
-                  `${statusMatch.extractedCount} CV(s) extrait(s).`,
+                  statusMatch.message || `${statusMatch.extractedCount} CV(s) extrait(s).`,
                 subErrors: statusMatch.subErrors,
               };
             }
@@ -419,11 +403,10 @@ export class CandidateImport implements OnInit {
               status: 'FAILED',
               progress: 0,
               errorCode: statusMatch.errorCode || undefined,
-              errorMessage:
-                statusMatch.message || 'Échec du traitement du fichier.',
+              errorMessage: statusMatch.message || 'Échec du traitement du fichier.',
               subErrors: statusMatch.subErrors,
             };
-          })
+          }),
         );
 
         this.saveSession();
@@ -439,15 +422,11 @@ export class CandidateImport implements OnInit {
       },
       error: (err) => {
         const errorMessage =
-          err?.error?.message ||
-          err?.message ||
-          "Erreur lors de l'envoi des fichiers.";
+          err?.error?.message || err?.message || "Erreur lors de l'envoi des fichiers.";
         this.uploadTasks.update((current) =>
           current.map((t) =>
-            filesSet.has(t.filename)
-              ? { ...t, status: 'FAILED', progress: 0, errorMessage }
-              : t
-          )
+            filesSet.has(t.filename) ? { ...t, status: 'FAILED', progress: 0, errorMessage } : t,
+          ),
         );
         this.isUploading.set(false);
         this.saveSession();
@@ -476,7 +455,7 @@ export class CandidateImport implements OnInit {
               applicationId,
               'FAILED',
               0,
-              "Échec de l'analyse IA : document illisible ou non reconnu."
+              "Échec de l'analyse IA : document illisible ou non reconnu.",
             );
             this.checkAllDone();
           }
@@ -484,9 +463,7 @@ export class CandidateImport implements OnInit {
         error: (err) => {
           this.stopPolling(applicationId);
           const errorMessage =
-            err?.error?.message ||
-            err?.message ||
-            "Erreur lors de l'extraction IA.";
+            err?.error?.message || err?.message || "Erreur lors de l'extraction IA.";
           this.updateTaskStatus(applicationId, 'FAILED', 0, errorMessage);
           this.checkAllDone();
         },
@@ -501,12 +478,7 @@ export class CandidateImport implements OnInit {
       pollCount++;
       if (pollCount > maxPolls) {
         this.stopPolling(applicationId);
-        this.updateTaskStatus(
-          applicationId,
-          'FAILED',
-          0,
-          "Délai d'attente d'extraction dépassé."
-        );
+        this.updateTaskStatus(applicationId, 'FAILED', 0, "Délai d'attente d'extraction dépassé.");
         this.checkAllDone();
         return;
       }
@@ -533,23 +505,19 @@ export class CandidateImport implements OnInit {
     applicationId: string,
     status: 'SUCCESS' | 'FAILED',
     progress: number,
-    errorMessage?: string
+    errorMessage?: string,
   ) {
     this.uploadTasks.update((current) =>
       current.map((t) =>
-        t.applicationId === applicationId
-          ? { ...t, status, progress, errorMessage }
-          : t
-      )
+        t.applicationId === applicationId ? { ...t, status, progress, errorMessage } : t,
+      ),
     );
     this.saveSession();
   }
 
   private checkAllDone() {
     const tasks = this.uploadTasks();
-    const stillActive = tasks.some(
-      (t) => t.status === 'UPLOADING' || t.status === 'PARSING'
-    );
+    const stillActive = tasks.some((t) => t.status === 'UPLOADING' || t.status === 'PARSING');
     if (!stillActive) {
       this.isUploading.set(false);
     }
@@ -563,4 +531,3 @@ export class CandidateImport implements OnInit {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   }
 }
-

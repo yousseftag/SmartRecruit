@@ -52,4 +52,3 @@ public class AppUser {
   @Column(updatable = false)
   private Instant createdAt;
 }
-

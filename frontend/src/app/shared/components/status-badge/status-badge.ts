@@ -14,7 +14,6 @@ export class StatusBadge {
   readonly statusConfig = computed(() => {
     const raw = (this.status() || '').toUpperCase();
     switch (raw) {
-
       // Workflow Statuses
       case 'NEW':
         return {
@@ -100,4 +99,3 @@ export class StatusBadge {
     }
   });
 }
-

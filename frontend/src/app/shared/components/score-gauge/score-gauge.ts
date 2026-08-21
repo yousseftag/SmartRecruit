@@ -36,4 +36,3 @@ export class ScoreGauge {
     return 'Profil non recommandé';
   });
 }
-

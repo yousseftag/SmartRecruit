@@ -48,7 +48,7 @@ export class CareerDetail implements OnInit {
         error: (err) => {
           this.error.set(true);
           this.errorMessage.set(
-            err?.error?.message || "L'offre demandée est introuvable ou n'est plus disponible."
+            err?.error?.message || "L'offre demandée est introuvable ou n'est plus disponible.",
           );
           this.isLoading.set(false);
         },

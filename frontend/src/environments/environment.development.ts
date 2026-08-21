@@ -12,4 +12,3 @@ export const environment = {
   pollingIntervalMs: 3000,
   pollingMaxAttempts: 30,
 };
-

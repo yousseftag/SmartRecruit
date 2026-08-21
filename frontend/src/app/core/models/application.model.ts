@@ -11,13 +11,7 @@ export * from './candidate.model';
 export * from './ai-extraction.model';
 
 export type WorkflowStatus =
-  | 'NEW'
-  | 'SHORTLISTED'
-  | 'INTERVIEWING'
-  | 'FOLLOW_UP'
-  | 'HIRED'
-  | 'REJECTED'
-  | 'ARCHIVED';
+  'NEW' | 'SHORTLISTED' | 'INTERVIEWING' | 'FOLLOW_UP' | 'HIRED' | 'REJECTED' | 'ARCHIVED';
 
 export interface ApplicationSummaryResponse {
   id: string;
@@ -74,13 +68,7 @@ export interface UpdateApplicationStatusRequest {
   status: WorkflowStatus | string;
 }
 
-export type TaskStatus =
-  | 'PENDING'
-  | 'UPLOADING'
-  | 'PARSING'
-  | 'SUCCESS'
-  | 'FAILED'
-  | 'DUPLICATE';
+export type TaskStatus = 'PENDING' | 'UPLOADING' | 'PARSING' | 'SUCCESS' | 'FAILED' | 'DUPLICATE';
 
 export interface UploadTask {
   file?: File;
@@ -95,4 +83,3 @@ export interface UploadTask {
   summaryMessage?: string;
   subErrors?: string[];
 }
-

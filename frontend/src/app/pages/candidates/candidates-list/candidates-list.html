@@ -3,11 +3,23 @@
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
     <div>
       <h1 class="text-2xl font-bold text-ink tracking-tight">Gestion des Candidatures</h1>
-      <p class="text-xs text-slate mt-0.5">Consultez, filtrez et évaluez les candidats analysés par l'IA.</p>
+      <p class="text-xs text-slate mt-0.5">
+        Consultez, filtrez et évaluez les candidats analysés par l'IA.
+      </p>
     </div>
     @if (canImport()) {
-      <a routerLink="/hr/candidates/import" class="btn btn-primary flex items-center gap-2 whitespace-nowrap text-xs">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+      <a
+        routerLink="/hr/candidates/import"
+        class="btn btn-primary flex items-center gap-2 whitespace-nowrap text-xs"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+          ></path>
+        </svg>
         Importer des CVs (Lots / ZIP)
       </a>
     }
@@ -16,15 +28,26 @@
   <div class="card bg-white mb-6 border border-line shadow-xs">
     <!-- Toolbar (Search, Dropdown Filters & Sort) -->
     <div class="p-4 border-b border-line flex flex-col gap-3">
-      
       <!-- Top Row: Search & Action Quick Counts -->
       <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         <!-- Search Input -->
         <div class="relative flex-1 max-w-lg">
-          <svg class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-          <input 
-            type="text" 
-            placeholder="Rechercher par candidat, email, intitulé de poste..." 
+          <svg
+            class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-faint"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            ></path>
+          </svg>
+          <input
+            type="text"
+            placeholder="Rechercher par candidat, email, intitulé de poste..."
             [value]="searchQuery()"
             (input)="setSearchQuery($event)"
             class="w-full pl-9 pr-4 py-2 bg-bg border border-line rounded-lg focus:border-blue focus:ring-1 focus:ring-blue outline-none transition-colors text-xs text-ink placeholder:text-faint"
@@ -32,7 +55,9 @@
         </div>
 
         <!-- Total Count Badge -->
-        <div class="text-xs text-slate font-medium flex items-center gap-1.5 self-end md:self-center">
+        <div
+          class="text-xs text-slate font-medium flex items-center gap-1.5 self-end md:self-center"
+        >
           <span class="w-2 h-2 rounded-full bg-blue"></span>
           <span>{{ totalCount() }} candidature(s) au total</span>
         </div>
@@ -40,7 +65,6 @@
 
       <!-- Bottom Row: 4 Clean Custom Dropdowns (Offer, Status, Period, Sort) -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
-        
         <!-- 1. Offer Selector Dropdown -->
         <div class="relative w-full">
           <button
@@ -49,14 +73,34 @@
             class="w-full px-3 py-2 bg-bg border border-line rounded-lg text-xs font-semibold text-ink flex items-center justify-between gap-2 hover:border-slate/40 focus:border-blue transition-all"
           >
             <div class="flex items-center gap-2 truncate">
-              <svg class="w-3.5 h-3.5 text-slate flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+              <svg
+                class="w-3.5 h-3.5 text-slate flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                ></path>
+              </svg>
               <span class="truncate">{{ selectedOfferLabel() }}</span>
             </div>
             <svg
               class="w-3.5 h-3.5 text-slate flex-shrink-0 transition-transform duration-200"
               [class.rotate-180]="isOfferDropdownOpen()"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              ></path>
             </svg>
           </button>
 
@@ -69,11 +113,25 @@
                 type="button"
                 (click)="selectOffer('ALL')"
                 class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="selectedOfferId() === 'ALL' ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'"
+                [ngClass]="
+                  selectedOfferId() === 'ALL' ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
+                "
               >
                 <span>Toutes les offres</span>
                 @if (selectedOfferId() === 'ALL') {
-                  <svg class="w-3.5 h-3.5 text-blue flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                  <svg
+                    class="w-3.5 h-3.5 text-blue flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    ></path>
+                  </svg>
                 }
               </button>
 
@@ -84,11 +142,25 @@
                   type="button"
                   (click)="selectOffer(off.id)"
                   class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors truncate"
-                  [ngClass]="selectedOfferId() === off.id ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'"
+                  [ngClass]="
+                    selectedOfferId() === off.id ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
+                  "
                 >
                   <span class="truncate">{{ off.title }}</span>
                   @if (selectedOfferId() === off.id) {
-                    <svg class="w-3.5 h-3.5 text-blue flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <svg
+                      class="w-3.5 h-3.5 text-blue flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 13l4 4L19 7"
+                      ></path>
+                    </svg>
                   }
                 </button>
               }
@@ -104,14 +176,25 @@
             class="w-full px-3 py-2 bg-bg border border-line rounded-lg text-xs font-semibold text-ink flex items-center justify-between gap-2 hover:border-slate/40 focus:border-blue transition-all"
           >
             <div class="flex items-center gap-2 truncate">
-              <span class="w-2 h-2 rounded-full flex-shrink-0" [ngClass]="selectedStatusOption().color"></span>
+              <span
+                class="w-2 h-2 rounded-full flex-shrink-0"
+                [ngClass]="selectedStatusOption().color"
+              ></span>
               <span class="truncate">{{ selectedStatusOption().label }}</span>
             </div>
             <svg
               class="w-3.5 h-3.5 text-slate flex-shrink-0 transition-transform duration-200"
               [class.rotate-180]="isStatusDropdownOpen()"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              ></path>
             </svg>
           </button>
 
@@ -125,14 +208,28 @@
                   type="button"
                   (click)="selectStatus(st.value)"
                   class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                  [ngClass]="currentTab() === st.value ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'"
+                  [ngClass]="
+                    currentTab() === st.value ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
+                  "
                 >
                   <div class="flex items-center gap-2">
                     <span class="w-2 h-2 rounded-full flex-shrink-0" [ngClass]="st.color"></span>
                     <span>{{ st.label }}</span>
                   </div>
                   @if (currentTab() === st.value) {
-                    <svg class="w-3.5 h-3.5 text-blue flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <svg
+                      class="w-3.5 h-3.5 text-blue flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 13l4 4L19 7"
+                      ></path>
+                    </svg>
                   }
                 </button>
               }
@@ -148,14 +245,34 @@
             class="w-full px-3 py-2 bg-bg border border-line rounded-lg text-xs font-semibold text-ink flex items-center justify-between gap-2 hover:border-slate/40 focus:border-blue transition-all"
           >
             <div class="flex items-center gap-2 truncate">
-              <svg class="w-3.5 h-3.5 text-slate flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+              <svg
+                class="w-3.5 h-3.5 text-slate flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                ></path>
+              </svg>
               <span class="truncate">{{ selectedPeriodLabel() }}</span>
             </div>
             <svg
               class="w-3.5 h-3.5 text-slate flex-shrink-0 transition-transform duration-200"
               [class.rotate-180]="isPeriodDropdownOpen()"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              ></path>
             </svg>
           </button>
 
@@ -169,11 +286,25 @@
                   type="button"
                   (click)="selectPeriod(p.value)"
                   class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                  [ngClass]="selectedPeriod() === p.value ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'"
+                  [ngClass]="
+                    selectedPeriod() === p.value ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
+                  "
                 >
                   <span>{{ p.label }}</span>
                   @if (selectedPeriod() === p.value) {
-                    <svg class="w-3.5 h-3.5 text-blue flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <svg
+                      class="w-3.5 h-3.5 text-blue flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 13l4 4L19 7"
+                      ></path>
+                    </svg>
                   }
                 </button>
               }
@@ -189,14 +320,34 @@
             class="w-full px-3 py-2 bg-bg border border-line rounded-lg text-xs font-semibold text-ink flex items-center justify-between gap-2 hover:border-slate/40 focus:border-blue transition-all"
           >
             <div class="flex items-center gap-2 truncate">
-              <svg class="w-3.5 h-3.5 text-slate flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"></path></svg>
+              <svg
+                class="w-3.5 h-3.5 text-slate flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12"
+                ></path>
+              </svg>
               <span class="truncate">{{ selectedSortLabel() }}</span>
             </div>
             <svg
               class="w-3.5 h-3.5 text-slate flex-shrink-0 transition-transform duration-200"
               [class.rotate-180]="isSortDropdownOpen()"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 9l-7 7-7-7"
+              ></path>
             </svg>
           </button>
 
@@ -210,18 +361,31 @@
                   type="button"
                   (click)="selectSort(s.value)"
                   class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                  [ngClass]="sortBy() === s.value ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'"
+                  [ngClass]="
+                    sortBy() === s.value ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
+                  "
                 >
                   <span>{{ s.label }}</span>
                   @if (sortBy() === s.value) {
-                    <svg class="w-3.5 h-3.5 text-blue flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <svg
+                      class="w-3.5 h-3.5 text-blue flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 13l4 4L19 7"
+                      ></path>
+                    </svg>
                   }
                 </button>
               }
             </div>
           }
         </div>
-
       </div>
     </div>
 
@@ -236,9 +400,23 @@
     <!-- Empty State -->
     @if (!isLoading() && totalCount() === 0) {
       <div class="p-16 text-center">
-        <svg class="w-12 h-12 text-faint mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+        <svg
+          class="w-12 h-12 text-faint mx-auto mb-3"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="1.5"
+            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+          ></path>
+        </svg>
         <p class="text-ink font-bold text-sm">Aucune candidature trouvée</p>
-        <p class="text-slate text-xs mt-1">Ajustez vos critères de recherche ou réinitialisez les filtres.</p>
+        <p class="text-slate text-xs mt-1">
+          Ajustez vos critères de recherche ou réinitialisez les filtres.
+        </p>
       </div>
     }
 
@@ -246,7 +424,9 @@
     @if (!isLoading() && totalCount() > 0) {
       <div class="overflow-x-auto">
         <table class="w-full text-left text-xs whitespace-nowrap">
-          <thead class="bg-bg text-slate font-bold uppercase tracking-wider border-b border-line text-[11px]">
+          <thead
+            class="bg-bg text-slate font-bold uppercase tracking-wider border-b border-line text-[11px]"
+          >
             <tr>
               <th class="px-6 py-3.5">Candidat</th>
               <th class="px-6 py-3.5">Offre postulée</th>
@@ -258,44 +438,62 @@
           </thead>
           <tbody class="divide-y divide-line">
             @for (app of paginatedApplications(); track app.id) {
-              <tr 
+              <tr
                 [routerLink]="['/hr/candidates', app.id]"
-                class="hover:bg-bg/60 transition-colors cursor-pointer group">
-                
+                class="hover:bg-bg/60 transition-colors cursor-pointer group"
+              >
                 <!-- Candidate Identity (Avatar + Name/Ghost handling) -->
                 <td class="px-6 py-4">
                   <div class="flex items-center gap-3">
-                    
                     <!-- Avatar -->
-                    <div class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0"
-                      [ngClass]="getCandidateDisplayName(app).isPending ? 'bg-amber-100 text-amber-700 animate-pulse' : 'bg-blue-100 text-blue'">
+                    <div
+                      class="w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs flex-shrink-0"
+                      [ngClass]="
+                        getCandidateDisplayName(app).isPending
+                          ? 'bg-amber-100 text-amber-700 animate-pulse'
+                          : 'bg-blue-100 text-blue'
+                      "
+                    >
                       {{ getInitials(app) }}
                     </div>
 
                     <div>
                       <!-- Name or Ghost Indicator -->
                       <div class="font-bold text-ink flex items-center gap-2">
-                        <span [ngClass]="{'italic text-slate-500 font-normal': getCandidateDisplayName(app).isGhost}">
+                        <span
+                          [ngClass]="{
+                            'italic text-slate-500 font-normal':
+                              getCandidateDisplayName(app).isGhost,
+                          }"
+                        >
                           {{ getCandidateDisplayName(app).text }}
                         </span>
                         <!-- Pending Pulse Dot -->
                         @if (getCandidateDisplayName(app).isPending) {
                           <span class="relative flex h-2 w-2">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                            <span
+                              class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"
+                            ></span>
+                            <span
+                              class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"
+                            ></span>
                           </span>
                         }
                       </div>
 
                       <!-- Email or Job Title -->
                       <div class="text-[11px] text-slate mt-0.5">
-                        {{ app.candidate?.email || (getCandidateDisplayName(app).isPending ? 'Extraction en cours...' : 'Email non extrait') }}
+                        {{
+                          app.candidate?.email ||
+                            (getCandidateDisplayName(app).isPending
+                              ? 'Extraction en cours...'
+                              : 'Email non extrait')
+                        }}
                       </div>
                     </div>
-
                   </div>
                 </td>
-                
+
                 <!-- Offer Title -->
                 <td class="px-6 py-4">
                   <span class="font-semibold text-ink">{{ app.offerTitle }}</span>
@@ -305,28 +503,55 @@
                 <td class="px-6 py-4 text-center">
                   @if (app.totalScore !== undefined && app.totalScore !== null) {
                     <div class="inline-flex items-center gap-2">
-                      <span class="font-extrabold text-sm" [ngClass]="getScoreColorClass(app.totalScore, app.offerMinScore)">
+                      <span
+                        class="font-extrabold text-sm"
+                        [ngClass]="getScoreColorClass(app.totalScore, app.offerMinScore)"
+                      >
                         {{ app.totalScore }}%
                       </span>
-                      
+
                       <!-- Pass/Fail Badge according to Offer minScore -->
                       @if (app.offerMinScore !== null) {
-                        <span 
+                        <span
                           class="text-[10px] font-bold px-1.5 py-0.5 rounded-md border"
-                          [ngClass]="app.totalScore >= app.offerMinScore ? 'bg-green-bg text-green border-green/20' : 'bg-red-bg text-red border-red/20'">
+                          [ngClass]="
+                            app.totalScore >= app.offerMinScore
+                              ? 'bg-green-bg text-green border-green/20'
+                              : 'bg-red-bg text-red border-red/20'
+                          "
+                        >
                           {{ app.totalScore >= app.offerMinScore ? 'ADMISSIBLE' : 'SOUS SEUIL' }}
                         </span>
                       }
                     </div>
                   } @else {
                     @if (app.extractionStatus === 'FAILED') {
-                      <span class="inline-flex items-center gap-1 text-[11px] text-red font-medium bg-red-bg px-2 py-0.5 rounded-md border border-red/20" title="Échec de l'analyse IA">
-                        <svg class="w-3 h-3 text-red flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                      <span
+                        class="inline-flex items-center gap-1 text-[11px] text-red font-medium bg-red-bg px-2 py-0.5 rounded-md border border-red/20"
+                        title="Échec de l'analyse IA"
+                      >
+                        <svg
+                          class="w-3 h-3 text-red flex-shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                          ></path>
+                        </svg>
                         Échec IA
                       </span>
                     } @else {
-                      <span class="inline-flex items-center gap-1 text-[11px] text-amber-800 dark:text-amber-300 font-medium bg-amber-500/15 px-2 py-0.5 rounded-md border border-amber-500/30">
-                        <span class="animate-spin h-2.5 w-2.5 border border-amber-600 dark:border-amber-400 border-t-transparent rounded-full"></span>
+                      <span
+                        class="inline-flex items-center gap-1 text-[11px] text-amber-800 dark:text-amber-300 font-medium bg-amber-500/15 px-2 py-0.5 rounded-md border border-amber-500/30"
+                      >
+                        <span
+                          class="animate-spin h-2.5 w-2.5 border border-amber-600 dark:border-amber-400 border-t-transparent rounded-full"
+                        ></span>
                         En cours
                       </span>
                     }
@@ -340,33 +565,43 @@
 
                 <!-- Applied Date -->
                 <td class="px-6 py-4 text-slate">
-                  {{ app.appliedAt | date:'dd MMM yyyy à HH:mm' }}
+                  {{ app.appliedAt | date: 'dd MMM yyyy à HH:mm' }}
                 </td>
 
                 <!-- Subtle Hover Navigation Chevron -->
                 <td class="pr-6 py-4 text-right">
-                  <svg class="w-4 h-4 text-slate-300 group-hover:text-blue group-hover:translate-x-1 transition-all inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                  <svg
+                    class="w-4 h-4 text-slate-300 group-hover:text-blue group-hover:translate-x-1 transition-all inline-block"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 5l7 7-7 7"
+                    ></path>
                   </svg>
                 </td>
-
               </tr>
             }
           </tbody>
         </table>
       </div>
     }
-    
+
     <!-- Table Footer with Pagination Controls -->
     @if (!isLoading() && totalCount() > 0) {
-      <div class="px-6 py-3.5 border-t border-line text-xs text-slate flex flex-col sm:flex-row justify-between items-center gap-3 bg-bg/30">
-        
+      <div
+        class="px-6 py-3.5 border-t border-line text-xs text-slate flex flex-col sm:flex-row justify-between items-center gap-3 bg-bg/30"
+      >
         <!-- Left: Count Summary & Page Size Picker -->
         <div class="flex items-center gap-3">
           <span>{{ paginationSummary() }}</span>
-          
+
           <span class="text-line">|</span>
-          
+
           <div class="flex items-center gap-1.5 text-xs">
             <span class="text-slate">Afficher :</span>
             @for (size of pageSizes; track size) {
@@ -374,7 +609,11 @@
                 type="button"
                 (click)="setPageSize(size)"
                 class="px-2 py-0.5 rounded border text-[11px] font-semibold transition-colors"
-                [ngClass]="pageSize() === size ? 'bg-blue text-white border-blue shadow-xs' : 'bg-white text-slate border-line hover:border-slate/40'"
+                [ngClass]="
+                  pageSize() === size
+                    ? 'bg-blue text-white border-blue shadow-xs'
+                    : 'bg-white text-slate border-line hover:border-slate/40'
+                "
               >
                 {{ size }}
               </button>
@@ -410,9 +649,7 @@
             </button>
           </div>
         }
-
       </div>
     }
   </div>
 </div>
-
