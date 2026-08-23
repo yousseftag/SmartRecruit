@@ -61,6 +61,9 @@ public class Application {
   @Column(name = "scored_at")
   private OffsetDateTime scoredAt;
 
+  @Column(name = "passed_min_score")
+  private Boolean passedMinScore;
+
   @CreationTimestamp
   @Column(name = "applied_at", nullable = false, updatable = false)
   private OffsetDateTime appliedAt;
