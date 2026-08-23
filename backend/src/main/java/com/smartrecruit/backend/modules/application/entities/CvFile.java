@@ -1,6 +1,6 @@
-package com.smartrecruit.backend.modules.candidate.entities;
+package com.smartrecruit.backend.modules.application.entities;
 
-import com.smartrecruit.backend.modules.candidate.enums.ExtractionStatus;
+import com.smartrecruit.backend.modules.application.enums.ExtractionStatus;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
 import java.util.UUID;

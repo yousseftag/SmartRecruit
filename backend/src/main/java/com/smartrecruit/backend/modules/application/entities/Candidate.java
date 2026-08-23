@@ -1,4 +1,4 @@
-package com.smartrecruit.backend.modules.candidate.entities;
+package com.smartrecruit.backend.modules.application.entities;
 
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;

@@ -1,8 +1,6 @@
 package com.smartrecruit.backend.modules.application.entities;
 
 import com.smartrecruit.backend.modules.application.enums.ApplicationStatus;
-import com.smartrecruit.backend.modules.candidate.entities.Candidate;
-import com.smartrecruit.backend.modules.candidate.entities.CvFile;
 import com.smartrecruit.backend.modules.offer.entities.Offer;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
