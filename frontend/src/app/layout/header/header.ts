@@ -10,6 +10,7 @@ import {
   LucideCircleCheck,
 } from '@lucide/angular';
 import { AuthService } from '../../core/auth/auth.service';
+import { UserRole } from '../../core/models/user.model';
 import { EditProfile } from '../../pages/edit-profile/edit-profile';
 
 @Component({
@@ -103,9 +104,9 @@ export class Header implements OnInit {
       }
       this.userInitials.set(initials);
 
-      if (this.authService.hasRole('HR_ADMIN')) {
+      if (this.authService.hasRole(UserRole.HR_ADMIN)) {
         this.userRole.set('Admin RH');
-      } else if (this.authService.hasRole('RECRUITER')) {
+      } else if (this.authService.hasRole(UserRole.RECRUITER)) {
         this.userRole.set('Recruteur');
       } else {
         this.userRole.set('Consultation');
