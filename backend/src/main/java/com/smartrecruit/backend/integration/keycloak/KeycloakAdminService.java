@@ -7,7 +7,6 @@ import java.util.Optional;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.RealmResource;
-import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
@@ -45,14 +44,12 @@ public class KeycloakAdminService {
 
   public void updateUser(String userId, String firstName, String lastName, String email) {
     try {
-      UserResource userResource = getRealmResource().users().get(userId);
-      UserRepresentation user = userResource.toRepresentation();
-
+      UserRepresentation user = new UserRepresentation();
       user.setFirstName(firstName);
       user.setLastName(lastName);
       user.setEmail(email);
 
-      userResource.update(user);
+      getRealmResource().users().get(userId).update(user);
     } catch (Exception e) {
       throw new KeycloakIntegrationException(
           "Failed to update user in Keycloak: " + e.getMessage(), e);

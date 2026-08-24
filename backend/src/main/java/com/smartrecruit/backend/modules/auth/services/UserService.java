@@ -15,16 +15,14 @@ import com.smartrecruit.backend.modules.auth.repositories.AppUserRepository;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 public class UserService {
-
-  private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
   private final AppUserRepository userRepository;
   private final KeycloakAdminService keycloakAdminService;
@@ -39,7 +37,7 @@ public class UserService {
     this.emailService = emailService;
   }
 
-  @Transactional(readOnly = true)
+  @Transactional
   public UserResponse getMyProfile(Jwt jwt) {
     String sub = jwt.getSubject();
     AppUser user =
@@ -47,10 +45,33 @@ public class UserService {
             .findByKeycloakSub(sub)
             .orElseThrow(() -> new UserNotFoundException("User not found for sub: " + sub));
 
+    // Self-healing: auto-sync local database with any direct updates from Keycloak token claims
+    boolean updated = false;
+    String jwtEmail = jwt.getClaimAsString("email");
+    String jwtFirstName = jwt.getClaimAsString("given_name");
+    String jwtLastName = jwt.getClaimAsString("family_name");
+
+    if (jwtEmail != null && !jwtEmail.equalsIgnoreCase(user.getEmail())) {
+      user.setEmail(jwtEmail);
+      updated = true;
+    }
+    if (jwtFirstName != null && !jwtFirstName.equals(user.getFirstName())) {
+      user.setFirstName(jwtFirstName);
+      updated = true;
+    }
+    if (jwtLastName != null && !jwtLastName.equals(user.getLastName())) {
+      user.setLastName(jwtLastName);
+      updated = true;
+    }
+
+    if (updated) {
+      log.info("Self-healing: Updated PostgreSQL user {} from Keycloak token claims", sub);
+      user = userRepository.save(user);
+    }
+
     return UserMapper.toResponse(user);
   }
 
-  @Transactional
   public UserResponse updateMyProfile(Jwt jwt, UpdateProfileRequest request) {
     String sub = jwt.getSubject();
     AppUser user =
@@ -64,16 +85,36 @@ public class UserService {
       }
     }
 
-    // Update PostgreSQL
-    user.setFirstName(request.firstName());
-    user.setLastName(request.lastName());
-    user.setEmail(request.email());
-    AppUser savedUser = userRepository.save(user);
+    String previousFirstName = user.getFirstName();
+    String previousLastName = user.getLastName();
+    String previousEmail = user.getEmail();
 
-    // Update Keycloak
+    // 1. Update Keycloak external identity provider
     keycloakAdminService.updateUser(sub, request.firstName(), request.lastName(), request.email());
 
-    return UserMapper.toResponse(savedUser);
+    // 2. Persist to PostgreSQL database with Compensating Rollback if DB write fails
+    try {
+      user.setFirstName(request.firstName());
+      user.setLastName(request.lastName());
+      user.setEmail(request.email());
+      AppUser savedUser = userRepository.save(user);
+      return UserMapper.toResponse(savedUser);
+    } catch (Exception dbException) {
+      log.error(
+          "Failed to persist user profile update in PostgreSQL. Initiating compensating rollback to Keycloak for sub: {}",
+          sub,
+          dbException);
+      try {
+        keycloakAdminService.updateUser(sub, previousFirstName, previousLastName, previousEmail);
+        log.info("Successfully rolled back Keycloak state for user sub: {}", sub);
+      } catch (Exception kcRollbackEx) {
+        log.error(
+            "CRITICAL: Failed to rollback Keycloak state after PostgreSQL error for user sub: {}",
+            sub,
+            kcRollbackEx);
+      }
+      throw dbException;
+    }
   }
 
   public List<UserResponse> getAllUsers() {
