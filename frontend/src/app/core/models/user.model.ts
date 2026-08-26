@@ -44,4 +44,5 @@ export interface UserProfile {
   fullName: string;
   email: string;
   preferredUsername: string;
+  roles?: string[];
 }
