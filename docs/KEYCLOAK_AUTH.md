@@ -1,246 +1,353 @@
-# SmartRecruit Authentication & Identity Architecture Specification
+# SmartRecruit — Authentication & User Management Architecture
 
-**Target Runtime:** Angular 18+ (Zoneless Signals), Spring Boot 4.1+ (Java 21 LTS), Keycloak 24.0, PostgreSQL 15+  
-**Classification:** Internal Technical Architecture & Developer Standard  
+**Runtime Stack:** Angular 18+ (Zoneless Signals) · Spring Boot 4.1+ (Java 21 LTS) · Keycloak 24.0 · PostgreSQL 16+  
+**Classification:** Internal Technical Architecture & Developer Reference
 
 ---
 
 ## Table of Contents
 
-1. [Architectural Overview & Design Principles](#1-architectural-overview--design-principles)
+1. [Architectural Overview](#1-architectural-overview)
 2. [System Boundaries & Component Directory](#2-system-boundaries--component-directory)
-3. [Frontend Security Architecture (Angular)](#3-frontend-security-architecture-angular)
-4. [Backend Security Architecture (Spring Boot Resource Server)](#4-backend-security-architecture-spring-boot-resource-server)
-5. [Keycloak & PostgreSQL Synchronization Model](#5-keycloak--postgresql-synchronization-model)
-6. [End-to-End Sequence Workflows](#6-end-to-end-sequence-workflows)
-7. [Role-Based Access Control (RBAC) Matrix](#7-role-based-access-control-rbac-matrix)
-8. [Developer Implementation Guidelines](#8-developer-implementation-guidelines)
+3. [Configuration Reference](#3-configuration-reference)
+4. [Startup & Admin Seeder](#4-startup--admin-seeder)
+5. [Frontend Security Architecture (Angular)](#5-frontend-security-architecture-angular)
+6. [Backend Security Architecture (Spring Boot)](#6-backend-security-architecture-spring-boot)
+7. [Keycloak ↔ PostgreSQL Synchronization Model](#7-keycloak--postgresql-synchronization-model)
+8. [User Management Lifecycle (CRUD)](#8-user-management-lifecycle-crud)
+9. [End-to-End Sequence Diagrams](#9-end-to-end-sequence-diagrams)
+10. [Role-Based Access Control (RBAC) Matrix](#10-role-based-access-control-rbac-matrix)
+11. [Developer Implementation Guidelines](#11-developer-implementation-guidelines)
 
 ---
 
-## 1. Architectural Overview & Design Principles
+## 1. Architectural Overview
 
-SmartRecruit uses a **hybrid identity and persistence architecture**: Keycloak manages identities, credentials, and tokens, while PostgreSQL maintains local user records for relational integrity (e.g., job offer creators and workflow audit logs).
+SmartRecruit uses a **hybrid identity and persistence architecture**: Keycloak owns all credentials, sessions, and token issuance. PostgreSQL owns relational user metadata needed for domain foreign keys (who created an offer, who changed a workflow status, etc.).
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ 1. CLIENT LAYER (Angular 18+ Single Page Application)                       │
-│    • Public Routes (/careers)    ──> Zero authentication overhead           │
-│    • Protected Routes (/hr/**)   ──> Guarded via authGuard (Lazy Init)      │
-│    • HTTP Pipeline               ──> keycloakBearerInterceptor              │
+│ 1. CLIENT LAYER (Angular 18+ SPA — :4200)                                   │
+│    • Public Routes  (/careers/**)  ──▶ Zero Keycloak overhead               │
+│    • Protected Routes (/hr/**)     ──▶ Lazy-initialized authGuard           │
+│    • All HTTP calls                ──▶ keycloakBearerInterceptor            │
 └─────────────────────────────────────────────────────────────────────────────┘
-          │ (OIDC / PKCE Redirect)         │ (HTTPS / Bearer JWT Token)
-          ▼                                ▼
-┌───────────────────────────┐    ┌────────────────────────────────────────────┐
-│ 2. IDENTITY LAYER         │    │ 3. RESOURCE SERVER LAYER (Spring Boot)     │
-│    Keycloak Server (:8081)│    │    • SecurityFilterChain (Stateless)       │
-│    • Realm: smartrecruit  │    │    • JwtAuthConverter (Authority Mapping)  │
-│    • RSA Token Signing    │◄───┼─── • KeycloakAdminService (Admin REST API) │
-│    • User Directory (SSO) │(Admin API • UserService (Profile CRUD)          │
-└───────────────────────────┘    └────────────────────────────────────────────┘
-                                                   │
-                                                   ▼ (SQL Queries)
-                                 ┌────────────────────────────────────────────┐
-                                 │ 4. PERSISTENCE LAYER (PostgreSQL :5432)    │
-                                 │    • app_user table (keycloak_sub index)   │
-                                 │    • Relational FKs (offer, audit history) │
-                                 └────────────────────────────────────────────┘
+          │ OIDC Authorization Code + PKCE     │ HTTPS / Bearer JWT
+          ▼                                    ▼
+┌─────────────────────┐         ┌──────────────────────────────────────────────┐
+│ 2. IDENTITY LAYER   │         │ 3. RESOURCE SERVER LAYER (Spring Boot :8080) │
+│  Keycloak (:8081)   │         │   • SecurityFilterChain (Stateless JWT)      │
+│  Realm: smartrecruit│◀────────│   • JwtAuthConverter  (role extraction)      │
+│  Client: smartrecruit│ Admin  │   • KeycloakAdminService (Admin REST API)    │
+│          -frontend  │   API   │   • UserService (CRUD + JIT Provisioning)    │
+│  RSA-256 Signing    │         │   • SecurityUtils  (request identity)        │
+│  admin-cli in master│         │   • AdminSeeder  (startup bootstrap)         │
+└─────────────────────┘         └──────────────────────────────────────────────┘
+                                                   │ JDBC
+                                                   ▼
+                                 ┌──────────────────────────────────────────────┐
+                                 │ 4. PERSISTENCE LAYER (PostgreSQL :5432)      │
+                                 │    Table: app_user  (keycloak_sub indexed)   │
+                                 │    FK targets: offer, workflow_status_history│
+                                 └──────────────────────────────────────────────┘
 ```
 
 ### Core Design Principles
 
-1. **Zero Password Footprint**: Passwords, MFA, and SSO sessions are handled exclusively by Keycloak. No credentials touch the backend database.
-2. **Stateless Verification**: Spring Boot acts as an OAuth2 Resource Server, verifying JWT signatures using Keycloak's public JWKS.
-3. **Local Relational Identity**: The local PostgreSQL `app_user` table maps to Keycloak via `keycloak_sub` (UUID) to preserve database foreign keys (`offer.created_by`, `workflow_status_history.changed_by`).
-4. **Non-Blocking Public Traffic**: Public career pages bypass Keycloak completely, preventing iframe freezes and ensuring instant page loads.
+| # | Principle | Rationale |
+|---|-----------|-----------|
+| 1 | **Zero Password Footprint** | Passwords, MFA, and sessions are handled exclusively by Keycloak. No credentials ever touch the backend database. |
+| 2 | **Stateless JWT Verification** | Spring Boot acts as an OAuth2 Resource Server, verifying JWT signatures against Keycloak's public JWKS endpoint. No session state is maintained server-side. |
+| 3 | **Local Relational Identity** | The `app_user` table maps to Keycloak via `keycloak_sub` (UUID) to preserve relational foreign keys throughout the domain model. |
+| 4 | **JIT Provisioning** | Users logging in for the first time are automatically provisioned in PostgreSQL from their JWT claims — no manual database seeding required. |
+| 5 | **Self-Healing Sync** | On every `GET /api/v1/users/me` call, PostgreSQL is silently updated if any JWT claim (email, firstName, lastName) differs from the local record. |
+| 6 | **Non-Blocking Public Traffic** | Public career pages bypass Keycloak completely to prevent iframe freezes and deliver instant page loads. |
 
 ---
 
 ## 2. System Boundaries & Component Directory
 
-| Layer | Runtime Host | Key Files | Responsibility | Protocol |
-| :--- | :--- | :--- | :--- | :--- |
-| **Client** | Browser (`:4200`) | [`auth.guard.ts`](../frontend/src/app/core/guards/auth.guard.ts)<br>[`keycloak-bearer.interceptor.ts`](../frontend/src/app/core/auth/keycloak-bearer.interceptor.ts)<br>[`keycloak-init.service.ts`](../frontend/src/app/core/auth/keycloak-init.service.ts)<br>[`auth.service.ts`](../frontend/src/app/core/auth/auth.service.ts) | • Lazy Keycloak bootstrap<br>• Token attachment & auto-refresh ($<30\text{s}$ buffer)<br>• Reactive auth state signals | HTTPS / OIDC<br>REST / JSON |
-| **Identity** | Docker (`:8081`) | Realm: `smartrecruit`<br>Client: `smartrecruit-frontend` | • Credentials, session state & RS256 token issuance<br>• Admin REST API for profile synchronization | OpenID Connect<br>Admin REST API |
-| **Backend** | Spring Boot (`:8080`) | [`SecurityConfig.java`](../backend/src/main/java/com/smartrecruit/backend/config/SecurityConfig.java)<br>[`JwtAuthConverter.java`](../backend/src/main/java/com/smartrecruit/backend/security/JwtAuthConverter.java)<br>[`UserService.java`](../backend/src/main/java/com/smartrecruit/backend/modules/auth/services/UserService.java)<br>[`KeycloakAdminService.java`](../backend/src/main/java/com/smartrecruit/backend/integration/keycloak/KeycloakAdminService.java) | • Stateless JWT verification against JWKS<br>• Extract `realm_access.roles` $\rightarrow$ `ROLE_*`<br>• Dual-write synchronization to Keycloak | REST / JSON<br>Keycloak Admin Client |
-| **Persistence** | PostgreSQL (`:5432`) | Table: `app_user`<br>Migration: [`V1__init.sql`](../backend/src/main/resources/db/migration/V1__init.sql) | • Local user profile metadata<br>• Foreign key target for application domain entities | JDBC / PostgreSQL Driver |
+| Layer | Host | Key Files | Responsibility |
+|:------|:-----|:----------|:---------------|
+| **Client** | Browser (`:4200`) | [`auth.guard.ts`](../frontend/src/app/core/guards/auth.guard.ts)<br>[`keycloak-bearer.interceptor.ts`](../frontend/src/app/core/auth/keycloak-bearer.interceptor.ts)<br>[`keycloak-init.service.ts`](../frontend/src/app/core/auth/keycloak-init.service.ts)<br>[`auth.service.ts`](../frontend/src/app/core/auth/auth.service.ts) | Lazy Keycloak bootstrap, token attachment & auto-refresh, reactive auth state signals |
+| **Identity** | Docker (`:8081`) | Realm: `smartrecruit`<br>Client: `smartrecruit-frontend`<br>Admin client: `admin-cli` (in `master` realm) | Credentials, RSA-256 token signing, SSO sessions, Admin REST API |
+| **Backend** | Spring Boot (`:8080`) | [`SecurityConfig.java`](../backend/src/main/java/com/smartrecruit/backend/config/SecurityConfig.java)<br>[`JwtAuthConverter.java`](../backend/src/main/java/com/smartrecruit/backend/security/JwtAuthConverter.java)<br>[`SecurityUtils.java`](../backend/src/main/java/com/smartrecruit/backend/security/SecurityUtils.java)<br>[`KeycloakAdminService.java`](../backend/src/main/java/com/smartrecruit/backend/integration/keycloak/KeycloakAdminService.java)<br>[`UserService.java`](../backend/src/main/java/com/smartrecruit/backend/modules/auth/services/UserService.java)<br>[`AdminSeeder.java`](../backend/src/main/java/com/smartrecruit/backend/modules/auth/services/AdminSeeder.java) | Stateless JWT verification, role extraction, dual-write sync, JIT provisioning, admin bootstrap |
+| **Persistence** | PostgreSQL (`:5432`) | Entity: [`AppUser.java`](../backend/src/main/java/com/smartrecruit/backend/modules/auth/entities/AppUser.java) | Local user metadata, FK target for domain entities |
 
 ---
 
-## 3. Frontend Security Architecture (Angular)
+## 3. Configuration Reference
 
-### 3.1 Deferred Lazy Initialization
-Global initialization during `APP_INITIALIZER` causes silent `check-sso` `<iframe>` checks that freeze public pages on modern browsers. SmartRecruit initializes Keycloak **lazily** only when navigating to routes guarded by [`authGuard`](../frontend/src/app/core/guards/auth.guard.ts) via [`KeycloakInitService`](../frontend/src/app/core/auth/keycloak-init.service.ts).
+All Keycloak settings are declared in [`application.yml`](../backend/src/main/resources/application.yml). Environment variables override defaults for Docker/production:
 
-### 3.2 HTTP Bearer Interceptor
-All outgoing HTTP requests pass through [`keycloakBearerInterceptor`](../frontend/src/app/core/auth/keycloak-bearer.interceptor.ts) registered in [`app.config.ts`](../frontend/src/app/app.config.ts):
-* **Public APIs (`/api/v1/public/**`)**: Immediate pass-through without touching Keycloak.
-* **Protected APIs**: Refreshes token if expiring within 30 seconds (`keycloak.updateToken(30)`), attaches `Authorization: Bearer <token>`, and forwards the request.
+```yaml
+keycloak:
+  realm: smartrecruit
+  url: ${KEYCLOAK_URL:http://localhost:8081}/realms/${keycloak.realm}
+  admin:
+    server-url: ${KEYCLOAK_SERVER_URL:http://localhost:8081}
+    admin-realm: master          # IMPORTANT: admin-cli lives in the 'master' realm
+    client-id: admin-cli
+    username: ${KEYCLOAK_ADMIN:admin}
+    password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
+```
 
----
-
-## 4. Backend Security Architecture (Spring Boot Resource Server)
-
-### 4.1 Stateless Security Filter Chain
-[`SecurityConfig.java`](../backend/src/main/java/com/smartrecruit/backend/config/SecurityConfig.java) configures stateless OAuth2 resource server validation:
-* **Whitelisted Routes**: `/v3/api-docs/**`, `/swagger-ui/**`, `/api/v1/public/**`, and internal service routes (`/api/v1/internal/**`).
-* **Protected Routes**: All other endpoints require a valid JWT Bearer token.
-* **Error Handling**: 401 Unauthorized and 403 Forbidden exceptions are routed to [`AuthExceptionHandler.java`](../backend/src/main/java/com/smartrecruit/backend/exceptions/AuthExceptionHandler.java) for standardized JSON responses.
-
-### 4.2 JWT Authority Extraction
-[`JwtAuthConverter.java`](../backend/src/main/java/com/smartrecruit/backend/security/JwtAuthConverter.java) extracts roles from `jwt.claims["realm_access"]["roles"]` and maps them into Spring Security authorities (`ROLE_HR_ADMIN`, `ROLE_RECRUITER`, `ROLE_VIEWER`), enabling method-level security with `@PreAuthorize`.
+> [!IMPORTANT]
+> `admin-realm: master` is critical. The `admin-cli` client with `admin`/`admin` credentials exists **only** in the `master` realm. Pointing it at `smartrecruit` causes `401 Unauthorized` on every admin API call and silently breaks the seeder.
 
 ---
 
-## 5. Keycloak & PostgreSQL Synchronization Model
+## 4. Startup & Admin Seeder
 
-### 5.1 Relational User Schema (`app_user`)
-Local PostgreSQL entity [`AppUser`](../backend/src/main/java/com/smartrecruit/backend/modules/auth/entities/AppUser.java) stores: `id` (UUID PK), `keycloakSub` (indexed unique UUID), `username`, `firstName`, `lastName`, `email`, `role`, and `createdAt`.
+[`AdminSeeder.java`](../backend/src/main/java/com/smartrecruit/backend/modules/auth/services/AdminSeeder.java) runs on `ApplicationReadyEvent` and performs a **two-way, self-healing synchronization** for the default `admin` account:
 
-### 5.2 Startup Admin Bootstrapping
-On application boot, [`AdminSeeder.java`](../backend/src/main/java/com/smartrecruit/backend/modules/auth/services/AdminSeeder.java) verifies if an `HR_ADMIN` exists in PostgreSQL. If missing, it queries the Keycloak Admin API for the `admin` account and replicates it into `app_user`.
+```mermaid
+flowchart TD
+    A([ApplicationReadyEvent]) --> B{Does 'admin' exist\nin Keycloak?}
+    B -- Yes --> C[Read sub + profile from Keycloak]
+    B -- No --> D[Create 'admin'/'admin'\nwith HR_ADMIN role\nin Keycloak — permanent password]
+    D --> C
+    C --> E{Does 'admin' exist\nin PostgreSQL?}
+    E -- Yes, sub matches --> F([Already synced — done])
+    E -- Yes, sub differs --> G[Update keycloak_sub in PostgreSQL]
+    E -- No --> H[INSERT app_user with\nall fields from Keycloak]
+    G --> F
+    H --> F
+```
 
-### 5.3 Profile Update & Dual-Write Protocol
-When updating a profile via `PUT /api/v1/users/me`:
-1. [`UserService.java`](../backend/src/main/java/com/smartrecruit/backend/modules/auth/services/UserService.java) validates that the new email is not taken by another user.
-2. Updates `app_user` in PostgreSQL.
-3. Calls [`KeycloakAdminService.java`](../backend/src/main/java/com/smartrecruit/backend/integration/keycloak/KeycloakAdminService.java) to update Keycloak via Admin REST API.
+> [!NOTE]
+> The `admin` user is **no longer seeded via `realm-export.json`**. It is created entirely by the backend on startup, making the system self-sufficient against any fresh Keycloak deployment.
 
 ---
 
-## 6. End-to-End Sequence Workflows
+## 5. Frontend Security Architecture (Angular)
 
-### Workflow 1: Authentication & Route Access
+### 5.1 Deferred Lazy Initialization
+
+Keycloak is **not** initialized in `APP_INITIALIZER`. Global initialization causes silent `check-sso` `<iframe>` requests that freeze public pages on modern browsers.
+
+Instead, [`KeycloakInitService`](../frontend/src/app/core/auth/keycloak-init.service.ts) is invoked **lazily** only when `authGuard` first intercepts a protected route navigation. This ensures:
+- Public pages (`/careers/**`) load with **zero Keycloak overhead**
+- Protected pages (`/hr/**`) trigger login on first access
+
+### 5.2 AuthService — Reactive Signal State
+
+[`AuthService`](../frontend/src/app/core/auth/auth.service.ts) is the central reactive auth façade, built entirely on Angular signals:
+
+```typescript
+// Reactive state — no Zone.js, no subscriptions needed in templates
+readonly isAuthenticated = signal<boolean>(false);
+readonly roles = signal<string[]>([]);
+readonly currentUser = signal<UserProfile | null>(null);
+
+// Derived computed signals — update automatically when roles changes
+readonly isAdmin    = computed(() => this.hasRole(UserRole.HR_ADMIN));
+readonly isRecruiter = computed(() => this.hasRole(UserRole.RECRUITER));
+readonly isViewer   = computed(() => this.hasRole(UserRole.VIEWER));
+```
+
+**On authentication (`syncAuthState`):**
+1. Sets `isAuthenticated`, `roles`, and `currentUser` signals from the live Keycloak token.
+2. Fires a **background** `GET /api/v1/users/me` call to trigger self-healing sync of the PostgreSQL user record against the verified JWT claims.
+
+### 5.3 HTTP Bearer Interceptor
+
+[`keycloakBearerInterceptor`](../frontend/src/app/core/auth/keycloak-bearer.interceptor.ts) is registered in [`app.config.ts`](../frontend/src/app/app.config.ts) and handles all outgoing HTTP requests:
+
+| Request Pattern | Behavior |
+|:----------------|:---------|
+| `/api/v1/public/**` | Pass-through — no token injected |
+| All other `/api/**` | Refresh token if expiring within 30 s (`updateToken(30)`), then attach `Authorization: Bearer <JWT>` |
+
+---
+
+## 6. Backend Security Architecture (Spring Boot)
+
+### 6.1 Stateless Security Filter Chain
+
+[`SecurityConfig.java`](../backend/src/main/java/com/smartrecruit/backend/config/SecurityConfig.java) configures Spring Security as an OAuth2 Resource Server:
+
+- **Session Policy:** `STATELESS` — no server-side session is ever created.
+- **JWT Verification:** Tokens are validated via Keycloak's public JWKS.
+- **Permit All:** `/v3/api-docs/**`, `/swagger-ui/**`, `/api/v1/public/**`, `/api/v1/internal/**`
+- **Authenticated:** Everything else requires a valid Bearer JWT.
+
+### 6.2 SecurityUtils — Request Identity Resolution
+
+[`SecurityUtils`](../backend/src/main/java/com/smartrecruit/backend/security/SecurityUtils.java) provides helpers for resolving the authenticated user within any Spring component:
+
+```java
+// Get the raw Keycloak UUID (sub claim)
+Optional<String> sub = securityUtils.getCurrentUserSub();
+
+// Get the full AppUser entity (with JIT provisioning fallback)
+Optional<AppUser> user = securityUtils.getCurrentUser();
+// ↑ If user is not in PostgreSQL yet, automatically calls provisionOrLinkUser(jwt)
+```
+
+### 6.3 KeycloakAdminService — Admin REST Client
+
+[`KeycloakAdminService`](../backend/src/main/java/com/smartrecruit/backend/integration/keycloak/KeycloakAdminService.java) wraps the Keycloak Admin REST API using the official `keycloak-admin-client`.
+
+> [!WARNING]
+> `KeycloakAdminService` authenticates against the **`master` realm** (`admin-realm: master` in config) using `admin-cli`. This is a Keycloak built-in; attempting to use it from the `smartrecruit` realm will return `401 Unauthorized`.
+
+---
+
+## 7. Keycloak ↔ PostgreSQL Synchronization Model
+
+### 7.1 `app_user` Table Schema
+
+The `keycloak_sub` column is the **primary join key** between Keycloak and PostgreSQL.
+
+### 7.2 JIT Provisioning (Just-In-Time)
+
+When a user authenticates via Keycloak for the first time, they receive a JWT. On the first protected API call, [`UserService.provisionOrLinkUser(jwt)`](../backend/src/main/java/com/smartrecruit/backend/modules/auth/services/UserService.java) is triggered:
+
+```
+JWT arrives → No matching keycloak_sub in app_user?
+  Step 1: Search by username
+  Step 2: Search by email
+  Step 3 (found match): Link — update keycloak_sub + sync profile fields
+  Step 3 (no match):    JIT INSERT — create new app_user from JWT claims
+                        role extracted from realm_access.roles
+```
+
+### 7.3 Self-Healing Token Sync
+
+On every `GET /api/v1/users/me`, [`UserService.getMyProfile()`](../backend/src/main/java/com/smartrecruit/backend/modules/auth/services/UserService.java) compares the live JWT claims against the PostgreSQL record, silently updating PostgreSQL if there is any drift.
+
+### 7.4 Profile Update — Dual-Write with Compensating Rollback
+
+`PUT /api/v1/users/me` writes to both stores in sequence. If PostgreSQL fails after Keycloak succeeds, a **compensating rollback** reverts Keycloak to the previous state.
+
+---
+
+## 8. User Management Lifecycle (CRUD)
+
+All admin user management operations go through `POST/PUT/DELETE /api/v1/users/**` and require `HR_ADMIN` role.
+
+### 8.1 Create User
+1. Validate `username` and `email` are unique in PostgreSQL.
+2. Generate a secure 12-character random password.
+3. Create user in Keycloak with **temporary** password (`temporary: true`).
+4. Assign the requested realm role in Keycloak.
+5. Insert `app_user` record in PostgreSQL.
+6. Send welcome email with temporary credentials.
+
+### 8.2 Delete User
+- A user **cannot delete their own account** (throws `400 Bad Request`).
+- Keycloak deletion is **idempotent**: if the user's `keycloak_sub` no longer exists in Keycloak (e.g. a legacy seed record), the 404 is ignored and PostgreSQL deletion proceeds cleanly.
+
+---
+
+## 9. End-to-End Sequence Diagrams
+
+### 9.1 First Login & JIT Provisioning
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as HR Personnel
-    participant Guard as authGuard (Frontend)
-    participant Init as KeycloakInitService (Frontend)
-    participant Keycloak as Keycloak Server (:8081)
+    actor User
+    participant Guard as authGuard
+    participant Init as KeycloakInitService
+    participant KC as Keycloak (:8081)
+    participant Auth as AuthService
+    participant Backend as Spring Boot (:8080)
+    participant DB as PostgreSQL
 
-    User->>Guard: Navigate to protected route (/hr/dashboard)
-    Guard->>Init: init() (Deferred initialization)
-    Init->>Keycloak: Check active session
-    Keycloak-->>Init: No active session
-    Guard->>Keycloak: Redirect browser to Keycloak login page (PKCE)
-    User->>Keycloak: Authenticate credentials
-    Keycloak-->>User: Redirect back with Authorization Code
-    Init->>Keycloak: Exchange Code for Access Token (JWT) & Refresh Token
+    User->>Guard: Navigate to /hr/dashboard
+    Guard->>Init: init() (lazy)
+    Init->>KC: Check active session
+    KC-->>Init: No active session
+    Guard->>KC: Redirect to login (PKCE)
+    User->>KC: Submit credentials
+    KC-->>User: Redirect + Authorization Code
+    Init->>KC: Exchange code for JWT + Refresh Token
+    Init-->>Guard: Authenticated ✓
     Guard-->>User: Render /hr/dashboard
+
+    Note over Auth: syncAuthState() fires on init
+    Auth->>Backend: GET /api/v1/users/me (background)
+    Backend->>DB: SELECT WHERE keycloak_sub = jwt.sub
+    DB-->>Backend: Not found (first login)
+    Backend->>DB: INSERT app_user from JWT claims (JIT Provision)
+    DB-->>Backend: AppUser saved
+    Backend-->>Auth: UserResponse
 ```
 
 ---
 
-### Workflow 2: Protected Resource Request
+### 9.2 Profile Update with Dual-Write & Compensating Rollback
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as HR Personnel
-    participant Comp as Angular Component
-    participant Interceptor as keycloakBearerInterceptor
-    participant SecConfig as Spring Security (:8080)
-    participant JwtConv as JwtAuthConverter
-    participant Controller as UserController / UserService
-    participant DB as PostgreSQL (app_user)
+    actor User
+    participant Form as Edit Profile Form
+    participant Backend as UserService
+    participant KC as Keycloak Admin API
+    participant DB as PostgreSQL
 
-    User->>Comp: Request Protected Data (/api/v1/users/me)
-    Comp->>Interceptor: Invoke HttpClient.get()
-    Interceptor->>Interceptor: Verify token validity (refresh if expiring in <30s)
-    Interceptor->>SecConfig: Dispatch HTTP GET with "Authorization: Bearer <JWT>"
-    SecConfig->>JwtConv: Verify cryptographic signature via Keycloak JWKS
-    JwtConv->>SecConfig: Extract authorities (ROLE_HR_ADMIN) and principal
-    SecConfig->>Controller: Dispatch to getMyProfile(Jwt)
-    Controller->>DB: SELECT * FROM app_user WHERE keycloak_sub = jwt.sub
-    DB-->>Controller: Return AppUser record
-    Controller-->>Comp: 200 OK (UserResponse DTO)
-    Comp-->>User: Render data in UI
+    User->>Form: Submit profile changes
+    Form->>Backend: PUT /api/v1/users/me
+    Backend->>DB: Validate email uniqueness
+    DB-->>Backend: ✓ Unique
+
+    Backend->>KC: PUT /admin/realms/smartrecruit/users/{sub}
+    KC-->>Backend: 204 No Content ✓
+
+    Backend->>DB: UPDATE app_user SET firstName, lastName, email
+    alt PostgreSQL write succeeds
+        DB-->>Backend: ✓ Saved
+        Backend-->>Form: 200 OK (UserResponse)
+        Form->>Backend: forceTokenRefresh() + syncAuthState()
+        Form-->>User: Success toast
+    else PostgreSQL write fails
+        DB-->>Backend: SQLException
+        Backend->>KC: Rollback — PUT /admin/.../users/{sub} (previous values)
+        KC-->>Backend: 204 No Content (rolled back)
+        Backend-->>Form: 500 Internal Server Error
+        Form-->>User: Error toast
+    end
 ```
 
 ---
 
-### Workflow 3: Profile Mutation & Keycloak Synchronization
-
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as HR Personnel
-    participant Comp as Profile Form
-    participant UserSvc as UserService (Backend)
-    participant DB as PostgreSQL (app_user)
-    participant KcAdmin as KeycloakAdminService (Backend)
-    participant Keycloak as Keycloak Admin API (:8081)
-
-    User->>Comp: Submit updated profile (firstName, lastName, email)
-    Comp->>UserSvc: PUT /api/v1/users/me (UpdateProfileRequest)
-    UserSvc->>DB: Validate uniqueness & UPDATE app_user
-    DB-->>UserSvc: PostgreSQL updated
-    UserSvc->>KcAdmin: updateUser(sub, firstName, lastName, email)
-    KcAdmin->>Keycloak: PUT /admin/realms/smartrecruit/users/{id}
-    Keycloak-->>KcAdmin: 204 No Content
-    UserSvc-->>Comp: 200 OK (UserResponse DTO)
-    Comp-->>User: Display update confirmation
-```
-
----
-
-## 7. Role-Based Access Control (RBAC) Matrix
+## 10. Role-Based Access Control (RBAC) Matrix
 
 | Endpoint Pattern | Method | Permitted Roles | Description |
-| :--- | :--- | :--- | :--- |
-| `/api/v1/public/offers/**` | `GET` | *Anonymous (Public)* | Public recruitment listings |
-| `/api/v1/public/applications/**` | `POST` | *Anonymous (Public)* | Public candidate application submission |
-| `/api/v1/internal/**` | *All* | *Internal Network* | Internal asynchronous AI/NLP callbacks |
-| `/api/v1/users/me` | `GET`, `PUT` | `HR_ADMIN`, `RECRUITER`, `VIEWER` | Current user profile management |
-| `/api/v1/offers/titles` | `GET` | `HR_ADMIN`, `RECRUITER`, `VIEWER` | Internal offer dropdown selectors |
-| `/api/v1/offers/{id}` | `GET` | `HR_ADMIN`, `RECRUITER`, `VIEWER` | Internal deep-dive offer details |
-| `/api/v1/offers/**` | `POST`, `PUT`, `DELETE` | `HR_ADMIN`, `RECRUITER` | Offer creation and modification |
-| `/api/v1/applications/**` | `GET` | `HR_ADMIN`, `RECRUITER`, `VIEWER` | Candidate application review |
-| `/api/v1/applications/**` | `PATCH`, `POST` | `HR_ADMIN`, `RECRUITER` | Workflow status transitions and imports |
+|:-----------------|:-------|:----------------|:------------|
+| `/api/v1/public/**` | `GET`, `POST` | Anonymous | Public jobs and applications |
+| `/api/v1/internal/**` | All | Internal Network | Async AI callbacks |
+| `/api/v1/users/me` | `GET`, `PUT` | All authenticated | Own profile management |
+| `/api/v1/users/**` | All | `HR_ADMIN` | User CRUD |
+| `/api/v1/offers/**` | `POST`, `PUT`, `DELETE` | `HR_ADMIN`, `RECRUITER` | Offer management |
 
 ---
 
-## 8. Developer Implementation Guidelines
+## 11. Developer Implementation Guidelines
 
-### 8.1 Implementing Public Endpoints
-* Prefix controller paths with `/api/v1/public/`.
-* Do not attach `@PreAuthorize`. The frontend interceptor automatically bypasses token injection.
+### 11.1 Accessing the Current User (Backend)
 
-### 8.2 Implementing Protected Endpoints
-* Prefix paths with `/api/v1/` and enforce roles via `@PreAuthorize`:
-  ```java
-  @GetMapping("/offers")
-  @PreAuthorize("hasAnyRole('HR_ADMIN', 'RECRUITER', 'VIEWER')")
-  public ResponseEntity<List<OfferResponse>> getOffers() { ... }
-  ```
+Use [`SecurityUtils`](../backend/src/main/java/com/smartrecruit/backend/security/SecurityUtils.java):
 
-### 8.3 Protecting Angular Routes
-Attach `authGuard` and specify required roles in route definitions:
-```typescript
-{
-  path: 'management',
-  component: ManagementComponent,
-  canActivate: [authGuard],
-  data: { roles: ['HR_ADMIN'] }
-}
+```java
+@Autowired SecurityUtils securityUtils;
+
+AppUser user = securityUtils.getCurrentUser()
+    .orElseThrow(() -> new UserNotFoundException("Not authenticated"));
 ```
 
-### 8.4 Accessing User Identity in Angular
+### 11.2 Accessing Auth State in Angular Components
+
 ```typescript
-export class UserMenuComponent {
-  private authService = inject(AuthService);
+@Component({ ... })
+export class HeaderComponent {
+  private auth = inject(AuthService);
 
-  readonly isAuthenticated = this.authService.isAuthenticated;
-  readonly isAdmin = this.authService.isAdmin;
-  readonly userProfile = this.authService.getUserProfile();
-
-  onLogout(): void {
-    this.authService.logout().subscribe();
-  }
+  readonly isAuthenticated = this.auth.isAuthenticated;  // signal<boolean>
+  readonly isAdmin = this.auth.isAdmin;                  // computed<boolean>
+  readonly currentUser = this.auth.currentUser;          // signal<UserProfile|null>
 }
 ```
-
-
-
