@@ -10,11 +10,17 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Transactional
 public class SyncControllerTest {
+
+  private static final String SEEDED_APP_ID = "22000000-0000-0000-0000-000000000002";
+  private static final String SEEDED_OFFER_ID = "22222222-2222-2222-2222-222222222222";
+  private static final String SEEDED_CV_ID = "21000000-0000-0000-0000-000000000002";
 
   @Autowired private MockMvc mockMvc;
 
@@ -23,9 +29,10 @@ public class SyncControllerTest {
     String validJson =
         """
         {
-          "applicationId": "123e4567-e89b-12d3-a456-426614174000",
-          "offerId": "123e4567-e89b-12d3-a456-426614174001",
-          "cvId": "123e4567-e89b-12d3-a456-426614174002",
+          "applicationId": "%s",
+          "offerId": "%s",
+          "cvId": "%s",
+          "extractionStatus": "SUCCESS",
           "extractedData": {
             "description_markdown": "test"
           },
@@ -44,7 +51,8 @@ public class SyncControllerTest {
           },
           "totalScore": 80
         }
-        """;
+        """
+            .formatted(SEEDED_APP_ID, SEEDED_OFFER_ID, SEEDED_CV_ID);
 
     mockMvc
         .perform(
@@ -59,9 +67,10 @@ public class SyncControllerTest {
     String invalidJson =
         """
         {
-          "applicationId": "123e4567-e89b-12d3-a456-426614174000",
-          "offerId": "123e4567-e89b-12d3-a456-426614174001",
-          "cvId": "123e4567-e89b-12d3-a456-426614174002",
+          "applicationId": "%s",
+          "offerId": "%s",
+          "cvId": "%s",
+          "extractionStatus": "SUCCESS",
           "extractedData": {},
           "extractedMatching": {},
           "categoryScores": {
@@ -73,7 +82,8 @@ public class SyncControllerTest {
           },
           "totalScore": 150.0
         }
-        """;
+        """
+            .formatted(SEEDED_APP_ID, SEEDED_OFFER_ID, SEEDED_CV_ID);
 
     mockMvc
         .perform(
@@ -88,9 +98,10 @@ public class SyncControllerTest {
     String invalidJson =
         """
         {
-          "applicationId": "123e4567-e89b-12d3-a456-426614174000",
-          "offerId": "123e4567-e89b-12d3-a456-426614174001",
-          "cvId": "123e4567-e89b-12d3-a456-426614174002",
+          "applicationId": "%s",
+          "offerId": "%s",
+          "cvId": "%s",
+          "extractionStatus": "SUCCESS",
           "extractedData": {},
           "extractedMatching": {},
           "categoryScores": {
@@ -102,7 +113,8 @@ public class SyncControllerTest {
           },
           "totalScore": 80.5
         }
-        """;
+        """
+            .formatted(SEEDED_APP_ID, SEEDED_OFFER_ID, SEEDED_CV_ID);
 
     mockMvc
         .perform(

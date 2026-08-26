@@ -3,6 +3,7 @@ package com.smartrecruit.backend.integration.modules.application;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.smartrecruit.backend.modules.offer.repositories.OfferRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,16 +12,25 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Transactional
 class ApplicationControllerTest {
 
   @Autowired private MockMvc mockMvc;
+  @Autowired private OfferRepository offerRepository;
 
   @Test
   void shouldReturn201WhenValidApplicationSubmitted() throws Exception {
+    UUID offerId =
+        offerRepository.findAll().stream()
+            .findFirst()
+            .map(com.smartrecruit.backend.modules.offer.entities.Offer::getId)
+            .orElse(UUID.fromString("22222222-2222-2222-2222-222222222222"));
+
     MockMultipartFile file =
         new MockMultipartFile("file", "resume.pdf", "application/pdf", "dummy content".getBytes());
 
@@ -30,8 +40,8 @@ class ApplicationControllerTest {
                 .file(file)
                 .param("firstName", "John")
                 .param("lastName", "Doe")
-                .param("email", "john.doe@example.com")
-                .param("offerId", UUID.randomUUID().toString()))
+                .param("email", "john.doe." + UUID.randomUUID() + "@example.com")
+                .param("offerId", offerId.toString()))
         .andExpect(status().isCreated());
   }
 
