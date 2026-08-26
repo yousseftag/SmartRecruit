@@ -28,34 +28,62 @@ public class AdminSeeder {
   @EventListener(ApplicationReadyEvent.class)
   public void seedAdminUser() {
     try {
-      if (userRepository.existsByRole(UserRole.HR_ADMIN)) {
-        logger.info("Admin user already exists in PostgreSQL. Seeding skipped.");
-        return;
-      }
+      String firstName = "Admin";
+      String lastName = "RH";
+      String email = "admin@smartrecruit.com";
+      String keycloakSub;
 
-      logger.info("No Admin user found in PostgreSQL. Attempting to seed from Keycloak...");
+      // 1. Ensure 'admin' exists in Keycloak with HR_ADMIN role
       Optional<UserRepresentation> adminOpt = keycloakAdminService.getUserByUsername("admin");
-
       if (adminOpt.isPresent()) {
         UserRepresentation adminKC = adminOpt.get();
+        keycloakSub = adminKC.getId();
+        if (adminKC.getFirstName() != null && !adminKC.getFirstName().isBlank()) {
+          firstName = adminKC.getFirstName();
+        }
+        if (adminKC.getLastName() != null && !adminKC.getLastName().isBlank()) {
+          lastName = adminKC.getLastName();
+        }
+        if (adminKC.getEmail() != null && !adminKC.getEmail().isBlank()) {
+          email = adminKC.getEmail();
+        }
+        logger.info("Found existing 'admin' user in Keycloak with sub: {}", keycloakSub);
+      } else {
+        logger.info(
+            "'admin' user not found in Keycloak. Auto-creating default admin in Keycloak...");
+        keycloakSub =
+            keycloakAdminService.createUser("admin", firstName, lastName, email, "admin", false);
+        keycloakAdminService.assignRealmRole(keycloakSub, UserRole.HR_ADMIN.name());
+        logger.info("Successfully created default 'admin' in Keycloak with sub: {}", keycloakSub);
+      }
 
+      // 2. Ensure 'admin' exists in PostgreSQL with the matching keycloakSub
+      Optional<AppUser> existingAdmin = userRepository.findByUsername("admin");
+      if (existingAdmin.isPresent()) {
+        AppUser user = existingAdmin.get();
+        if (!keycloakSub.equals(user.getKeycloakSub())) {
+          user.setKeycloakSub(keycloakSub);
+          userRepository.save(user);
+          logger.info("Updated 'admin' PostgreSQL keycloakSub to: {}", keycloakSub);
+        } else {
+          logger.info("Admin user already synced in PostgreSQL with sub: {}", keycloakSub);
+        }
+      } else {
         AppUser adminUser =
             AppUser.builder()
-                .keycloakSub(adminKC.getId())
-                .username(adminKC.getUsername())
-                .firstName(adminKC.getFirstName() != null ? adminKC.getFirstName() : "Admin")
-                .lastName(adminKC.getLastName() != null ? adminKC.getLastName() : "Admin")
-                .email(adminKC.getEmail() != null ? adminKC.getEmail() : "admin@example.com")
+                .keycloakSub(keycloakSub)
+                .username("admin")
+                .firstName(firstName)
+                .lastName(lastName)
+                .email(email)
                 .role(UserRole.HR_ADMIN)
                 .build();
 
         userRepository.save(adminUser);
-        logger.info("Admin user seeded in PostgreSQL with sub: {}", adminKC.getId());
-      } else {
-        logger.warn("Could not find 'admin' user in Keycloak. Seeding failed.");
+        logger.info("Admin user successfully seeded in PostgreSQL with sub: {}", keycloakSub);
       }
     } catch (Exception e) {
-      logger.error("An error occurred while seeding admin user: {}", e.getMessage());
+      logger.error("An error occurred while seeding admin user: {}", e.getMessage(), e);
     }
   }
 }

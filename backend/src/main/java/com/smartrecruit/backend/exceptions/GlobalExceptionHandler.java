@@ -25,9 +25,18 @@ public class GlobalExceptionHandler {
     return new ResponseEntity<>(body, status);
   }
 
-  // --- 400 Bad Request (Validation) ---
-  @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
+  // --- 400 Bad Request (Validation & Business Arguments) ---
+  @ExceptionHandler({
+    MethodArgumentNotValidException.class,
+    BindException.class,
+    IllegalArgumentException.class
+  })
   public ResponseEntity<ApiErrorResponse> handleValidationException(Exception ex) {
+    if (ex instanceof IllegalArgumentException iae) {
+      log.warn("Illegal argument / business constraint: {}", iae.getMessage());
+      return buildResponse(HttpStatus.BAD_REQUEST, iae.getMessage());
+    }
+
     BindingResult bindingResult = null;
     if (ex instanceof MethodArgumentNotValidException manve) {
       bindingResult = manve.getBindingResult();

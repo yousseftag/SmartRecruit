@@ -12,7 +12,10 @@ import com.smartrecruit.backend.modules.auth.exceptions.UserAlreadyExistsExcepti
 import com.smartrecruit.backend.modules.auth.exceptions.UserNotFoundException;
 import com.smartrecruit.backend.modules.auth.mappers.UserMapper;
 import com.smartrecruit.backend.modules.auth.repositories.AppUserRepository;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -40,10 +43,7 @@ public class UserService {
   @Transactional
   public UserResponse getMyProfile(Jwt jwt) {
     String sub = jwt.getSubject();
-    AppUser user =
-        userRepository
-            .findByKeycloakSub(sub)
-            .orElseThrow(() -> new UserNotFoundException("User not found for sub: " + sub));
+    AppUser user = userRepository.findByKeycloakSub(sub).orElseGet(() -> provisionOrLinkUser(jwt));
 
     // Self-healing: auto-sync local database with any direct updates from Keycloak token claims
     boolean updated = false;
@@ -74,10 +74,7 @@ public class UserService {
 
   public UserResponse updateMyProfile(Jwt jwt, UpdateProfileRequest request) {
     String sub = jwt.getSubject();
-    AppUser user =
-        userRepository
-            .findByKeycloakSub(sub)
-            .orElseThrow(() -> new UserNotFoundException("User not found for sub: " + sub));
+    AppUser user = userRepository.findByKeycloakSub(sub).orElseGet(() -> provisionOrLinkUser(jwt));
 
     if (!user.getEmail().equalsIgnoreCase(request.email())) {
       if (userRepository.existsByEmailAndIdNot(request.email(), user.getId())) {
@@ -212,6 +209,78 @@ public class UserService {
 
     keycloakAdminService.deleteUser(user.getKeycloakSub());
     userRepository.delete(user);
+  }
+
+  @Transactional
+  public AppUser provisionOrLinkUser(Jwt jwt) {
+    String sub = jwt.getSubject();
+    String username = jwt.getClaimAsString("preferred_username");
+    if (username == null || username.isBlank()) {
+      username = sub;
+    }
+    String email = jwt.getClaimAsString("email");
+    if (email == null || email.isBlank()) {
+      email = username + "@smartrecruit.com";
+    }
+    String firstName = jwt.getClaimAsString("given_name");
+    String lastName = jwt.getClaimAsString("family_name");
+
+    // 1. Try to link by username or email if already exists in PostgreSQL
+    Optional<AppUser> existing = userRepository.findByUsername(username);
+    if (existing.isEmpty()) {
+      existing = userRepository.findByEmail(email);
+    }
+
+    if (existing.isPresent()) {
+      AppUser user = existing.get();
+      log.info(
+          "Linking existing PostgreSQL user '{}' to Keycloak sub '{}'", user.getUsername(), sub);
+      user.setKeycloakSub(sub);
+      if (firstName != null && !firstName.isBlank()) {
+        user.setFirstName(firstName);
+      }
+      if (lastName != null && !lastName.isBlank()) {
+        user.setLastName(lastName);
+      }
+      user.setEmail(email);
+      return userRepository.save(user);
+    }
+
+    // 2. Otherwise JIT provision new user in PostgreSQL
+    UserRole role = extractRoleFromJwt(jwt);
+    log.info(
+        "JIT Provisioning new user in PostgreSQL: username={}, sub={}, role={}",
+        username,
+        sub,
+        role);
+    AppUser newUser =
+        AppUser.builder()
+            .keycloakSub(sub)
+            .username(username)
+            .firstName(firstName != null && !firstName.isBlank() ? firstName : username)
+            .lastName(lastName != null && !lastName.isBlank() ? lastName : "")
+            .email(email)
+            .role(role)
+            .build();
+
+    return userRepository.save(newUser);
+  }
+
+  @SuppressWarnings("unchecked")
+  private UserRole extractRoleFromJwt(Jwt jwt) {
+    Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+    if (realmAccess != null && !realmAccess.isEmpty()) {
+      Collection<String> roles = (Collection<String>) realmAccess.get("roles");
+      if (roles != null) {
+        if (roles.contains("HR_ADMIN")) {
+          return UserRole.HR_ADMIN;
+        }
+        if (roles.contains("RECRUITER")) {
+          return UserRole.RECRUITER;
+        }
+      }
+    }
+    return UserRole.VIEWER;
   }
 
   private String generateRandomPassword() {

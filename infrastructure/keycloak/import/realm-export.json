@@ -68,36 +68,6 @@
   ],
   "users": [
     {
-      "username": "admin",
-      "enabled": true,
-      "email": "admin@smartrecruit.com",
-      "emailVerified": true,
-      "firstName": "Admin",
-      "lastName": "RH",
-      "credentials": [
-        {
-          "type": "password",
-          "value": "admin",
-          "temporary": false
-        }
-      ],
-      "realmRoles": [
-        "HR_ADMIN"
-      ],
-      "clientRoles": {
-        "account": [
-          "view-profile",
-          "manage-account"
-        ],
-        "realm-management": [
-          "view-users",
-          "manage-users",
-          "view-realm",
-          "query-users"
-        ]
-      }
-    },
-    {
       "username": "recruteur",
       "enabled": true,
       "email": "recruteur@smartrecruit.com",

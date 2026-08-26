@@ -25,13 +25,14 @@ public class KeycloakAdminService {
       @Value("${keycloak.admin.client-id}") String clientId,
       @Value("${keycloak.admin.username}") String username,
       @Value("${keycloak.admin.password}") String password,
+      @Value("${keycloak.admin.admin-realm:master}") String adminRealm,
       @Value("${keycloak.realm}") String realm) {
 
     this.realm = realm;
     this.keycloak =
         KeycloakBuilder.builder()
             .serverUrl(serverUrl)
-            .realm(realm)
+            .realm(adminRealm) // authenticate via 'master' realm where admin-cli lives
             .clientId(clientId)
             .username(username)
             .password(password)
@@ -72,6 +73,16 @@ public class KeycloakAdminService {
 
   public String createUser(
       String username, String firstName, String lastName, String email, String password) {
+    return createUser(username, firstName, lastName, email, password, true);
+  }
+
+  public String createUser(
+      String username,
+      String firstName,
+      String lastName,
+      String email,
+      String password,
+      boolean temporary) {
     try {
       UserRepresentation user = new UserRepresentation();
       user.setUsername(username);
@@ -84,7 +95,7 @@ public class KeycloakAdminService {
       CredentialRepresentation credential = new CredentialRepresentation();
       credential.setType(CredentialRepresentation.PASSWORD);
       credential.setValue(password);
-      credential.setTemporary(true);
+      credential.setTemporary(temporary);
       user.setCredentials(Collections.singletonList(credential));
 
       Response response = getRealmResource().users().create(user);
@@ -136,9 +147,10 @@ public class KeycloakAdminService {
   public void deleteUser(String userId) {
     try {
       Response response = getRealmResource().users().delete(userId);
-      if (response.getStatus() != 204 && response.getStatus() != 200) {
+      int status = response.getStatus();
+      if (status != 204 && status != 200 && status != 404) {
         throw new KeycloakIntegrationException(
-            "Failed to delete user in Keycloak, status: " + response.getStatus(), null);
+            "Failed to delete user in Keycloak, status: " + status, null);
       }
     } catch (Exception e) {
       if (e instanceof KeycloakIntegrationException) throw e;

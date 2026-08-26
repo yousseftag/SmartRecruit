@@ -2,6 +2,7 @@ package com.smartrecruit.backend.security;
 
 import com.smartrecruit.backend.modules.auth.entities.AppUser;
 import com.smartrecruit.backend.modules.auth.repositories.AppUserRepository;
+import com.smartrecruit.backend.modules.auth.services.UserService;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 public class SecurityUtils {
 
   private final AppUserRepository userRepository;
+  private final UserService userService;
 
   /**
    * Retrieves the Keycloak Subject (UUID) of the currently authenticated user.
@@ -48,7 +50,12 @@ public class SecurityUtils {
    * @return Optional containing the AppUser from the local PostgreSQL database.
    */
   public Optional<AppUser> getCurrentUser() {
-    return getCurrentUserSub().flatMap(userRepository::findByKeycloakSub);
+    return getCurrentJwt()
+        .map(
+            jwt ->
+                userRepository
+                    .findByKeycloakSub(jwt.getSubject())
+                    .orElseGet(() -> userService.provisionOrLinkUser(jwt)));
   }
 
   /**
