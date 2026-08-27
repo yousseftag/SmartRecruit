@@ -11,6 +11,7 @@ import {
   LucideShieldCheck,
   LucideSettings,
   LucideUpload,
+  LucideMail,
 } from '@lucide/angular';
 import { NavItem } from './models/nav-item.model';
 import { AuthService } from '../../core/auth/auth.service';
@@ -44,6 +45,12 @@ export class Sidebar {
     { label: 'Workflow', route: '/hr/workflow', icon: LucideGitMerge },
     { label: 'Reporting', route: '/hr/reporting', icon: LucideChartColumnBig },
     {
+      label: "Modèles d'emails",
+      route: '/hr/settings/templates',
+      icon: LucideMail,
+      roles: [UserRole.HR_ADMIN, UserRole.RECRUITER],
+    },
+    {
       label: 'Administration',
       route: '/hr/administration',
       icon: LucideShieldCheck,
@@ -64,6 +71,12 @@ export class Sidebar {
     }
     if (route === '/hr/candidates') {
       return current.startsWith('/hr/candidates') && !current.startsWith('/hr/candidates/import');
+    }
+    if (route === '/hr/settings/general') {
+      return current === '/hr/settings/general';
+    }
+    if (route === '/hr/settings/templates') {
+      return current.startsWith('/hr/settings/templates');
     }
     if (route === '/hr/dashboard') {
       return current === '/hr/dashboard' || current === '/hr';
