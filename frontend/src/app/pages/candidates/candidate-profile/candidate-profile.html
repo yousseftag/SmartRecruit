@@ -172,8 +172,21 @@
           }
         </div>
 
-        <!-- Header Actions: Re-Extract AI & Custom Status Dropdown -->
-        <div class="flex items-center gap-3">
+        <!-- Header Actions: Send Email, Re-Extract AI & Custom Status Dropdown -->
+        <div class="flex items-center gap-2.5">
+          <!-- Send Email Button (HR & Recruiters) -->
+          @if (canManageStatus()) {
+            <button
+              type="button"
+              (click)="openEmailModal()"
+              class="btn btn-outline px-3 py-2 text-xs font-bold flex items-center gap-1.5 text-blue-600 border-blue-200 hover:bg-blue-50 transition-colors shadow-2xs"
+              title="Envoyer un email au candidat"
+            >
+              <svg [lucideIcon]="LucideMail" class="w-3.5 h-3.5"></svg>
+              <span>Envoyer un email</span>
+            </button>
+          }
+
           <!-- Re-Analyze AI Button (HR & Recruiters) -->
           @if (canManageStatus()) {
             <button
@@ -1202,4 +1215,16 @@
       </div>
     </div>
   }
+
+  <!-- Send Email Modal Component Integration -->
+  <app-send-email-modal
+    [isOpen]="isEmailModalOpen()"
+    [applicationId]="application()?.id || null"
+    [candidateName]="candidateFullName()"
+    [candidateEmail]="application()?.candidate?.email || ''"
+    [offerTitle]="application()?.offerTitle || 'Offre'"
+    [targetStatus]="application()?.status || null"
+    (close)="closeEmailModal()"
+    (emailSent)="onEmailSent()"
+  ></app-send-email-modal>
 </div>

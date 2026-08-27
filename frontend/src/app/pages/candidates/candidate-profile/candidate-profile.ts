@@ -22,6 +22,8 @@ import {
 import { AuthService } from '../../../core/auth/auth.service';
 import { ScoreGauge } from '../../../shared/components/score-gauge/score-gauge';
 import { ExperienceFormatPipe } from '../../../shared/pipes/experience-format.pipe';
+import { SendEmailModal } from '../../../shared/components/send-email-modal/send-email-modal';
+import { LucideDynamicIcon, LucideMail } from '@lucide/angular';
 import { environment } from '../../../../environments/environment';
 
 export interface StatusOption {
@@ -34,7 +36,7 @@ export interface StatusOption {
 @Component({
   selector: 'app-candidate-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule, ScoreGauge, ExperienceFormatPipe],
+  imports: [CommonModule, RouterModule, ScoreGauge, ExperienceFormatPipe, SendEmailModal, LucideDynamicIcon],
   templateUrl: './candidate-profile.html',
 })
 export class CandidateProfile implements OnInit, OnDestroy {
@@ -44,6 +46,8 @@ export class CandidateProfile implements OnInit, OnDestroy {
   private elementRef = inject(ElementRef);
   private sanitizer = inject(DomSanitizer);
   private destroyRef = inject(DestroyRef);
+
+  readonly LucideMail = LucideMail;
 
   private activePoller: ReturnType<typeof setInterval> | null = null;
 
@@ -57,6 +61,7 @@ export class CandidateProfile implements OnInit, OnDestroy {
 
   readonly isUpdatingStatus = signal(false);
   readonly isStatusDropdownOpen = signal(false);
+  readonly isEmailModalOpen = signal(false);
 
   readonly isReExtracting = signal(false);
 
@@ -423,10 +428,25 @@ export class CandidateProfile implements OnInit, OnDestroy {
     document.body.removeChild(a);
   }
 
+  openEmailModal(): void {
+    this.isEmailModalOpen.set(true);
+  }
+
+  closeEmailModal(): void {
+    this.isEmailModalOpen.set(false);
+  }
+
+  onEmailSent(): void {
+    this.showToast('Email envoyé au candidat avec succès !', 'success');
+  }
+
   @HostListener('document:keydown.escape')
   onEscapePress() {
     if (this.isPreviewModalOpen()) {
       this.closeCvModal();
+    }
+    if (this.isEmailModalOpen()) {
+      this.closeEmailModal();
     }
   }
 
