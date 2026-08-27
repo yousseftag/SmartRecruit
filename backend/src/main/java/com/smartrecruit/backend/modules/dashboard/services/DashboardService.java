@@ -3,15 +3,11 @@ package com.smartrecruit.backend.modules.dashboard.services;
 import com.smartrecruit.backend.modules.application.enums.ApplicationStatus;
 import com.smartrecruit.backend.modules.application.repositories.ApplicationRepository;
 import com.smartrecruit.backend.modules.dashboard.dtos.*;
-import com.smartrecruit.backend.modules.dashboard.entities.WorkflowStatusHistory;
 import com.smartrecruit.backend.modules.dashboard.repositories.WorkflowStatusHistoryRepository;
 import com.smartrecruit.backend.modules.offer.entities.Offer;
 import com.smartrecruit.backend.modules.offer.repositories.OfferRepository;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -85,48 +81,19 @@ public class DashboardService {
   }
 
   public List<ActivityDto> getRecentActivities() {
-
-    List<ActivityDto> activities = new ArrayList<>();
-
-    // Fetch workflow status changes
-    List<WorkflowStatusHistory> workflows = workflowRepository.findLatest(PageRequest.of(0, 10));
-    for (WorkflowStatusHistory w : workflows) {
-      String user =
-          w.getChangedBy() != null
-              ? w.getChangedBy().getFirstName() + " " + w.getChangedBy().getLastName()
-              : "Système";
-      String candidateName = "Candidat";
-      if (w.getApplication() != null && w.getApplication().getCandidate() != null) {
-        candidateName =
-            w.getApplication().getCandidate().getFirstName()
-                + " "
-                + w.getApplication().getCandidate().getLastName();
-      }
-      activities.add(
-          new ActivityDto(
-              "STATUS_CHANGE",
-              user,
-              candidateName,
-              w.getFromStatus().toLowerCase(),
-              w.getToStatus().toLowerCase(),
-              w.getChangedAt()));
-    }
-
-    // Fetch recent offer modifications
-    List<Offer> recentOffers = offerRepository.findLatestOffers(10);
-    for (Offer o : recentOffers) {
-      String user =
-          o.getUpdatedBy() != null
-              ? o.getUpdatedBy().getFirstName() + " " + o.getUpdatedBy().getLastName()
-              : "Système";
-      String type = o.getCreatedAt().equals(o.getUpdatedAt()) ? "CREATE_OFFER" : "UPDATE_OFFER";
-      activities.add(new ActivityDto(type, user, o.getTitle(), null, null, o.getUpdatedAt()));
-    }
-
-    // Sort and limit to 10 entries total
-    return activities.stream()
-        .sorted(Comparator.comparing(ActivityDto::occurredAt).reversed())
-        .limit(10)
+    List<Object[]> results = workflowRepository.fetchRecentActivities();
+    return results.stream()
+        .map(
+            row -> {
+              String type = (String) row[0];
+              String user = (String) row[1];
+              String targetName = (String) row[2];
+              String fromStatus = (String) row[3];
+              String toStatus = (String) row[4];
+              java.time.OffsetDateTime occurredAt =
+                  ((java.time.Instant) row[5]).atOffset(java.time.ZoneOffset.UTC);
+              return new ActivityDto(type, user, targetName, fromStatus, toStatus, occurredAt);
+            })
         .collect(Collectors.toList());
   }
 

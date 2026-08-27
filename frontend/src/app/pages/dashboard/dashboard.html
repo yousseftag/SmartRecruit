@@ -212,7 +212,7 @@
                       }
                     </p>
                     <p class="text-xs text-slate-400 mt-1">
-                      {{ activity.occurredAt | date: 'short' }}
+                      {{ activity.occurredAt | date: 'dd/MM/yyyy à HH:mm' }}
                     </p>
                   </div>
                 </div>
@@ -284,9 +284,7 @@
                       >
                         <svg lucideSparkles class="w-3.5 h-3.5"></svg>
                         {{ offer.aiPassedCount }}
-                        {{
-                          offer.aiPassedCount > 1 ? 'profils ont dépassé' : 'profil a dépassé'
-                        }}
+                        {{ offer.aiPassedCount > 1 ? 'profils ont dépassé' : 'profil a dépassé' }}
                         le seuil
                       </div>
                     }
