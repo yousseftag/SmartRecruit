@@ -85,6 +85,7 @@ public class DashboardService {
   }
 
   public List<ActivityDto> getRecentActivities() {
+
     List<ActivityDto> activities = new ArrayList<>();
 
     // Fetch workflow status changes
@@ -93,12 +94,21 @@ public class DashboardService {
       String user =
           w.getChangedBy() != null
               ? w.getChangedBy().getFirstName() + " " + w.getChangedBy().getLastName()
-              : "System";
+              : "Système";
+      String candidateName = "Candidat";
+      if (w.getApplication() != null && w.getApplication().getCandidate() != null) {
+        candidateName =
+            w.getApplication().getCandidate().getFirstName()
+                + " "
+                + w.getApplication().getCandidate().getLastName();
+      }
       activities.add(
           new ActivityDto(
               "STATUS_CHANGE",
               user,
-              "Changed status from " + w.getFromStatus() + " to " + w.getToStatus(),
+              candidateName,
+              w.getFromStatus().toLowerCase(),
+              w.getToStatus().toLowerCase(),
               w.getChangedAt()));
     }
 
@@ -108,10 +118,9 @@ public class DashboardService {
       String user =
           o.getUpdatedBy() != null
               ? o.getUpdatedBy().getFirstName() + " " + o.getUpdatedBy().getLastName()
-              : "System";
+              : "Système";
       String type = o.getCreatedAt().equals(o.getUpdatedAt()) ? "CREATE_OFFER" : "UPDATE_OFFER";
-      String action = type.equals("CREATE_OFFER") ? "Created offer" : "Updated offer";
-      activities.add(new ActivityDto(type, user, action + " " + o.getTitle(), o.getUpdatedAt()));
+      activities.add(new ActivityDto(type, user, o.getTitle(), null, null, o.getUpdatedAt()));
     }
 
     // Sort and limit to 10 entries total

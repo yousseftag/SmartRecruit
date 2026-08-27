@@ -20,7 +20,9 @@ export interface PriorityOffer {
 export interface Activity {
   type: string;
   user: string;
-  description: string;
+  targetName: string;
+  fromStatus?: string;
+  toStatus?: string;
   occurredAt: string;
 }
 

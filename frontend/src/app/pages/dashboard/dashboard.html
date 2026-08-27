@@ -184,8 +184,32 @@
                   </div>
                   <div class="ml-3">
                     <p class="text-sm text-slate-700">
-                      <span class="font-semibold text-slate-900">{{ activity.user }}</span>
-                      {{ activity.description }}
+                      <span class="font-semibold text-emerald-600">{{ activity.user }}</span>
+
+                      @switch (activity.type) {
+                        @case ('STATUS_CHANGE') {
+                          <span> a déplacé </span>
+                          <span class="font-semibold text-blue-600">{{ activity.targetName }}</span>
+                          <span> du statut </span>
+                          <span class="font-semibold text-amber-600">{{
+                            activity.fromStatus
+                          }}</span>
+                          <span> vers </span>
+                          <span class="font-semibold text-amber-600">{{ activity.toStatus }}</span>
+                        }
+                        @case ('CREATE_OFFER') {
+                          <span> a créé l'offre </span>
+                          <span class="font-semibold text-amber-600">{{
+                            activity.targetName
+                          }}</span>
+                        }
+                        @case ('UPDATE_OFFER') {
+                          <span> a mis à jour l'offre </span>
+                          <span class="font-semibold text-amber-600">{{
+                            activity.targetName
+                          }}</span>
+                        }
+                      }
                     </p>
                     <p class="text-xs text-slate-400 mt-1">
                       {{ activity.occurredAt | date: 'short' }}
@@ -259,7 +283,11 @@
                         class="flex items-center gap-1.5 px-3 py-1 bg-teal-50 text-teal-700 rounded-full text-sm font-medium border border-teal-100"
                       >
                         <svg lucideSparkles class="w-3.5 h-3.5"></svg>
-                        {{ offer.aiPassedCount }} profils ont dépassé le seuil
+                        {{ offer.aiPassedCount }}
+                        {{
+                          offer.aiPassedCount > 1 ? 'profils ont dépassé' : 'profil a dépassé'
+                        }}
+                        le seuil
                       </div>
                     }
                   </div>
