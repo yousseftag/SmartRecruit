@@ -16,7 +16,7 @@ import { Footer } from '../footer/footer';
       <div class="main">
         <app-header></app-header>
         <!-- Scrollable area for the router outlet -->
-        <main style="flex: 1; overflow-y: auto;">
+        <main class="flex-1 overflow-y-auto">
           <router-outlet></router-outlet>
         </main>
         <app-footer></app-footer>

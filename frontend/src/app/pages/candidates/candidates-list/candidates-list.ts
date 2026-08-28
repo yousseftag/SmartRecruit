@@ -16,6 +16,7 @@ import {
   ApplicationSummaryResponse,
   WorkflowStatus,
   OfferTitleResponse,
+  UserRole,
 } from '../../../core/models';
 import { AuthService } from '../../../core/auth/auth.service';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
@@ -39,8 +40,8 @@ export class CandidatesList implements OnInit, OnDestroy {
   private router = inject(Router);
   private elementRef = inject(ElementRef);
 
-  readonly canImport = computed(
-    () => this.authService.hasRole('HR_ADMIN') || this.authService.hasRole('RECRUITER'),
+  readonly canImport = computed(() =>
+    this.authService.hasAnyRole([UserRole.HR_ADMIN, UserRole.RECRUITER]),
   );
 
   readonly offers = signal<OfferTitleResponse[]>([]);

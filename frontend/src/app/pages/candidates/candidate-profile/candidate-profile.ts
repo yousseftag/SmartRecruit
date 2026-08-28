@@ -13,7 +13,12 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { ApplicationService } from '../../../core/services/application.service';
-import { ApplicationResponse, ExtractedData, ExtractedMatching } from '../../../core/models';
+import {
+  ApplicationResponse,
+  ExtractedData,
+  ExtractedMatching,
+  UserRole,
+} from '../../../core/models';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ScoreGauge } from '../../../shared/components/score-gauge/score-gauge';
 import { ExperienceFormatPipe } from '../../../shared/pipes/experience-format.pipe';
@@ -42,12 +47,8 @@ export class CandidateProfile implements OnInit, OnDestroy {
 
   private activePoller: ReturnType<typeof setInterval> | null = null;
 
-  readonly canManageStatus = computed(
-    () =>
-      this.authService.hasRole('HR_ADMIN') ||
-      this.authService.hasRole('RECRUITER') ||
-      this.authService.hasRole('ADMIN') ||
-      this.authService.isAdmin(),
+  readonly canManageStatus = computed(() =>
+    this.authService.hasAnyRole([UserRole.HR_ADMIN, UserRole.RECRUITER]),
   );
 
   readonly application = signal<ApplicationResponse | null>(null);

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, HostListener, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, NavigationEnd, Event as RouterEvent } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -30,26 +30,47 @@ export class Header implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  // User Profile State
-  userName = signal<string>('');
-  userInitials = signal<string>('U');
-  userEmail = signal<string>('');
-  userRole = signal<string>('');
+  // User Profile Reactive Signals
+  readonly userName = computed(() => {
+    const user = this.authService.currentUser();
+    return user ? user.fullName || user.preferredUsername || 'Utilisateur' : 'Utilisateur';
+  });
+
+  readonly userEmail = computed(
+    () => this.authService.currentUser()?.email || 'Aucun email renseigné',
+  );
+
+  readonly userInitials = computed(() => {
+    const user = this.authService.currentUser();
+    if (!user) return 'U';
+    if (user.firstName && user.lastName) {
+      return (user.firstName.charAt(0) + user.lastName.charAt(0)).toUpperCase();
+    }
+    if (user.fullName) {
+      return user.fullName.substring(0, 2).toUpperCase();
+    }
+    return 'U';
+  });
+
+  readonly userRole = computed(() => {
+    if (this.authService.isAdmin()) return 'Admin RH';
+    if (this.authService.isRecruiter()) return 'Recruteur';
+    return 'Consultation';
+  });
 
   // UI State
-  isDropdownOpen = signal<boolean>(false);
-  isDarkMode = signal<boolean>(false);
-  pageTitle = signal<string>('Tableau de bord');
+  readonly isDropdownOpen = signal<boolean>(false);
+  readonly isDarkMode = signal<boolean>(false);
+  readonly pageTitle = signal<string>('Tableau de bord');
 
   // Profile Modal State
-  isProfileModalOpen = signal<boolean>(false);
-  profileSuccessMessage = signal<string>('');
+  readonly isProfileModalOpen = signal<boolean>(false);
+  readonly profileSuccessMessage = signal<string>('');
 
   ngOnInit() {
     this.setupRouterListener();
-    this.loadUserData();
     this.authService.profileUpdated.subscribe(() => {
-      this.loadUserData();
+      this.authService.syncAuthState();
     });
 
     const savedMode = localStorage.getItem('darkMode');
@@ -86,33 +107,6 @@ export class Header implements OnInit {
     this.pageTitle.set(matchingRoute ? routeTitles[matchingRoute] : 'Tableau de bord');
   }
 
-  // Extracts user information from the parsed Keycloak token to populate the UI.
-  private loadUserData() {
-    const profile = this.authService.getUserProfile();
-
-    if (profile) {
-      this.userName.set(profile.fullName || profile.preferredUsername || 'Utilisateur');
-      this.userEmail.set(profile.email || 'Aucun email renseigné');
-
-      let initials = 'U';
-      if (profile.firstName && profile.lastName) {
-        initials =
-          profile.firstName.charAt(0).toUpperCase() + profile.lastName.charAt(0).toUpperCase();
-      } else if (profile.fullName) {
-        initials = profile.fullName.substring(0, 2).toUpperCase();
-      }
-      this.userInitials.set(initials);
-
-      if (this.authService.hasRole('HR_ADMIN')) {
-        this.userRole.set('Admin RH');
-      } else if (this.authService.hasRole('RECRUITER')) {
-        this.userRole.set('Recruteur');
-      } else {
-        this.userRole.set('Consultation');
-      }
-    }
-  }
-
   toggleDropdown(event: Event) {
     event.stopPropagation();
     this.isDropdownOpen.update((val) => !val);
@@ -146,7 +140,6 @@ export class Header implements OnInit {
   onProfileModalClose(success: boolean) {
     this.isProfileModalOpen.set(false);
     if (success) {
-      this.loadUserData();
       this.profileSuccessMessage.set('Profil mis à jour avec succès');
 
       setTimeout(() => {
