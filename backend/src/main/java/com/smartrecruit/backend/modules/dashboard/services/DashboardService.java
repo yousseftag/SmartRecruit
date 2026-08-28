@@ -6,6 +6,9 @@ import com.smartrecruit.backend.modules.dashboard.dtos.*;
 import com.smartrecruit.backend.modules.dashboard.repositories.WorkflowStatusHistoryRepository;
 import com.smartrecruit.backend.modules.offer.entities.Offer;
 import com.smartrecruit.backend.modules.offer.repositories.OfferRepository;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
@@ -90,8 +93,7 @@ public class DashboardService {
               String targetName = (String) row[2];
               String fromStatus = (String) row[3];
               String toStatus = (String) row[4];
-              java.time.OffsetDateTime occurredAt =
-                  ((java.time.Instant) row[5]).atOffset(java.time.ZoneOffset.UTC);
+              OffsetDateTime occurredAt = ((Instant) row[5]).atOffset(ZoneOffset.UTC);
               return new ActivityDto(type, user, targetName, fromStatus, toStatus, occurredAt);
             })
         .collect(Collectors.toList());

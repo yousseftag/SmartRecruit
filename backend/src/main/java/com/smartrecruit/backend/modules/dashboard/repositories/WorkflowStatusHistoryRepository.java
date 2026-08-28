@@ -19,7 +19,7 @@ public interface WorkflowStatusHistoryRepository
           """
           SELECT
               'STATUS_CHANGE' as type,
-              COALESCE(u.first_name || ' ' || u.last_name, 'Système') as user_name,
+              COALESCE(u.first_name || ' ' || u.last_name, 'System') as user_name,
               c.first_name || ' ' || c.last_name as target_name,
               LOWER(w.from_status) as from_status,
               LOWER(w.to_status) as to_status,
@@ -33,7 +33,7 @@ public interface WorkflowStatusHistoryRepository
 
           SELECT
               CASE WHEN o.created_at = o.updated_at THEN 'CREATE_OFFER' ELSE 'UPDATE_OFFER' END as type,
-              COALESCE(u.first_name || ' ' || u.last_name, 'Système') as user_name,
+              COALESCE(u.first_name || ' ' || u.last_name, 'System') as user_name,
               o.title as target_name,
               NULL as from_status,
               NULL as to_status,
