@@ -30,7 +30,9 @@ import { CreateUserRequest } from '../../../../../core/models/user.model';
                     <span>Doit contenir au moins 3 caractères.</span>
                   }
                   @if (userForm.get('username')?.errors?.['pattern']) {
-                    <span>Ne doit pas contenir d'espaces ni de caractères spéciaux non autorisés.</span>
+                    <span
+                      >Ne doit pas contenir d'espaces ni de caractères spéciaux non autorisés.</span
+                    >
                   }
                 </div>
               }
@@ -101,11 +103,7 @@ export class CreateUserModalComponent {
   userForm: FormGroup = this.fb.group({
     username: [
       '',
-      [
-        Validators.required,
-        Validators.minLength(3),
-        Validators.pattern(/^[a-zA-Z0-9._@+-]+$/),
-      ],
+      [Validators.required, Validators.minLength(3), Validators.pattern(/^[a-zA-Z0-9._@+-]+$/)],
     ],
     email: ['', [Validators.required, Validators.email]],
     firstName: [''],

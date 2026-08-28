@@ -82,10 +82,7 @@ export class AuthService {
       const token = this.keycloak.tokenParsed as any;
       const firstName = token.given_name || '';
       const lastName = token.family_name || '';
-      const realmRoles =
-        this.keycloak.realmAccess?.roles ||
-        token.realm_access?.roles ||
-        [];
+      const realmRoles = this.keycloak.realmAccess?.roles || token.realm_access?.roles || [];
       return {
         sub: token.sub || '',
         firstName,
