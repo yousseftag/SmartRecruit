@@ -64,10 +64,8 @@ keycloak:
   url: ${KEYCLOAK_URL:http://localhost:8081}/realms/${keycloak.realm}
   admin:
     server-url: ${KEYCLOAK_SERVER_URL:http://localhost:8081}
-    admin-realm: master
-    client-id: admin-cli
-    username: ${KEYCLOAK_ADMIN:admin}
-    password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
+    client-id: ${KEYCLOAK_BACKEND_CLIENT_ID:smartrecruit-backend}
+    client-secret: ${KEYCLOAK_BACKEND_SECRET:smartrecruit-backend-secret}
 
 # Custom MinIO properties
 minio:

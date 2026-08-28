@@ -19,10 +19,19 @@ class ApplicationControllerTest {
 
   @Autowired private MockMvc mockMvc;
 
+  @Autowired
+  private com.smartrecruit.backend.modules.offer.repositories.OfferRepository offerRepository;
+
   @Test
   void shouldReturn201WhenValidApplicationSubmitted() throws Exception {
+    UUID validOfferId = offerRepository.findAll().getFirst().getId();
+    String uniqueEmail = "john." + UUID.randomUUID() + "@example.com";
     MockMultipartFile file =
-        new MockMultipartFile("file", "resume.pdf", "application/pdf", "dummy content".getBytes());
+        new MockMultipartFile(
+            "file",
+            "resume.pdf",
+            "application/pdf",
+            ("dummy content " + UUID.randomUUID()).getBytes());
 
     mockMvc
         .perform(
@@ -30,8 +39,8 @@ class ApplicationControllerTest {
                 .file(file)
                 .param("firstName", "John")
                 .param("lastName", "Doe")
-                .param("email", "john.doe@example.com")
-                .param("offerId", UUID.randomUUID().toString()))
+                .param("email", uniqueEmail)
+                .param("offerId", validOfferId.toString()))
         .andExpect(status().isCreated());
   }
 

@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
@@ -17,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 public class SyncControllerTest {
 
   @Autowired private MockMvc mockMvc;
+  @MockitoBean private com.smartrecruit.backend.modules.application.services.NlpService nlpService;
 
   @Test
   void shouldReturn200WhenValidPayload() throws Exception {
@@ -26,6 +28,7 @@ public class SyncControllerTest {
           "applicationId": "123e4567-e89b-12d3-a456-426614174000",
           "offerId": "123e4567-e89b-12d3-a456-426614174001",
           "cvId": "123e4567-e89b-12d3-a456-426614174002",
+          "extractionStatus": "SUCCESS",
           "extractedData": {
             "description_markdown": "test"
           },

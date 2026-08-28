@@ -12,19 +12,20 @@ import com.smartrecruit.backend.modules.auth.exceptions.UserAlreadyExistsExcepti
 import com.smartrecruit.backend.modules.auth.exceptions.UserNotFoundException;
 import com.smartrecruit.backend.modules.auth.mappers.UserMapper;
 import com.smartrecruit.backend.modules.auth.repositories.AppUserRepository;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 public class UserService {
-
-  private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
   private final AppUserRepository userRepository;
   private final KeycloakAdminService keycloakAdminService;
@@ -39,41 +40,91 @@ public class UserService {
     this.emailService = emailService;
   }
 
-  @Transactional(readOnly = true)
+  @Transactional
   public UserResponse getMyProfile(Jwt jwt) {
     String sub = jwt.getSubject();
-    AppUser user =
-        userRepository
-            .findByKeycloakSub(sub)
-            .orElseThrow(() -> new UserNotFoundException("User not found for sub: " + sub));
+    AppUser user = userRepository.findByKeycloakSub(sub).orElseGet(() -> provisionOrLinkUser(jwt));
+
+    // Self-healing: auto-sync local database with any direct updates from Keycloak token claims
+    boolean updated = false;
+    String jwtEmail = jwt.getClaimAsString("email");
+    String jwtFirstName = jwt.getClaimAsString("given_name");
+    String jwtLastName = jwt.getClaimAsString("family_name");
+
+    if (jwtEmail != null && !jwtEmail.equalsIgnoreCase(user.getEmail())) {
+      user.setEmail(jwtEmail);
+      updated = true;
+    }
+    if (jwtFirstName != null && !jwtFirstName.equals(user.getFirstName())) {
+      user.setFirstName(jwtFirstName);
+      updated = true;
+    }
+    if (jwtLastName != null && !jwtLastName.equals(user.getLastName())) {
+      user.setLastName(jwtLastName);
+      updated = true;
+    }
+
+    Optional<UserRole> jwtRoleOpt = extractRoleFromJwt(jwt);
+    if (jwtRoleOpt.isPresent() && user.getRole() != jwtRoleOpt.get()) {
+      user.setRole(jwtRoleOpt.get());
+      updated = true;
+    }
+
+    if (updated) {
+      log.info("Self-healing: Updated PostgreSQL user {} from Keycloak token claims", sub);
+      user = userRepository.save(user);
+    }
 
     return UserMapper.toResponse(user);
   }
 
-  @Transactional
   public UserResponse updateMyProfile(Jwt jwt, UpdateProfileRequest request) {
     String sub = jwt.getSubject();
-    AppUser user =
-        userRepository
-            .findByKeycloakSub(sub)
-            .orElseThrow(() -> new UserNotFoundException("User not found for sub: " + sub));
+    AppUser user = userRepository.findByKeycloakSub(sub).orElseGet(() -> provisionOrLinkUser(jwt));
 
-    if (!user.getEmail().equalsIgnoreCase(request.email())) {
-      if (userRepository.existsByEmailAndIdNot(request.email(), user.getId())) {
+    String previousFirstName = user.getFirstName();
+    String previousLastName = user.getLastName();
+    String previousEmail = user.getEmail();
+
+    String newFirstName = (request.firstName() != null) ? request.firstName() : previousFirstName;
+    String newLastName = (request.lastName() != null) ? request.lastName() : previousLastName;
+    String newEmail =
+        (request.email() != null && !request.email().isBlank()) ? request.email() : previousEmail;
+
+    if (request.email() != null
+        && !request.email().isBlank()
+        && !user.getEmail().equalsIgnoreCase(request.email())) {
+      if (userRepository.existsByEmailAndIdNot(newEmail, user.getId())) {
         throw new UserAlreadyExistsException("Email is already in use by another account.");
       }
     }
 
-    // Update PostgreSQL
-    user.setFirstName(request.firstName());
-    user.setLastName(request.lastName());
-    user.setEmail(request.email());
-    AppUser savedUser = userRepository.save(user);
+    // 1. Update Keycloak external identity provider
+    keycloakAdminService.updateUser(sub, newFirstName, newLastName, newEmail);
 
-    // Update Keycloak
-    keycloakAdminService.updateUser(sub, request.firstName(), request.lastName(), request.email());
-
-    return UserMapper.toResponse(savedUser);
+    // 2. Persist to PostgreSQL database with Compensating Rollback if DB write fails
+    try {
+      user.setFirstName(newFirstName);
+      user.setLastName(newLastName);
+      user.setEmail(newEmail);
+      AppUser savedUser = userRepository.save(user);
+      return UserMapper.toResponse(savedUser);
+    } catch (Exception dbException) {
+      log.error(
+          "Failed to persist user profile update in PostgreSQL. Initiating compensating rollback to Keycloak for sub: {}",
+          sub,
+          dbException);
+      try {
+        keycloakAdminService.updateUser(sub, previousFirstName, previousLastName, previousEmail);
+        log.info("Successfully rolled back Keycloak state for user sub: {}", sub);
+      } catch (Exception kcRollbackEx) {
+        log.error(
+            "CRITICAL: Failed to rollback Keycloak state after PostgreSQL error for user sub: {}",
+            sub,
+            kcRollbackEx);
+      }
+      throw dbException;
+    }
   }
 
   public List<UserResponse> getAllUsers() {
@@ -84,7 +135,14 @@ public class UserService {
 
   @Transactional
   public UserResponse createUser(CreateUserRequest request) {
-    if (userRepository.existsByUsername(request.getUsername())) {
+    String username = request.getUsername() != null ? request.getUsername().trim() : "";
+    if (username.isBlank()) {
+      throw new IllegalArgumentException("Le nom d'utilisateur est requis.");
+    }
+    if (username.contains(" ")) {
+      throw new IllegalArgumentException("Le nom d'utilisateur ne doit pas contenir d'espaces.");
+    }
+    if (userRepository.existsByUsername(username)) {
       throw new UserAlreadyExistsException("Username is already taken.");
     }
     if (userRepository.existsByEmail(request.getEmail())) {
@@ -92,35 +150,56 @@ public class UserService {
     }
 
     String password = generateRandomPassword();
-    String firstName = request.getFirstName() != null ? request.getFirstName() : "";
-    String lastName = request.getLastName() != null ? request.getLastName() : "";
+    String firstName = request.getFirstName() != null ? request.getFirstName().trim() : "";
+    String lastName = request.getLastName() != null ? request.getLastName().trim() : "";
 
     String sub =
         keycloakAdminService.createUser(
-            request.getUsername(), firstName, lastName, request.getEmail(), password);
-    keycloakAdminService.assignRealmRole(sub, request.getRole());
+            username, firstName, lastName, request.getEmail().trim(), password);
 
-    AppUser user =
-        AppUser.builder()
-            .keycloakSub(sub)
-            .username(request.getUsername())
-            .email(request.getEmail())
-            .firstName(firstName)
-            .lastName(lastName)
-            .role(UserRole.valueOf(request.getRole()))
-            .build();
-
-    AppUser savedUser = userRepository.save(user);
-
-    String warning = null;
     try {
-      emailService.sendWelcomeEmail(request.getEmail(), request.getUsername(), password);
-    } catch (Exception e) {
-      log.warn("Welcome email failed for user {}: {}", request.getUsername(), e.getMessage());
-      warning = "L'utilisateur a été créé, mais l'envoi de l'email a échoué.";
-    }
+      keycloakAdminService.assignRealmRole(sub, request.getRole());
+      try {
+        keycloakAdminService.assignClientRole(sub, "account", "view-profile");
+        keycloakAdminService.assignClientRole(sub, "account", "manage-account");
+      } catch (Exception e) {
+        log.debug("Account client roles assignment for new user: {}", e.getMessage());
+      }
 
-    return UserMapper.toResponse(savedUser, warning);
+      AppUser user =
+          AppUser.builder()
+              .keycloakSub(sub)
+              .username(username)
+              .email(request.getEmail().trim())
+              .firstName(firstName)
+              .lastName(lastName)
+              .role(UserRole.valueOf(request.getRole()))
+              .build();
+
+      AppUser savedUser = userRepository.save(user);
+
+      String warning = null;
+      try {
+        emailService.sendWelcomeEmail(request.getEmail().trim(), username, password);
+      } catch (Exception e) {
+        log.warn("Welcome email failed for user {}: {}", username, e.getMessage());
+        warning = "L'utilisateur a été créé, mais l'envoi de l'email a échoué.";
+      }
+
+      return UserMapper.toResponse(savedUser, warning);
+    } catch (Exception ex) {
+      log.error(
+          "Failed to complete user creation for sub {}, initiating compensating deletion in Keycloak",
+          sub,
+          ex);
+      try {
+        keycloakAdminService.deleteUser(sub);
+      } catch (Exception cleanupEx) {
+        log.error(
+            "Failed to delete Keycloak user {} during rollback: {}", sub, cleanupEx.getMessage());
+      }
+      throw ex;
+    }
   }
 
   @Transactional
@@ -171,6 +250,86 @@ public class UserService {
 
     keycloakAdminService.deleteUser(user.getKeycloakSub());
     userRepository.delete(user);
+  }
+
+  @Transactional
+  public AppUser provisionOrLinkUser(Jwt jwt) {
+    String sub = jwt.getSubject();
+    String username = jwt.getClaimAsString("preferred_username");
+    if (username == null || username.isBlank()) {
+      username = sub;
+    }
+    String email = jwt.getClaimAsString("email");
+    if (email == null || email.isBlank()) {
+      email = username + "@smartrecruit.com";
+    }
+    String firstName = jwt.getClaimAsString("given_name");
+    String lastName = jwt.getClaimAsString("family_name");
+
+    // 1. Try to link by username or email if already exists in PostgreSQL
+    Optional<AppUser> existing = userRepository.findByUsername(username);
+    if (existing.isEmpty()) {
+      existing = userRepository.findByEmail(email);
+    }
+
+    UserRole role = extractRoleFromJwt(jwt).orElse(UserRole.VIEWER);
+
+    if (existing.isPresent()) {
+      AppUser user = existing.get();
+      log.info(
+          "Linking existing PostgreSQL user '{}' to Keycloak sub '{}'", user.getUsername(), sub);
+      user.setKeycloakSub(sub);
+      if (firstName != null && !firstName.isBlank()) {
+        user.setFirstName(firstName);
+      }
+      if (lastName != null && !lastName.isBlank()) {
+        user.setLastName(lastName);
+      }
+      user.setEmail(email);
+      extractRoleFromJwt(jwt).ifPresent(user::setRole);
+      return userRepository.save(user);
+    }
+
+    // 2. Otherwise JIT provision new user in PostgreSQL
+    log.info(
+        "JIT Provisioning new user in PostgreSQL: username={}, sub={}, role={}",
+        username,
+        sub,
+        role);
+    AppUser newUser =
+        AppUser.builder()
+            .keycloakSub(sub)
+            .username(username)
+            .firstName(firstName != null && !firstName.isBlank() ? firstName : username)
+            .lastName(lastName != null && !lastName.isBlank() ? lastName : "")
+            .email(email)
+            .role(role)
+            .build();
+
+    return userRepository.save(newUser);
+  }
+
+  @SuppressWarnings("unchecked")
+  private Optional<UserRole> extractRoleFromJwt(Jwt jwt) {
+    if (jwt == null) {
+      return Optional.empty();
+    }
+    Map<String, Object> realmAccess = jwt.getClaim("realm_access");
+    if (realmAccess != null && !realmAccess.isEmpty()) {
+      Collection<String> roles = (Collection<String>) realmAccess.get("roles");
+      if (roles != null) {
+        if (roles.contains("HR_ADMIN")) {
+          return Optional.of(UserRole.HR_ADMIN);
+        }
+        if (roles.contains("RECRUITER")) {
+          return Optional.of(UserRole.RECRUITER);
+        }
+        if (roles.contains("VIEWER")) {
+          return Optional.of(UserRole.VIEWER);
+        }
+      }
+    }
+    return Optional.empty();
   }
 
   private String generateRandomPassword() {

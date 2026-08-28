@@ -6,6 +6,7 @@ import com.smartrecruit.backend.modules.application.entities.WorkflowStatusHisto
 import com.smartrecruit.backend.modules.application.enums.ApplicationStatus;
 import com.smartrecruit.backend.modules.application.repositories.ApplicationRepository;
 import com.smartrecruit.backend.modules.application.repositories.WorkflowStatusHistoryRepository;
+import com.smartrecruit.backend.security.SecurityUtils;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ public class ApplicationService {
   private final ApplicationRepository applicationRepository;
   private final WorkflowStatusHistoryRepository workflowStatusHistoryRepository;
   private final CvIngestionService cvIngestionService;
+  private final SecurityUtils securityUtils;
 
   @Transactional
   public void updateApplicationStatus(UUID applicationId, ApplicationStatus newStatus) {
@@ -36,6 +38,7 @@ public class ApplicationService {
               .application(application)
               .fromStatus(oldStatus)
               .toStatus(newStatus)
+              .changedBy(securityUtils.getCurrentUser().orElse(null))
               .build();
       workflowStatusHistoryRepository.save(history);
 
