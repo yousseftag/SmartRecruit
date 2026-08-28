@@ -64,9 +64,48 @@
         "http://localhost:8080",
         "+"
       ]
+    },
+    {
+      "clientId": "smartrecruit-backend",
+      "name": "Smart Recruit Backend Service",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "smartrecruit-backend-secret",
+      "bearerOnly": false,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false,
+      "fullScopeAllowed": true
     }
   ],
   "users": [
+    {
+      "username": "service-account-smartrecruit-backend",
+      "enabled": true,
+      "serviceAccountClientId": "smartrecruit-backend",
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-users",
+          "query-users",
+          "query-groups",
+          "query-realms",
+          "query-clients",
+          "view-realm",
+          "manage-realm",
+          "view-clients",
+          "manage-clients",
+          "view-events",
+          "manage-events",
+          "view-identity-providers",
+          "manage-identity-providers",
+          "view-authorization",
+          "manage-authorization"
+        ]
+      }
+    },
     {
       "username": "admin",
       "enabled": true,
@@ -88,12 +127,6 @@
         "account": [
           "view-profile",
           "manage-account"
-        ],
-        "realm-management": [
-          "view-users",
-          "manage-users",
-          "view-realm",
-          "query-users"
         ]
       }
     },
