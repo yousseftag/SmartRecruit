@@ -95,6 +95,6 @@ class DashboardServiceTest {
     ActivityDto dto = activities.get(0);
     assertEquals("STATUS_CHANGE", dto.type());
     assertEquals("System", dto.user());
-    assertEquals(now.atOffset(ZoneOffset.UTC), dto.occurredAt());
+    assertEquals(now.atZone(ZoneOffset.UTC).toLocalDateTime(), dto.occurredAt());
   }
 }

@@ -7,9 +7,12 @@ import com.smartrecruit.backend.modules.dashboard.repositories.WorkflowStatusHis
 import com.smartrecruit.backend.modules.offer.entities.Offer;
 import com.smartrecruit.backend.modules.offer.repositories.OfferRepository;
 import java.time.Instant;
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -93,7 +96,8 @@ public class DashboardService {
               String targetName = (String) row[2];
               String fromStatus = (String) row[3];
               String toStatus = (String) row[4];
-              OffsetDateTime occurredAt = ((Instant) row[5]).atOffset(ZoneOffset.UTC);
+              LocalDateTime occurredAt =
+                  ((Instant) row[5]).atZone(ZoneOffset.UTC).toLocalDateTime();
               return new ActivityDto(type, user, targetName, fromStatus, toStatus, occurredAt);
             })
         .collect(Collectors.toList());
@@ -101,13 +105,17 @@ public class DashboardService {
 
   public List<DailyApplicationStatsDto> getApplicationsByDay() {
     List<Object[]> results = applicationRepository.countApplicationsByDay();
-    return results.stream()
-        .map(
-            row -> {
-              String date = (String) row[0];
-              long count = ((Number) row[1]).longValue();
-              return new DailyApplicationStatsDto(date, count);
-            })
-        .collect(Collectors.toList());
+    Map<String, Long> countsByDate =
+        results.stream()
+            .collect(
+                Collectors.toMap(row -> (String) row[0], row -> ((Number) row[1]).longValue()));
+
+    List<DailyApplicationStatsDto> fullWeek = new ArrayList<>();
+    LocalDate today = LocalDate.now();
+    for (int i = 6; i >= 0; i--) {
+      String dateStr = today.minusDays(i).toString();
+      fullWeek.add(new DailyApplicationStatsDto(dateStr, countsByDate.getOrDefault(dateStr, 0L)));
+    }
+    return fullWeek;
   }
 }
