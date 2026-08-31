@@ -233,6 +233,8 @@
                     'bg-blue-100 text-blue border border-blue/20': task.status === 'UPLOADING',
                     'bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 animate-pulse':
                       task.status === 'PARSING',
+                    'bg-orange-500/15 text-orange-800 dark:text-orange-300 border border-orange-500/30':
+                      task.status === 'STALLED',
                     'bg-green-bg text-green border border-green/20': task.status === 'SUCCESS',
                     'bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30':
                       task.status === 'DUPLICATE',
@@ -248,6 +250,9 @@
                     }
                     @case ('PARSING') {
                       Analyse IA...
+                    }
+                    @case ('STALLED') {
+                      Bloqué
                     }
                     @case ('SUCCESS') {
                       Terminé
@@ -282,10 +287,11 @@
                   </a>
                 }
 
-                <!-- Remove Button (for PENDING, FAILED, DUPLICATE or completed tasks) -->
+                <!-- Remove Button (for PENDING, FAILED, STALLED, DUPLICATE or completed tasks) -->
                 @if (
                   task.status === 'PENDING' ||
                   task.status === 'FAILED' ||
+                  task.status === 'STALLED' ||
                   task.status === 'DUPLICATE' ||
                   task.status === 'SUCCESS'
                 ) {
@@ -329,7 +335,7 @@
                 class="text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2 pt-0.5"
               >
                 <svg
-                  class="animate-spin h-3.5 w-3.5 text-amber-600 dark:text-amber-400"
+                  class="animate-spin h-3.5 w-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0"
                   fill="none"
                   viewBox="0 0 24 24"
                 >
@@ -347,7 +353,7 @@
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                <span>Décompression et extraction des CVs en cours...</span>
+                <span>{{ task.errorMessage || 'Décompression et extraction des CVs en cours...' }}</span>
               </div>
             }
 
@@ -357,7 +363,7 @@
                 class="text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2 pt-0.5"
               >
                 <svg
-                  class="animate-spin h-3.5 w-3.5 text-amber-600 dark:text-amber-400"
+                  class="animate-spin h-3.5 w-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0"
                   fill="none"
                   viewBox="0 0 24 24"
                 >
@@ -375,7 +381,7 @@
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                <span>Extraction et analyse NLP en cours...</span>
+                <span>{{ task.errorMessage || 'Extraction et analyse NLP en cours...' }}</span>
               </div>
             }
 
@@ -433,6 +439,46 @@
                     }
                   </div>
                 }
+              </div>
+            }
+
+            <!-- Stalled Callout Box with Inline Relancer Button -->
+            @if (task.status === 'STALLED' && task.errorMessage) {
+              <div
+                class="p-2.5 bg-orange-500/10 border border-orange-500/20 rounded-md text-[11px] text-orange-800 dark:text-orange-300 flex items-center justify-between gap-2"
+              >
+                <div class="flex items-center gap-1.5 min-w-0">
+                  <svg
+                    class="w-3.5 h-3.5 flex-shrink-0 text-orange-600 dark:text-orange-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    ></path>
+                  </svg>
+                  <span class="font-medium truncate">{{ task.errorMessage }}</span>
+                </div>
+                <button
+                  type="button"
+                  (click)="relaunchStalled(task)"
+                  [disabled]="isProcessing()"
+                  class="px-2.5 py-1 text-[10px] font-bold text-white bg-orange-600 hover:bg-orange-700 disabled:opacity-50 rounded shadow-xs transition-colors flex items-center gap-1 flex-shrink-0 cursor-pointer"
+                >
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    ></path>
+                  </svg>
+                  Relancer
+                </button>
               </div>
             }
 
@@ -507,6 +553,11 @@
           }
           @if (failedCount() > 0) {
             <span class="text-red font-medium ml-2">• {{ failedCount() }} échec(s)</span>
+          }
+          @if (stalledCount() > 0) {
+            <span class="text-orange-800 dark:text-orange-300 font-medium ml-2"
+              >• {{ stalledCount() }} bloqué(s)</span
+            >
           }
           @if (duplicateCount() > 0) {
             <span class="text-amber-800 dark:text-amber-300 font-medium ml-2"

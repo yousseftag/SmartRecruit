@@ -12,12 +12,12 @@ import {
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { Subscription } from 'rxjs';
 import { ApplicationService } from '../../../core/services/application.service';
 import { ApplicationResponse, ExtractedData, ExtractedMatching } from '../../../core/models';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ScoreGauge } from '../../../shared/components/score-gauge/score-gauge';
 import { ExperienceFormatPipe } from '../../../shared/pipes/experience-format.pipe';
-import { environment } from '../../../../environments/environment';
 
 export interface StatusOption {
   value: string;
@@ -40,7 +40,7 @@ export class CandidateProfile implements OnInit, OnDestroy {
   private sanitizer = inject(DomSanitizer);
   private destroyRef = inject(DestroyRef);
 
-  private activePoller: ReturnType<typeof setInterval> | null = null;
+  private activePoller: Subscription | null = null;
 
   readonly canManageStatus = computed(
     () =>
@@ -332,32 +332,34 @@ export class CandidateProfile implements OnInit, OnDestroy {
   private pollStatus(applicationId: string) {
     this.stopPolling();
 
-    const intervalMs = environment.pollingIntervalMs;
-    const maxPolls = environment.pollingMaxAttempts;
-    let pollCount = 0;
-
-    this.activePoller = setInterval(() => {
-      pollCount++;
-      if (pollCount > maxPolls) {
-        this.stopPolling();
-        this.isReExtracting.set(false);
-        this.showToast("Délai d'attente d'extraction dépassé.", 'error');
-        return;
-      }
-
-      this.applicationService.pollExtractionStatus(applicationId).subscribe({
-        next: (statusData) => {
-          if (statusData.extractionStatus === 'SUCCESS') {
+    this.activePoller = this.applicationService
+      .watchExtractionStatus$(applicationId)
+      .subscribe({
+        next: (event) => {
+          if (event.kind === 'SUCCESS') {
             this.stopPolling();
             this.isReExtracting.set(false);
             // Re-fetch entire application to get fresh scores and match breakdowns
             this.fetchApplication(applicationId);
             this.showToast('Analyse IA terminée avec succès !', 'success');
-          } else if (statusData.extractionStatus === 'FAILED') {
+          } else if (event.kind === 'FAILED') {
             this.stopPolling();
             this.isReExtracting.set(false);
             this.fetchApplication(applicationId);
             this.showToast("Échec de l'analyse IA du CV.", 'error');
+          } else if (event.kind === 'BACKEND_STALLED') {
+            this.stopPolling();
+            this.isReExtracting.set(false);
+            this.fetchApplication(applicationId);
+            this.showToast("L'analyse IA a dépassé le délai limite (bloquée).", 'error');
+          } else if (event.kind === 'TIMEOUT') {
+            this.stopPolling();
+            this.isReExtracting.set(false);
+            this.showToast("Délai d'attente d'extraction dépassé.", 'error');
+          } else if (event.kind === 'ERROR') {
+            this.stopPolling();
+            this.isReExtracting.set(false);
+            this.showToast("Erreur lors du suivi de l'analyse IA.", 'error');
           }
         },
         error: () => {
@@ -366,12 +368,11 @@ export class CandidateProfile implements OnInit, OnDestroy {
           this.showToast("Erreur lors du suivi de l'analyse IA.", 'error');
         },
       });
-    }, intervalMs);
   }
 
   private stopPolling() {
     if (this.activePoller) {
-      clearInterval(this.activePoller);
+      this.activePoller.unsubscribe();
       this.activePoller = null;
     }
   }

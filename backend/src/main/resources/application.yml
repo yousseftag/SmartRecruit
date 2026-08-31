@@ -69,3 +69,8 @@ springdoc:
     persist-authorization: true
     oauth:
       clientId: smartrecruit-frontend
+
+app:
+  cv-ingestion:
+    stall-threshold-minutes: ${CV_STALL_THRESHOLD_MINUTES:5}
+

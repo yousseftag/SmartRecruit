@@ -338,7 +338,9 @@ export class CandidatesList implements OnInit, OnDestroy {
   private isExtractionPending(app: ApplicationSummaryResponse): boolean {
     return (
       app.extractionStatus === 'PENDING' ||
-      (app.totalScore === null && app.extractionStatus !== 'FAILED')
+      (app.totalScore === null &&
+        app.extractionStatus !== 'FAILED' &&
+        app.extractionStatus !== 'STALLED')
     );
   }
 
@@ -348,8 +350,8 @@ export class CandidatesList implements OnInit, OnDestroy {
     const hasPending = apps.some((app) => this.isExtractionPending(app));
     if (!hasPending) return;
 
-    const intervalMs = environment.pollingIntervalMs;
-    const maxPolls = environment.pollingMaxAttempts;
+    const intervalMs = environment.polling.intervalMs;
+    const maxPolls = environment.polling.maxAttempts;
     let pollCount = 0;
 
     this.pollingSub = interval(intervalMs)

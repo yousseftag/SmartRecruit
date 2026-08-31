@@ -68,7 +68,14 @@ export interface UpdateApplicationStatusRequest {
   status: WorkflowStatus | string;
 }
 
-export type TaskStatus = 'PENDING' | 'UPLOADING' | 'PARSING' | 'SUCCESS' | 'FAILED' | 'DUPLICATE';
+export type TaskStatus =
+  | 'PENDING'
+  | 'UPLOADING'
+  | 'PARSING'
+  | 'STALLED'
+  | 'SUCCESS'
+  | 'FAILED'
+  | 'DUPLICATE';
 
 export interface UploadTask {
   file?: File;
@@ -82,4 +89,6 @@ export interface UploadTask {
   errorMessage?: string;
   summaryMessage?: string;
   subErrors?: string[];
+  savedAt?: number;
 }
+

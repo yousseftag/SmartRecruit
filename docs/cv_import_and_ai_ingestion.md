@@ -131,19 +131,20 @@ public record ImportResponse(List<FileImportStatus> fileStatuses) {
 ```
 [ PENDING ] ──► [ UPLOADING (50%) ] ──► [ PARSING (75%) ] ──► [ SUCCESS (100%) ]
      │                                         │
-     ├─────────────► [ DUPLICATE ]             └─────────────► [ FAILED (0%) ]
-     │
-     └─────────────► [ FAILED ]
+     ├─────────────► [ DUPLICATE ]             ├─────────────► [ STALLED (0%) ] ──► [ Relancer ]
+     │                                         │
+     └─────────────► [ FAILED ]                └─────────────► [ FAILED (0%) ]
 ```
 
 | State | Badge | Color | Retryable? | Behavior |
 |---|---|---|---|---|
 | **`PENDING`** | `En attente` | Gray / Slate | Yes | Queued in memory; waiting for recruiter to click "Démarrer l'importation". |
 | **`UPLOADING`** | `Téléchargement` | Blue | No | Multipart HTTP transfer to backend (50% progress). |
-| **`PARSING`** | `Extraction IA` | Amber Pulse | No | Backend created application; polling `/extraction-status` (75% progress). |
+| **`PARSING`** | `Extraction IA` | Amber Pulse | No | Backend created application; polling `/extraction-status` with backoff (75% progress). |
+| **`STALLED`** | `Bloqué` | Orange | **Yes** | Backend marked job stalled (>5 min pending) or restore probe exceeded age. Inline "Relancer" resets & redispatches. |
 | **`SUCCESS`** | `Terminé` | Emerald / Green | No | AI extraction completed or ZIP unpacked successfully. Direct link to profile. |
 | **`DUPLICATE`** | `Doublon` | Amber Solid | **No** | Candidate already applied to this offer. Excluded from retry queue. |
-| **`FAILED`** | `Échec` | Red | **Yes** | Corrupted ZIP, invalid format, or AI model error. Can be retried via "Relancer". |
+| **`FAILED`** | `Échec` | Red | **Yes** | Corrupted ZIP, invalid format, or unrecoverable error. Can be retried via "Relancer". |
 
 ---
 
@@ -165,16 +166,22 @@ public record ImportResponse(List<FileImportStatus> fileStatuses) {
 - **Decision**: An unpacked ZIP archive is classified as `SUCCESS` (`Terminé`) with message *"X CV(s) extrait(s), Y non traité(s)"* and sub-error notices, regardless of whether sub-files were duplicates.
 - **Rationale**: The archive container itself was read successfully; duplicate files inside are reported as informational warnings rather than a red failure.
 
-### 5. Unified Global 3-Second Status Polling
-- **Decision**: Standardized on a single global polling interval (`pollingIntervalMs: 3000`, `pollingMaxAttempts: 30`) defined in `environment.ts` and shared across Bulk Import, Candidate Profile re-analysis, and Candidates List live auto-refresh.
-- **Rationale**: Eliminates magic numbers across components, provides consistent 3-second real-time responsiveness for recruiters during background AI extraction, and centralizes timeout and interval tuning in a single location with automatic lifecycle cleanup on route navigation.
+### 5. Reactive Non-Overlapping Polling with Exponential Backoff & Backend Stall Detection
+- **Decision**: Replaced `setInterval`-based polling with an RxJS `expand` + `timer` + `switchMap` stream (`watchExtractionStatus$`) paired with a backend `@Scheduled` stall detector (`ExtractionStallDetector`).
+- **Rationale**:
+  - **Non-Overlapping Stream**: Guarantees exactly one in-flight HTTP request at a time, eliminating request pileup.
+  - **Exponential Backoff**: Starts at 3 s, multiplies by 1.5×, capped at 15 s. Reduces server pressure while staying responsive early.
+  - **Soft Stalled Warning**: At attempt 10 (~1.5 min), displays an informational *"L'analyse IA prend plus de temps..."* warning while continuing to poll.
+  - **Backend Stall Sweeper**: Backend automatically sweeps every 1 minute (`PT1M`) and flags any `CvFile` pending for >5 min as `STALLED`, stopping pointless polling and showing an inline "Relancer" action.
+  - **Stale Session Guard**: On page reload or session restore, if the task is older than 3 minutes (`maxRestorePollAgeMs: 180_000`), a single probe is fired instead of launching an aggressive polling loop.
 
 ---
 
 ## 7. Future Improvements & Planned Updates
 
-1. **Optimize Polling Loop**:
-   Tune polling intervals, progressive backoff, and max retries depending on real-world NLP engine performance and GPU worker response times.
+1. **WebSocket / SSE Push**:
+   Replace HTTP polling entirely with a server-sent event or WebSocket channel on `/api/v1/applications/{id}/status/stream` so the AI worker callback instantly pushes the terminal state to the browser with zero polling overhead.
 2. **Granular ZIP Bulk Import Details**:
    Expand the bulk import results to display individual expandable sub-cards for each CV extracted from the ZIP archive with its own direct profile link and extraction status.
+
 
