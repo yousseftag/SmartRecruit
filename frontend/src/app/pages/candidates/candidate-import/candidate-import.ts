@@ -186,14 +186,17 @@ export class CandidateImport implements OnInit {
                     if (res.extractionStatus === 'SUCCESS') {
                       this.updateTaskStatus(t.applicationId!, 'SUCCESS', 100);
                       this.checkAllDone();
-                    } else if (res.extractionStatus === 'FAILED' || res.extractionStatus === 'STALLED') {
+                    } else if (
+                      res.extractionStatus === 'FAILED' ||
+                      res.extractionStatus === 'STALLED'
+                    ) {
                       this.updateTaskStatus(
                         t.applicationId!,
                         res.extractionStatus === 'STALLED' ? 'STALLED' : 'FAILED',
                         0,
                         res.extractionStatus === 'STALLED'
                           ? "L'analyse IA a dépassé le délai limite. Relancez manuellement."
-                          : "Analyse expirée ou échouée. Veuillez relancer.",
+                          : 'Analyse expirée ou échouée. Veuillez relancer.',
                       );
                       this.checkAllDone();
                     } else {
@@ -203,7 +206,12 @@ export class CandidateImport implements OnInit {
                   },
                   error: () => {
                     if (t.status !== 'STALLED') {
-                      this.updateTaskStatus(t.applicationId!, 'FAILED', 0, "Statut de l'analyse inconnu.");
+                      this.updateTaskStatus(
+                        t.applicationId!,
+                        'FAILED',
+                        0,
+                        "Statut de l'analyse inconnu.",
+                      );
                     }
                     this.checkAllDone();
                   },

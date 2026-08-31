@@ -1,16 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import {
-  Observable,
-  defer,
-  timer,
-  switchMap,
-  expand,
-  takeWhile,
-  map,
-  catchError,
-  of,
-} from 'rxjs';
+import { Observable, defer, timer, switchMap, expand, takeWhile, map, catchError, of } from 'rxjs';
 import {
   ApplicationResponse,
   ApplicationExtractionStatusResponse,
@@ -22,13 +12,7 @@ import { environment } from '../../../environments/environment';
 
 // ── Polling Event Types ───────────────────────────────────────────────────────
 export type PollingEventKind =
-  | 'PENDING'
-  | 'STALLED'
-  | 'BACKEND_STALLED'
-  | 'SUCCESS'
-  | 'FAILED'
-  | 'TIMEOUT'
-  | 'ERROR';
+  'PENDING' | 'STALLED' | 'BACKEND_STALLED' | 'SUCCESS' | 'FAILED' | 'TIMEOUT' | 'ERROR';
 
 export interface PollingEvent {
   kind: PollingEventKind;
@@ -152,7 +136,6 @@ export class ApplicationService {
       ),
     );
   }
-
 
   /** Retrieves the full, detailed profile of a single application */
   getApplicationDetails(id: string): Observable<ApplicationResponse> {

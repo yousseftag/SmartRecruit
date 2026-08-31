@@ -332,42 +332,40 @@ export class CandidateProfile implements OnInit, OnDestroy {
   private pollStatus(applicationId: string) {
     this.stopPolling();
 
-    this.activePoller = this.applicationService
-      .watchExtractionStatus$(applicationId)
-      .subscribe({
-        next: (event) => {
-          if (event.kind === 'SUCCESS') {
-            this.stopPolling();
-            this.isReExtracting.set(false);
-            // Re-fetch entire application to get fresh scores and match breakdowns
-            this.fetchApplication(applicationId);
-            this.showToast('Analyse IA terminée avec succès !', 'success');
-          } else if (event.kind === 'FAILED') {
-            this.stopPolling();
-            this.isReExtracting.set(false);
-            this.fetchApplication(applicationId);
-            this.showToast("Échec de l'analyse IA du CV.", 'error');
-          } else if (event.kind === 'BACKEND_STALLED') {
-            this.stopPolling();
-            this.isReExtracting.set(false);
-            this.fetchApplication(applicationId);
-            this.showToast("L'analyse IA a dépassé le délai limite (bloquée).", 'error');
-          } else if (event.kind === 'TIMEOUT') {
-            this.stopPolling();
-            this.isReExtracting.set(false);
-            this.showToast("Délai d'attente d'extraction dépassé.", 'error');
-          } else if (event.kind === 'ERROR') {
-            this.stopPolling();
-            this.isReExtracting.set(false);
-            this.showToast("Erreur lors du suivi de l'analyse IA.", 'error');
-          }
-        },
-        error: () => {
+    this.activePoller = this.applicationService.watchExtractionStatus$(applicationId).subscribe({
+      next: (event) => {
+        if (event.kind === 'SUCCESS') {
+          this.stopPolling();
+          this.isReExtracting.set(false);
+          // Re-fetch entire application to get fresh scores and match breakdowns
+          this.fetchApplication(applicationId);
+          this.showToast('Analyse IA terminée avec succès !', 'success');
+        } else if (event.kind === 'FAILED') {
+          this.stopPolling();
+          this.isReExtracting.set(false);
+          this.fetchApplication(applicationId);
+          this.showToast("Échec de l'analyse IA du CV.", 'error');
+        } else if (event.kind === 'BACKEND_STALLED') {
+          this.stopPolling();
+          this.isReExtracting.set(false);
+          this.fetchApplication(applicationId);
+          this.showToast("L'analyse IA a dépassé le délai limite (bloquée).", 'error');
+        } else if (event.kind === 'TIMEOUT') {
+          this.stopPolling();
+          this.isReExtracting.set(false);
+          this.showToast("Délai d'attente d'extraction dépassé.", 'error');
+        } else if (event.kind === 'ERROR') {
           this.stopPolling();
           this.isReExtracting.set(false);
           this.showToast("Erreur lors du suivi de l'analyse IA.", 'error');
-        },
-      });
+        }
+      },
+      error: () => {
+        this.stopPolling();
+        this.isReExtracting.set(false);
+        this.showToast("Erreur lors du suivi de l'analyse IA.", 'error');
+      },
+    });
   }
 
   private stopPolling() {

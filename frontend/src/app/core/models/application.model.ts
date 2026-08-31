@@ -69,13 +69,7 @@ export interface UpdateApplicationStatusRequest {
 }
 
 export type TaskStatus =
-  | 'PENDING'
-  | 'UPLOADING'
-  | 'PARSING'
-  | 'STALLED'
-  | 'SUCCESS'
-  | 'FAILED'
-  | 'DUPLICATE';
+  'PENDING' | 'UPLOADING' | 'PARSING' | 'STALLED' | 'SUCCESS' | 'FAILED' | 'DUPLICATE';
 
 export interface UploadTask {
   file?: File;
@@ -91,4 +85,3 @@ export interface UploadTask {
   subErrors?: string[];
   savedAt?: number;
 }
-
