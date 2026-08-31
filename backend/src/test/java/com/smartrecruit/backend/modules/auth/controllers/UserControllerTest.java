@@ -7,10 +7,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.smartrecruit.backend.config.SecurityConfig;
+import com.smartrecruit.backend.exceptions.GlobalExceptionHandler;
 import com.smartrecruit.backend.modules.auth.dtos.CreateUserRequest;
 import com.smartrecruit.backend.modules.auth.dtos.UpdateProfileRequest;
 import com.smartrecruit.backend.modules.auth.dtos.UserResponse;
 import com.smartrecruit.backend.modules.auth.services.UserService;
+import com.smartrecruit.backend.security.JwtAuthConverter;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -23,21 +28,16 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(UserController.class)
-@Import({
-  com.smartrecruit.backend.config.SecurityConfig.class,
-  com.smartrecruit.backend.exceptions.GlobalExceptionHandler.class
-})
+@Import({SecurityConfig.class, GlobalExceptionHandler.class})
 class UserControllerTest {
 
   @Autowired private MockMvc mockMvc;
 
   @MockitoBean private UserService userService;
 
-  @MockitoBean private com.smartrecruit.backend.security.JwtAuthConverter jwtAuthConverter;
+  @MockitoBean private JwtAuthConverter jwtAuthConverter;
 
-  private ObjectMapper objectMapper =
-      new com.fasterxml.jackson.databind.ObjectMapper()
-          .registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+  private ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
   @Test
   void testGetAllUsers_WithHrAdminRole_ShouldReturn200() throws Exception {
@@ -49,7 +49,7 @@ class UserControllerTest {
             "Doe",
             "john@example.com",
             "HR_ADMIN",
-            java.time.Instant.now(),
+            Instant.now(),
             null);
     when(userService.getAllUsers()).thenReturn(List.of(mockUser));
 
@@ -113,14 +113,7 @@ class UserControllerTest {
   void testGetMyProfile_Authenticated_ShouldReturn200() throws Exception {
     UserResponse mockUser =
         new UserResponse(
-            UUID.randomUUID(),
-            "me",
-            "Me",
-            "My",
-            "me@example.com",
-            "HR_ADMIN",
-            java.time.Instant.now(),
-            null);
+            UUID.randomUUID(), "me", "Me", "My", "me@example.com", "HR_ADMIN", Instant.now(), null);
 
     when(userService.getMyProfile(any())).thenReturn(mockUser);
 
@@ -141,7 +134,7 @@ class UserControllerTest {
             "NewMy",
             "newme@example.com",
             "HR_ADMIN",
-            java.time.Instant.now(),
+            Instant.now(),
             null);
 
     when(userService.updateMyProfile(any(), any())).thenReturn(mockUser);

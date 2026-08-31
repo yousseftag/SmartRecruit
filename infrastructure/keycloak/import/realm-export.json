@@ -90,19 +90,9 @@
           "manage-users",
           "view-users",
           "query-users",
-          "query-groups",
-          "query-realms",
-          "query-clients",
           "view-realm",
-          "manage-realm",
-          "view-clients",
-          "manage-clients",
-          "view-events",
-          "manage-events",
-          "view-identity-providers",
-          "manage-identity-providers",
-          "view-authorization",
-          "manage-authorization"
+          "query-clients",
+          "view-clients"
         ]
       }
     },

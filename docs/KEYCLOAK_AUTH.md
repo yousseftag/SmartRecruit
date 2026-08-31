@@ -190,7 +190,7 @@ Optional<AppUser> user = securityUtils.getCurrentUser();
 [`KeycloakAdminService`](../backend/src/main/java/com/smartrecruit/backend/integration/keycloak/KeycloakAdminService.java) wraps the Keycloak Admin REST API using the official `keycloak-admin-client`.
 
 > [!NOTE]
-> `KeycloakAdminService` authenticates directly against the **`smartrecruit` realm** using the `smartrecruit-backend` service account client with `manage-users` and `view-users` roles. It never touches or accesses the `master` realm. All profile updates use a **fetch-before-update** pattern to preserve existing user representation attributes.
+> `KeycloakAdminService` authenticates directly against the **`smartrecruit` realm** using the `smartrecruit-backend` service account client with the least-privilege `realm-management` roles: `manage-users`, `view-users`, `query-users`, `view-realm`, `query-clients`, and `view-clients`. It never touches or accesses the `master` realm. All profile updates use a **fetch-before-update** pattern to preserve existing user representation attributes.
 
 ---
 

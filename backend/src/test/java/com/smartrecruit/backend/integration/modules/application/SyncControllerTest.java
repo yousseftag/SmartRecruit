@@ -3,6 +3,7 @@ package com.smartrecruit.backend.integration.modules.application;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.smartrecruit.backend.modules.application.services.NlpService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -18,7 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 public class SyncControllerTest {
 
   @Autowired private MockMvc mockMvc;
-  @MockitoBean private com.smartrecruit.backend.modules.application.services.NlpService nlpService;
+  @MockitoBean private NlpService nlpService;
 
   @Test
   void shouldReturn200WhenValidPayload() throws Exception {

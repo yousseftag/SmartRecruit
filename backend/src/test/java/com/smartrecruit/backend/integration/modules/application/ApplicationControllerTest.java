@@ -3,6 +3,7 @@ package com.smartrecruit.backend.integration.modules.application;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.smartrecruit.backend.modules.offer.repositories.OfferRepository;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,8 +20,7 @@ class ApplicationControllerTest {
 
   @Autowired private MockMvc mockMvc;
 
-  @Autowired
-  private com.smartrecruit.backend.modules.offer.repositories.OfferRepository offerRepository;
+  @Autowired private OfferRepository offerRepository;
 
   @Test
   void shouldReturn201WhenValidApplicationSubmitted() throws Exception {
