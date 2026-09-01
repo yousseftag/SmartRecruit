@@ -9,9 +9,10 @@ The **Candidate Application & Ingestion Pipeline** is the core entry point for c
 2. **HR Bulk Import (`/import`)**: Recruiter batch upload of standalone CV files (PDF/DOCX) or multi-file ZIP archives against a target job offer.
 
 Key System Capabilities:
-- **Instant SHA-256 Deduplication**: Prevents duplicate document storage in MinIO and blocks duplicate applications per job offer.
-- **2-Phase Asynchronous Processing**: Immediate synchronous ingestion (~200ms) with background AI NLP entity extraction and matching.
-- **Resilient State Machine**: 6 distinct frontend task states (`PENDING`, `UPLOADING`, `PARSING`, `SUCCESS`, `DUPLICATE`, `FAILED`) with selective retries.
+- **Instant SHA-256 Deduplication**: Prevents duplicate document storage in MinIO and reuses extracted candidate profile data across multiple applications.
+- **Offer-Specific Scoring**: While CV text extraction is cached at the document level (`CvFile`), candidate-offer matching and scoring are computed per `Application`.
+- **Asynchronous Queue-Driven AI Pipeline (RabbitMQ)**: Non-blocking asynchronous message queues (`cv.processing.queue` and `cv.sync.queue`) provide reliable backpressure, decoupled workers, and zero data loss.
+- **Resilient State Machine**: 6 distinct frontend task states (`PENDING`, `UPLOADING`, `PARSING`, `SUCCESS`, `DUPLICATE`, `FAILED`) with selective retries and stall detection.
 - **Data Synchronization**: In-place null-only candidate enrichment and lazy authenticated PDF preview streaming.
 
 ---
@@ -25,21 +26,24 @@ Key System Capabilities:
    - If candidate exists $\rightarrow$ updates name/phone and reuses existing `Candidate` record.
    - If candidate is new $\rightarrow$ creates a new `Candidate` entity.
 4. File is processed: SHA-256 checksum calculated, uploaded to MinIO storage, linked to `CvFile` and `Application` in `PENDING` extraction state.
-5. Dispatches NLP extraction event to background AI worker.
+5. Dispatches CV extraction task to RabbitMQ `cv.processing.queue`.
 
 ---
 
-### B. HR Bulk Import & AI Processing (`POST /api/v1/applications/import`)
+### B. HR Bulk Import & Asynchronous AI Architecture (`POST /api/v1/applications/import`)
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Recruiter as HR / Recruiter (UI)
     participant FE as Angular Frontend
-    participant API as Spring Boot Backend
+    participant API as Spring Boot Backend (Ingestion)
     participant MinIO as MinIO Storage
     participant DB as PostgreSQL Database
-    participant Worker as AI / NLP Worker
+    participant RMQ_REQ as RabbitMQ (cv.processing.queue)
+    participant Worker as AI Worker / Simulation
+    participant RMQ_RES as RabbitMQ (cv.sync.queue)
+    participant Consumer as CvSyncConsumer (@RabbitListener)
 
     Note over Recruiter, FE: Phase 1: Ingestion & Storage (~200ms)
     Recruiter->>FE: Select Offer + Drop PDF/DOCX/ZIP
@@ -52,47 +56,60 @@ sequenceDiagram
             API->>MinIO: Upload File Stream (resumes/{uuid}.ext)
             API->>DB: Create CvFile (PENDING) & Candidate Placeholder
         else Existing CV Document
-            API->>DB: Fetch existing Candidate from CvFile
+            API->>DB: Fetch existing Candidate & CvFile from Checksum
         end
         
         API->>DB: Check uq_application_candidate_offer (Candidate + Offer)
-        alt Candidate Already Applied
+        alt Candidate Already Applied to this Offer
             API-->>API: Tag as DUPLICATE (Skip DB write)
         else Valid New Application
-            API->>DB: Save Application (Status: NEW, ExtractionStatus: PENDING)
-            API->>Worker: Dispatch NLP Extraction Event
+            API->>DB: Save Application (Status: NEW, TotalScore: null)
+            API->>RMQ_REQ: CvIngestionProducer publishes task to cv.processing.queue
         end
     end
     
-    API-->>FE: HTTP 200 ImportResponse (fileStatuses)
+    API-->>FE: HTTP 200 ImportResponse (fileStatuses with PENDING)
 
-    Note over FE, Worker: Phase 2: Asynchronous AI Extraction
-    alt Direct PDF/DOCX Upload
-        loop Poll until Terminal State
-            FE->>API: GET /api/v1/applications/{id}/extraction-status (JPQL Projection)
-            API-->>FE: { id, extractionStatus: PENDING | SUCCESS | FAILED }
-        end
-    else ZIP Archive
-        FE-->>Recruiter: Displays Ingestion Count & Sub-Notices (Terminé / Doublons)
+    Note over FE, Worker: Phase 2: Asynchronous AI Extraction & Queue Sync
+    loop Poll until Terminal State (Exponential Backoff: 2s -> 3s -> 4.5s...)
+        FE->>API: GET /api/v1/applications/{id}/extraction-status
+        API->>DB: Check Application (totalScore) & CvFile (extractionStatus)
+        API-->>FE: { id, extractionStatus: PENDING | SUCCESS | FAILED | STALLED }
     end
 
-    Worker->>API: POST /api/v1/internal/cv/sync (AI Webhook)
-    API->>DB: Update CvFile (extractedData), Application (scores), Candidate (null-only enrichment)
-    FE-->>Recruiter: Candidate List & Profile automatically reflect scores
+    RMQ_REQ->>Worker: Consumes task from cv.processing.queue
+    Note over Worker: Runs NLP entity extraction & Offer match scoring (6-9s)
+    Worker->>RMQ_RES: Publishes SyncRequestDto to cv.sync.queue
+
+    RMQ_RES->>Consumer: @RabbitListener pulls message from cv.sync.queue
+    Consumer->>DB: NlpService updates CvFile, Application (Score), Candidate (Enrichment)
+    
+    FE-->>FE: Polling receives SUCCESS / FAILED
+    FE-->>Recruiter: UI badge turns Green/Red; Candidate List & Profile reflect live scores
 ```
 
 ---
 
-## 3. API Endpoints Reference
+## 3. API & Messaging Reference
+
+### A. HTTP REST Endpoints
 
 | Endpoint | Method | Role | Description |
 |---|---|---|---|
 | `/api/v1/applications/apply` | `POST` | `PUBLIC` | Direct public applicant form submission (Candidate + CvFile + Application). |
 | `/api/v1/applications/import` | `POST` | `HR_ADMIN`, `RECRUITER` | Ingests a batch of PDF/DOCX CVs or ZIP archives against `offerId`. Returns minimal `ImportResponse`. |
-| `/api/v1/applications/{id}/extraction-status` | `GET` | `HR_ADMIN`, `RECRUITER`, `VIEWER` | Ultra-fast lightweight JPQL projection query for UI polling during AI extraction. |
+| `/api/v1/applications/{id}/extraction-status` | `GET` | `HR_ADMIN`, `RECRUITER`, `VIEWER` | Lightweight JPQL projection query for UI polling (evaluates application score + CV extraction status). |
 | `/api/v1/applications/{id}/cv` | `GET` | `HR_ADMIN`, `RECRUITER`, `VIEWER` | Authenticated lazy PDF streaming directly from MinIO with inline disposition. |
-| `/api/v1/applications/{id}/re-extract` | `POST` | `HR_ADMIN`, `RECRUITER` | Resets application scores to null, sets extraction status to `PENDING`, and re-triggers AI. |
-| `/api/v1/internal/cv/sync` | `POST` | `INTERNAL` | Asynchronous AI webhook endpoint that ingests extracted skills, scores, and candidate data. |
+| `/api/v1/applications/{id}/re-extract` | `POST` | `HR_ADMIN`, `RECRUITER` | Resets application scores to null, sets extraction status to `PENDING`, and re-dispatches to RabbitMQ. |
+| `/api/v1/internal/cv/sync` | `POST` | `INTERNAL` | Asynchronous AI webhook endpoint (kept for backward compatibility and fallback testing). |
+
+### B. RabbitMQ AMQP Channels
+
+| Queue | Exchange | Routing Key | Direction | Producer | Consumer |
+|---|---|---|---|---|---|
+| `cv.processing.queue` | `ai.exchange` | `cv.routing.key` | Request | `CvIngestionProducer` (Spring Boot) | Python AI Worker / `SimulationNlpService` |
+| `cv.sync.queue` | `ai.exchange` | `cv.sync.routing.key` | Response | Python AI Worker / `SimulationNlpService` | `CvSyncConsumer` (Spring Boot) |
+| `offer.processing.queue` | `ai.exchange` | `offer.routing.key` | Request | Spring Boot | Python AI Worker |
 
 ---
 
@@ -124,6 +141,20 @@ public record ImportResponse(List<FileImportStatus> fileStatuses) {
 }
 ```
 
+### C. `SyncRequestDto` (RabbitMQ & Webhook Callback Payload)
+```java
+public class SyncRequestDto {
+  @NotNull private UUID applicationId;
+  @NotNull private UUID offerId;
+  @NotNull private UUID cvId;
+  @NotNull private ExtractionStatus extractionStatus; // SUCCESS | FAILED
+  private ExtractedDataDto extractedData;
+  private ExtractedMatchingDto extractedMatching;
+  private CategoryScoresDto categoryScores;
+  private BigDecimal totalScore;
+}
+```
+
 ---
 
 ## 5. State Machine & Task Status Matrix
@@ -142,46 +173,66 @@ public record ImportResponse(List<FileImportStatus> fileStatuses) {
 | **`UPLOADING`** | `Téléchargement` | Blue | No | Multipart HTTP transfer to backend (50% progress). |
 | **`PARSING`** | `Extraction IA` | Amber Pulse | No | Backend created application; polling `/extraction-status` with backoff (75% progress). |
 | **`STALLED`** | `Bloqué` | Orange | **Yes** | Backend marked job stalled (>5 min pending) or restore probe exceeded age. Inline "Relancer" resets & redispatches. |
-| **`SUCCESS`** | `Terminé` | Emerald / Green | No | AI extraction completed or ZIP unpacked successfully. Direct link to profile. |
-| **`DUPLICATE`** | `Doublon` | Amber Solid | **No** | Candidate already applied to this offer. Excluded from retry queue. |
-| **`FAILED`** | `Échec` | Red | **Yes** | Corrupted ZIP, invalid format, or unrecoverable error. Can be retried via "Relancer". |
+| **`SUCCESS`** | `Terminé` | Emerald / Green | No | AI extraction and offer scoring completed. Direct link to candidate profile. |
+| **`DUPLICATE`** | `Doublon` | Amber Solid | **No** | Candidate already applied to this specific job offer. Excluded from retry queue. |
+| **`FAILED`** | `Échec` | Red | **Yes** | Corrupted ZIP, unreadable PDF, or AI failure. Can be retried via "Relancer". |
 
 ---
 
 ## 6. Key Architectural Decisions & Rationale
 
-### 1. Granular Transaction Boundaries (No Monolithic `@Transactional`)
-- **Decision**: Removed `@Transactional` from `CvIngestionService.importCandidates`.
-- **Rationale**: An orchestrator batch loop must not be transactional. If File #2 is a duplicate, it throws `DuplicateResourceException` which is caught in the loop, allowing File #1, #3, and #4 to commit independently.
+### 1. RabbitMQ Asynchronous Consumer vs Synchronous HTTP Webhook
+- **Decision**: Implemented `CvSyncConsumer` listening to `cv.sync.queue`.
+- **Rationale**:
+  - **Downtime Resilience**: If Spring Boot restarts during a deployment, RabbitMQ holds all completed extraction messages in durable on-disk queues. Zero data loss.
+  - **Decoupling**: The Python worker does not need to know Spring Boot's host/port, only the message broker.
+  - **Backpressure**: Prevents hundreds of simultaneous HTTP callbacks from overwhelming Spring Boot and PostgreSQL connection pools.
 
-### 2. SHA-256 Storage Deduplication
-- **Decision**: Every uploaded CV calculates a SHA-256 checksum before MinIO upload.
-- **Rationale**: If Candidate X applies to multiple jobs with the same CV file, MinIO upload and raw text extraction are skipped, saving storage and cutting AI costs.
+### 2. Document-Level SHA-256 Deduplication vs Offer-Level Scoring
+- **Decision**: `CvFile` is cached by SHA-256 hash, but `Application` status evaluates whether that specific application has been scored.
+- **Rationale**: If Candidate X applies to 3 different offers with the same PDF, the raw document extraction (skills, experience, contact info) is reused immediately, but the match score against each distinct offer's requirements is independently computed and tracked.
 
-### 3. Null-Only Candidate Enrichment
+### 3. MinIO Configuration Lifecycle
+- **Decision**: Moved MinIO bucket creation to `MinioConfig` `@PostConstruct` / `@Bean` lifecycle.
+- **Rationale**: Avoids redundant `bucketExists()` network calls to MinIO on every file upload. The bucket is verified once at application startup.
+
+### 4. Null-Only Candidate Enrichment
 - **Decision**: `NlpService` only updates `Candidate` entity fields (`firstName`, `lastName`, `email`, `phone`) if they are currently `null` or blank.
 - **Rationale**: Prevents AI simulation drift from overwriting confirmed user data, avoids broken foreign keys, and guarantees 100% synchronization between Candidate List and Profile views.
 
-### 4. Simple ZIP Container Classification
-- **Decision**: An unpacked ZIP archive is classified as `SUCCESS` (`Terminé`) with message *"X CV(s) extrait(s), Y non traité(s)"* and sub-error notices, regardless of whether sub-files were duplicates.
-- **Rationale**: The archive container itself was read successfully; duplicate files inside are reported as informational warnings rather than a red failure.
+### 5. Configurable Dev/Prod AI Simulation Mode
+- **Decision**: Added `@ConditionalOnProperty(name = "app.ai-simulation.enabled")` to `SimulationNlpService` backed by `AI_SIMULATION_ENABLED`.
+- **Rationale**: In development, Spring Boot can simulate realistic sequential AI extraction (6–9s) without requiring the Python service. In production, switching `AI_SIMULATION_ENABLED=false` completely disables the simulation with **zero code changes**.
 
-### 5. Reactive Non-Overlapping Polling with Exponential Backoff & Backend Stall Detection
-- **Decision**: Replaced `setInterval`-based polling with an RxJS `expand` + `timer` + `switchMap` stream (`watchExtractionStatus$`) paired with a backend `@Scheduled` stall detector (`ExtractionStallDetector`).
+### 6. Reactive Non-Overlapping Polling with Exponential Backoff & Backend Stall Detection
+- **Decision**: Replaced `setInterval`-based polling with an RxJS `expand` + `timer` + `switchMap` stream (`watchExtractionStatus$`) paired with a backend Quartz scheduler (`CvStallDetectionJob`).
 - **Rationale**:
-  - **Non-Overlapping Stream**: Guarantees exactly one in-flight HTTP request at a time, eliminating request pileup.
-  - **Exponential Backoff**: Starts at 3 s, multiplies by 1.5×, capped at 15 s. Reduces server pressure while staying responsive early.
-  - **Soft Stalled Warning**: At attempt 10 (~1.5 min), displays an informational *"L'analyse IA prend plus de temps..."* warning while continuing to poll.
-  - **Backend Stall Sweeper**: Backend automatically sweeps every 1 minute (`PT1M`) and flags any `CvFile` pending for >5 min as `STALLED`, stopping pointless polling and showing an inline "Relancer" action.
-  - **Stale Session Guard**: On page reload or session restore, if the task is older than 3 minutes (`maxRestorePollAgeMs: 180_000`), a single probe is fired instead of launching an aggressive polling loop.
+  - **Non-Overlapping Stream**: Guarantees exactly one in-flight HTTP request at a time.
+  - **Exponential Backoff**: Starts at 2s, multiplies by 1.5×, capped at 15s. Reduces server pressure while staying responsive early.
+  - **Soft Stalled Warning**: At attempt 10 (~30s), displays an informational warning while continuing to poll.
+  - **Backend Stall Sweeper**: Backend Quartz scheduler sweeps every 1 minute and flags any `CvFile` pending for >5 min as `STALLED`, stopping pointless polling and showing an inline "Relancer" action.
 
 ---
 
-## 7. Future Improvements & Planned Updates
+## 7. Configuration Reference
 
-1. **WebSocket / SSE Push**:
-   Replace HTTP polling entirely with a server-sent event or WebSocket channel on `/api/v1/applications/{id}/status/stream` so the AI worker callback instantly pushes the terminal state to the browser with zero polling overhead.
-2. **Granular ZIP Bulk Import Details**:
-   Expand the bulk import results to display individual expandable sub-cards for each CV extracted from the ZIP archive with its own direct profile link and extraction status.
+```yaml
+# application.yml
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:8080}
+  cv-ingestion:
+    stall-threshold-minutes: ${CV_STALL_THRESHOLD_MINUTES:5}
+  ai-simulation:
+    enabled: ${AI_SIMULATION_ENABLED:true}
+
+spring:
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: 5672
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASS:guest}
+```
+
 
 
