@@ -90,6 +90,59 @@ sequenceDiagram
 
 ---
 
+### C. RabbitMQ Messaging Topology & Worker Operating Modes
+
+RabbitMQ operates as a decoupled, bi-directional asynchronous message broker using two dedicated queues on `ai.exchange`:
+
+#### 1. Production Mode (`AI_SIMULATION_ENABLED=false`)
+In production, Spring Boot dispatches extraction tasks to `cv.processing.queue`. An external Python FastAPI worker consumes tasks, performs OCR/LLM matching, and publishes extraction results to `cv.sync.queue`. Spring Boot's `CvSyncConsumer` receives the results over an open AMQP listener and synchronizes PostgreSQL.
+
+```mermaid
+flowchart LR
+    subgraph SpringBoot["Spring Boot Backend"]
+        Producer["CvIngestionProducer"]
+        Consumer["CvSyncConsumer (@RabbitListener)"]
+    end
+
+    subgraph RabbitMQ["RabbitMQ Broker (localhost:5672)"]
+        Q1[("cv.processing.queue")]
+        Q2[("cv.sync.queue")]
+    end
+
+    subgraph PythonAI["Python FastAPI Worker"]
+        PyWorker["Pika / Aio-Pika AMQP Consumer & LLM"]
+    end
+
+    Producer --"1. Pushes Task"--> Q1
+    Q1 --"2. Delivers Task to Worker"--> PyWorker
+    PyWorker --"3. Pushes JSON Result"--> Q2
+    Q2 --"4. Delivers Result to Backend"--> Consumer
+```
+
+#### 2. Development Simulation Mode (`AI_SIMULATION_ENABLED=true`)
+In local development, Spring Boot can run standalone without spinning up the Python AI microservice. `SimulationNlpService` acts as an in-JVM consumer on `cv.processing.queue`, simulates realistic sequential processing (6–9s latency), and writes results to `cv.sync.queue`. To RabbitMQ, both `SimulationNlpService` and `CvSyncConsumer` are independent AMQP clients.
+
+```mermaid
+flowchart LR
+    subgraph SpringBootProcess["Spring Boot Java Process (JVM)"]
+        Producer["1. CvIngestionProducer"]
+        Simulator["2. SimulationNlpService (@RabbitListener)"]
+        SyncConsumer["3. CvSyncConsumer (@RabbitListener)"]
+    end
+
+    subgraph RabbitMQ["RabbitMQ Broker Process"]
+        Q1[("cv.processing.queue")]
+        Q2[("cv.sync.queue")]
+    end
+
+    Producer --"Publish Task"--> Q1
+    Q1 --"Deliver Task"--> Simulator
+    Simulator --"Publish Result (after 6-9s)"--> Q2
+    Q2 --"Deliver Result"--> SyncConsumer
+```
+
+---
+
 ## 3. API & Messaging Reference
 
 ### A. HTTP REST Endpoints
