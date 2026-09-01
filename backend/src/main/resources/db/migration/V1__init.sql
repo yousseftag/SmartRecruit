@@ -62,6 +62,7 @@ CREATE TRIGGER trg_offer_updated_at
 -- where one candidate can log in, manage multiple CVs, and select which one to apply with.
 CREATE TABLE candidate (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    -- Nullable: Populated asynchronously via AI extraction. May remain null if extraction fails.
     first_name VARCHAR(255),
     last_name VARCHAR(255),
     email VARCHAR(255) UNIQUE,
@@ -80,7 +81,7 @@ CREATE TABLE cv_file (
         CHECK (extraction_status IN ('PENDING', 'SUCCESS', 'FAILED')),
     -- Extracted raw text/data from the CV (JSON Structure)
     -- {
-    --   "candidate_info": { "first_name": "John", "last_name": "Doe", "email": "john@email.com", "phone": "+123" },
+    --   "candidate_info": { "first_name": "John", "last_name": "Doe", "email": "john@email.com", "phone": "+123", "current_job_title": "Backend Developer" },
     --   "description_markdown": "Backend developer with 2 years of experience...",
     --   "skills": ["java", "spring boot"],
     --   "experience": 24,
@@ -115,7 +116,7 @@ CREATE TABLE application (
         -- 'ARCHIVED'       : Application archived for future reference
         CHECK (status IN ('NEW', 'SHORTLISTED', 'INTERVIEWING', 'FOLLOW_UP', 'HIRED', 'REJECTED', 'ARCHIVED')),
 
-    -- score fields (formerly score_breakdown), null until FastAPI's callback fires
+    -- Nullable AI Fields: Populated asynchronously via NLP callback.
     total_score NUMERIC(5, 2),
     -- Expected JSON Structure:
     -- { "skills": 66.67, "experience": 100.0, "coursework": 100.0, "languages": 50.0, "localization": 100.0 }
@@ -150,3 +151,5 @@ CREATE TABLE workflow_status_history (
     changed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX idx_workflow_history_application ON workflow_status_history(application_id);
+
+

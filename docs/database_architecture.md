@@ -38,14 +38,36 @@ Managing relational cleanup is critical. We use a mix of strict rules to ensure 
 
 ---
 
-## 3. Dealing with AI/NLP Failures (Optional Fields)
+## 3. Strictness vs. Flexibility (NULL vs NOT NULL)
 
-AI extraction is not perfect. The schema is highly fault-tolerant by explicitly allowing `NULL` values where AI data might fail or take time to process:
+The database acts as the last line of defense against corrupted data, but it must also remain flexible enough to handle the non-deterministic nature of AI and future feature additions.
 
-- **`cv_file`:** `extracted_data`, `processed_at` are `NULL` until FastAPI finishes processing.
-- **`application`:** `total_score`, `category_scores`, `extracted_matching`, `scored_at` are all `NULL` until FastAPI returns the webhook.
-- **`offer`:** `description_markdown`, `category_criteria`, `extracted_requirements` are optional.
-- **`candidate`:** `first_name`, `last_name`, `email`, `phone` are optional so HR can bulk-upload CVs anonymously, allowing the AI to extract and populate this data later.
+### 3.1 Always Guaranteed (`NOT NULL`)
+These fields are strictly enforced by PostgreSQL. The API and Frontend can safely assume they will always exist:
+- **`app_user`**: `id`, `keycloak_sub`, `username`, `first_name`, `last_name`, `email`, `role`, `created_at` (All fields strictly required).
+- **`offer`**: `id`, `title`, `status`, `category_weights`, `created_at`, `updated_at`.
+- **`cv_file`**: `id`, `candidate_id`, `storage_key`, `original_filename`, `checksum_sha256`, `extraction_status`, `uploaded_at`.
+- **`application`**: `id`, `candidate_id`, `offer_id`, `cv_file_id`, `status`, `applied_at`.
+- **`workflow_status_history`**: `id`, `application_id`, `to_status`, `changed_at`.
+
+### 3.2 Flexible Business Logic (`NULLABLE`)
+**Architectural Note:** These are the *only* fields in the schema where developers are permitted to toggle strictness (`NULL` vs `NOT NULL`) in future migrations based on changing company policy. Enforcement for these is currently delegated to the DTO layer (`@NotNull` in Java) and the Frontend to avoid hardcoding business rules into SQL:
+- **`offer.contract_type`**: Nullable to avoid hardcoding Enums in SQL.
+- **`offer.min_score`**: Nullable because the frontend handles the default (e.g., 80) and some offers might not require a threshold.
+- **`offer.description_markdown` & `category_criteria`**: Optional at the DB level to support minimal job postings, though the frontend may require them.
+- **`offer.duration_months`**: Null implies a permanent contract (CDI) where duration is not applicable.
+
+### 3.3 Dealing with AI/NLP Failures (`NULLABLE` by Design)
+AI extraction is asynchronous and non-deterministic. The schema is highly fault-tolerant by explicitly allowing `NULL` values where AI data might fail or take time to process:
+- **`candidate`**: `first_name`, `last_name`, `email`, `phone` are optional. When HR bulk-uploads CVs, these are created as empty "Ghost" candidates so the AI can extract and populate them later. The UI must always provide fallbacks (e.g. "Candidat Inconnu").
+- **`cv_file`**: `extracted_data`, `processed_at` are `NULL` until FastAPI finishes processing.
+- **`application`**: `total_score`, `category_scores`, `extracted_matching`, `scored_at` are all strictly `NULL` until FastAPI returns the webhook (Represented as `PENDING` in the UI).
+- **`offer`**: `extracted_requirements` is null until the AI uncovers hidden requirements.
+
+### 3.4 Audit & History Logs (`NULLABLE` by Design)
+To maintain data integrity without breaking foreign keys when HR users are deleted, or when records are first created, some history fields are explicitly nullable:
+- **`workflow_status_history.from_status`**: Null when an application is first created, as there is no previous status.
+- **`workflow_status_history.changed_by` & `offer.created_by`**: Nullable due to `ON DELETE SET NULL`. If an HR user is deleted, their actions remain in the audit log, but their reference ID safely becomes null.
 
 ---
 

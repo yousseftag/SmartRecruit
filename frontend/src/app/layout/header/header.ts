@@ -55,13 +55,14 @@ export class Header implements OnInit {
   // Subscribes to router events to dynamically update the page title based on the current active route.
   private setupRouterListener() {
     const routeTitles: Record<string, string> = {
-      '/dashboard': 'Tableau de bord',
-      '/offers': 'Offres',
-      '/candidates': 'Candidats',
-      '/workflow': 'Workflow',
-      '/reporting': 'Reporting',
-      '/administration': 'Administration',
-      '/settings': 'Paramètres',
+      '/hr/dashboard': 'Tableau de bord',
+      '/hr/offers': 'Offres',
+      '/hr/candidates/import': 'Importation de CVs',
+      '/hr/candidates': 'Candidats',
+      '/hr/workflow': 'Workflow',
+      '/hr/reporting': 'Reporting',
+      '/hr/administration': 'Administration',
+      '/hr/settings': 'Paramètres',
     };
 
     this.updateTitle(this.router.url, routeTitles);
