@@ -49,11 +49,20 @@ backend_test:
   services:
     - name: postgres:16-alpine
       alias: postgres
+    - name: minio/minio:latest
+      alias: minio
+      command: ["server", "/data"]
+    - name: rabbitmq:3-management-alpine
+      alias: rabbitmq
   variables:
     POSTGRES_DB: smartrecruit
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: postgres
-    SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/smartrecruit
+    POSTGRES_HOST: postgres
+    MINIO_URL: http://minio:9000
+    MINIO_ROOT_USER: minioadmin
+    MINIO_ROOT_PASSWORD: minioadmin
+    RABBITMQ_HOST: rabbitmq
   script:
     # Runs standard JUnit tests with test profile and global CLI opts
     - ./mvnw $MAVEN_CLI_OPTS test -Dspring.profiles.active=test

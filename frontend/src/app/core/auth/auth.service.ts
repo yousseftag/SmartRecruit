@@ -56,7 +56,7 @@ export class AuthService {
     });
   }
 
-  logout(redirectUri: string = window.location.origin): Observable<void> {
+  logout(redirectUri: string = `${window.location.origin}/hr`): Observable<void> {
     return from(this.keycloak.logout({ redirectUri }));
   }
 

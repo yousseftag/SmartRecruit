@@ -3,6 +3,7 @@ package com.smartrecruit.backend.config;
 import com.smartrecruit.backend.security.JwtAuthConverter;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -23,12 +24,16 @@ public class SecurityConfig {
 
   private final JwtAuthConverter jwtAuthConverter;
   private final HandlerExceptionResolver exceptionResolver;
+  private final List<String> allowedOrigins;
 
   public SecurityConfig(
       JwtAuthConverter jwtAuthConverter,
-      @Qualifier("handlerExceptionResolver") HandlerExceptionResolver exceptionResolver) {
+      @Qualifier("handlerExceptionResolver") HandlerExceptionResolver exceptionResolver,
+      @Value("${app.cors.allowed-origins:http://localhost:4200,http://localhost:8080}")
+          List<String> allowedOrigins) {
     this.jwtAuthConverter = jwtAuthConverter;
     this.exceptionResolver = exceptionResolver;
+    this.allowedOrigins = allowedOrigins;
   }
 
   @Bean
@@ -37,7 +42,12 @@ public class SecurityConfig {
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+                auth.requestMatchers(
+                        "/v3/api-docs", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+                    .permitAll()
+                    .requestMatchers("/api/v1/public/**")
+                    .permitAll()
+                    .requestMatchers("/api/v1/internal/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
@@ -62,7 +72,7 @@ public class SecurityConfig {
   @Bean
   public CorsConfigurationSource corsConfigurationSource() {
     CorsConfiguration configuration = new CorsConfiguration();
-    configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+    configuration.setAllowedOrigins(allowedOrigins);
     configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
     configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
     configuration.setAllowCredentials(true);
