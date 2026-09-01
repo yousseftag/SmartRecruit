@@ -48,6 +48,15 @@ spring:
     port: 5672
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASS:guest}
+    listener:
+      simple:
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-retries: 3
+          initial-interval: 2000ms
+          multiplier: 2.0
+          max-interval: 10000ms
 
 keycloak:
   realm: smartrecruit
