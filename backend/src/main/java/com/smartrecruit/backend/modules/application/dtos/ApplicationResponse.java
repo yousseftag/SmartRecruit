@@ -3,6 +3,7 @@ package com.smartrecruit.backend.modules.application.dtos;
 import com.smartrecruit.backend.modules.application.enums.ApplicationStatus;
 import com.smartrecruit.backend.modules.application.enums.ExtractionStatus;
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -19,8 +20,9 @@ public record ApplicationResponse(
     UUID cvFileId,
     String cvOriginalFilename,
     BigDecimal totalScore,
+    Boolean passedMinScore,
     Map<String, Object> categoryScores,
     Map<String, Object> extractedMatching,
     Map<String, Object> cvExtractedData,
-    java.time.OffsetDateTime appliedAt,
-    java.time.OffsetDateTime scoredAt) {}
+    OffsetDateTime appliedAt,
+    OffsetDateTime scoredAt) {}

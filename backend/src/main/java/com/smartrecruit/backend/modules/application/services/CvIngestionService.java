@@ -317,6 +317,7 @@ public class CvIngestionService {
 
     // 1. Reset scoring and match states
     application.setTotalScore(null);
+    application.setPassedMinScore(null);
     application.setCategoryScores(null);
     application.setExtractedMatching(null);
     application.setScoredAt(null);
