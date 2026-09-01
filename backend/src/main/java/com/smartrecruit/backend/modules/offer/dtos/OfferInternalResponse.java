@@ -1,6 +1,7 @@
 package com.smartrecruit.backend.modules.offer.dtos;
 
 import com.smartrecruit.backend.modules.auth.dtos.AppUserResponse;
+import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -16,5 +17,5 @@ public record OfferInternalResponse(
     Integer durationMonths,
     String contractType,
     Map<String, Object> extractedRequirements,
-    java.time.OffsetDateTime createdAt,
-    java.time.OffsetDateTime updatedAt) {}
+    OffsetDateTime createdAt,
+    OffsetDateTime updatedAt) {}

@@ -1,5 +1,6 @@
 package com.smartrecruit.backend.modules.offer.dtos;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record OfferPublicSummaryResponse(
@@ -9,4 +10,4 @@ public record OfferPublicSummaryResponse(
     Integer durationMonths,
     String localization,
     Integer experience,
-    java.time.OffsetDateTime createdAt) {}
+    OffsetDateTime createdAt) {}

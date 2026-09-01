@@ -4,10 +4,14 @@ import com.smartrecruit.backend.integration.keycloak.KeycloakIntegrationExceptio
 import com.smartrecruit.backend.modules.auth.exceptions.UserAlreadyExistsException;
 import com.smartrecruit.backend.modules.auth.exceptions.UserNotFoundException;
 import java.time.LocalDateTime;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindException;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -30,16 +34,13 @@ public class GlobalExceptionHandler {
     return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
   }
 
-  @ExceptionHandler({
-    org.springframework.web.bind.MethodArgumentNotValidException.class,
-    org.springframework.validation.BindException.class
-  })
+  @ExceptionHandler({MethodArgumentNotValidException.class, BindException.class})
   public ResponseEntity<ApiErrorResponse> handleValidationException(Exception ex) {
-    org.springframework.validation.BindingResult bindingResult = null;
+    BindingResult bindingResult = null;
 
-    if (ex instanceof org.springframework.web.bind.MethodArgumentNotValidException manve) {
+    if (ex instanceof MethodArgumentNotValidException manve) {
       bindingResult = manve.getBindingResult();
-    } else if (ex instanceof org.springframework.validation.BindException be) {
+    } else if (ex instanceof BindException be) {
       bindingResult = be.getBindingResult();
     }
 
@@ -48,7 +49,7 @@ public class GlobalExceptionHandler {
       message =
           bindingResult.getFieldErrors().stream()
               .map(error -> error.getField() + ": " + error.getDefaultMessage())
-              .collect(java.util.stream.Collectors.joining(", "));
+              .collect(Collectors.joining(", "));
     }
 
     return buildResponse(HttpStatus.BAD_REQUEST, message);
