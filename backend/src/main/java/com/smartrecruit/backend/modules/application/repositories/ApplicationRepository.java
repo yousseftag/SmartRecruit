@@ -27,7 +27,13 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
    */
   @Query(
       "SELECT new com.smartrecruit.backend.modules.application.dtos.ApplicationExtractionStatusResponse("
-          + "a.id, c.extractionStatus) "
+          + "a.id, "
+          + "CASE "
+          + "  WHEN c.extractionStatus = com.smartrecruit.backend.modules.application.enums.ExtractionStatus.FAILED THEN com.smartrecruit.backend.modules.application.enums.ExtractionStatus.FAILED "
+          + "  WHEN c.extractionStatus = com.smartrecruit.backend.modules.application.enums.ExtractionStatus.STALLED THEN com.smartrecruit.backend.modules.application.enums.ExtractionStatus.STALLED "
+          + "  WHEN a.totalScore IS NOT NULL OR a.scoredAt IS NOT NULL THEN com.smartrecruit.backend.modules.application.enums.ExtractionStatus.SUCCESS "
+          + "  ELSE com.smartrecruit.backend.modules.application.enums.ExtractionStatus.PENDING "
+          + "END) "
           + "FROM Application a JOIN a.cvFile c WHERE a.id = :id")
   Optional<ApplicationExtractionStatusResponse> findExtractionStatusById(@Param("id") UUID id);
 }
