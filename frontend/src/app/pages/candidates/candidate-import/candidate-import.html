@@ -241,29 +241,7 @@
                     'bg-red-bg text-red border border-red/20': task.status === 'FAILED',
                   }"
                 >
-                  @switch (task.status) {
-                    @case ('PENDING') {
-                      En attente
-                    }
-                    @case ('UPLOADING') {
-                      Envoi...
-                    }
-                    @case ('PARSING') {
-                      Analyse IA...
-                    }
-                    @case ('STALLED') {
-                      Bloqué
-                    }
-                    @case ('SUCCESS') {
-                      Terminé
-                    }
-                    @case ('DUPLICATE') {
-                      Doublon
-                    }
-                    @case ('FAILED') {
-                      Échec
-                    }
-                  }
+                  {{ statusLabels[task.status] }}
                 </span>
 
                 <!-- Direct Link on Single CV Success -->

@@ -44,6 +44,16 @@ export class CandidateImport implements OnInit {
   readonly uploadTasks = signal<UploadTask[]>([]);
   readonly isUploading = signal(false);
 
+  readonly statusLabels: Readonly<Record<TaskStatus, string>> = {
+    PENDING: 'En attente',
+    UPLOADING: 'Envoi...',
+    PARSING: 'Analyse IA...',
+    STALLED: 'Bloqué',
+    SUCCESS: 'Terminé',
+    DUPLICATE: 'Doublon',
+    FAILED: 'Échec',
+  };
+
   // --- Computed States for the State Machine ---
 
   // 1. Files ready to be processed (Pending or Failed with a valid File object)
@@ -293,12 +303,7 @@ export class CandidateImport implements OnInit {
         if (existingIdx >= 0) {
           const existing = updated[existingIdx];
           // Block re-processing if already completed or active
-          if (
-            existing.status === 'SUCCESS' ||
-            existing.status === 'PARSING' ||
-            existing.status === 'UPLOADING' ||
-            existing.status === 'DUPLICATE'
-          ) {
+          if (existing.status !== 'PENDING' && existing.status !== 'FAILED') {
             continue;
           }
 
