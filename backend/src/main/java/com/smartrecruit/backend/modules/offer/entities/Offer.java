@@ -1,9 +1,11 @@
 package com.smartrecruit.backend.modules.offer.entities;
 
 import com.smartrecruit.backend.modules.auth.entities.AppUser;
-import com.smartrecruit.backend.modules.offer.enums.OfferStatus;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -34,18 +36,17 @@ public class Offer {
   @Column(name = "description_markdown")
   private String descriptionMarkdown;
 
-  @Enumerated(EnumType.STRING)
   @Column(name = "status", nullable = false)
   @Builder.Default
-  private OfferStatus status = OfferStatus.DRAFT;
+  private String status = "DRAFT";
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "category_weights", columnDefinition = "jsonb", nullable = false)
-  private String categoryWeights;
+  private Map<String, Object> categoryWeights;
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "category_criteria", columnDefinition = "jsonb")
-  private String categoryCriteria;
+  private Map<String, Object> categoryCriteria;
 
   @Column(name = "min_score")
   private Integer minScore;
@@ -58,7 +59,7 @@ public class Offer {
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "extracted_requirements", columnDefinition = "jsonb")
-  private String extractedRequirements;
+  private Map<String, Object> extractedRequirements;
 
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
@@ -71,4 +72,25 @@ public class Offer {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "updated_by")
   private AppUser updatedBy;
+
+  public String getLocalization() {
+    if (categoryCriteria != null && categoryCriteria.get("localization") instanceof String s) {
+      return s;
+    }
+    return null;
+  }
+
+  public Integer getExperience() {
+    if (categoryCriteria != null && categoryCriteria.get("experience") instanceof Number n) {
+      return n.intValue();
+    }
+    return null;
+  }
+
+  public List<String> getRequiredSkills() {
+    if (categoryCriteria != null && categoryCriteria.get("skills") instanceof List<?> list) {
+      return list.stream().map(Object::toString).toList();
+    }
+    return Collections.emptyList();
+  }
 }

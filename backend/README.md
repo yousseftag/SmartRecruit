@@ -19,7 +19,7 @@ This spins up:
 - **RabbitMQ**: `localhost:5672` (Management UI at [`localhost:15672`](http://localhost:15672))
 - **MinIO (S3 Storage)**: `localhost:9000` (Console at [`localhost:9001`](http://localhost:9001))
 - **Keycloak (Auth)**: [`localhost:8081`](http://localhost:8081)
-- **Mailpit (Local Email Catcher)**: `localhost:1025` (Web UI at [`localhost:8025`](http://localhost:8025))
+- **Mailpit (Local Email Catcher)**: `localhost:8025` (Web UI at [`localhost:8025`](http://localhost:8025))
 
 ### 2. Run the Application
 You can run the application directly from your IDE, or via Maven:
@@ -50,19 +50,24 @@ We follow a **Package-by-Feature (Domain-Driven)** architecture. Each module is 
 com.smartrecruit.backend
 ├── config/            # Security, MinIO, RabbitMQ, Cors configurations
 ├── security/          # Keycloak JWT converters, custom role extractors
-├── exceptions/        # GlobalExceptionHandler (@RestControllerAdvice)
+├── exceptions/        # GlobalExceptionHandler and Custom Exceptions. Maps to unified ApiErrorResponse.
 ├── modules/           # Grouped by feature (Domain-Driven)
 │   ├── auth/          # Users, Roles syncing
 │   ├── offer/         # Job Offers
 │   ├── candidate/     # Candidate profiles, CV files
 │   ├── application/   # Job applications, statuses, scores
 │   └── reporting/     # Dashboard stats, PDF/Excel generators
-└── integration/       # External services (Storage, Messaging, Email)
+└── integration/       # External services integrations (MinIO Storage, RabbitMQ Producers/Consumers, SMTP Email)
 ```
 
 ### ⚠️ Important Architectural Rules
 1. **Public vs Private Endpoints**: Candidate-facing endpoints (e.g., fetching public offers, submitting a CV) must be explicitly set to `permitAll()` in the `SecurityFilterChain`. Recruiter endpoints must be protected using `@PreAuthorize`.
 2. **No Scoring Module**: Spring Boot **does not** compute scores. Do not create a `scoring` module. The `ScoreBreakdown` entity is simply a data record attached to an Application, so it lives in `modules/application/`.
+3. **Exception Handling**: Always throw specific custom exceptions (e.g., `ResourceNotFoundException`) rather than generic `RuntimeException`s. They are automatically intercepted by `GlobalExceptionHandler` and translated into standard `ApiErrorResponse` JSON payloads.
+4. **Testing Philosophy**: 
+   - **Web Layer**: Test controllers using `@SpringBootTest` and `MockMvc`, but isolate them by mocking the Service layer (`@MockitoBean`).
+   - **Profiles**: Always annotate integration tests with `@ActiveProfiles("test")` to ensure safe configuration overrides.
+   - Run tests via `./mvnw clean test`.
 
 ---
 

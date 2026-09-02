@@ -4,23 +4,23 @@
       <h1 class="h1" style="margin: 0">Modifier mon profil</h1>
     </div>
 
-    <!-- Skeleton loader or spinner could go here when isLoading is true -->
-    @if (isLoading) {
+    <!-- Skeleton loader or spinner when isLoading is true -->
+    @if (isLoading()) {
       <div style="text-align: center; padding: 40px 0">
         <span class="muted">Chargement de votre profil...</span>
       </div>
     } @else {
       <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
         <!-- Notifications -->
-        @if (successMessage) {
+        @if (successMessage()) {
           <div class="alert-success">
-            {{ successMessage }}
+            {{ successMessage() }}
           </div>
         }
 
-        @if (errorMessage) {
+        @if (errorMessage()) {
           <div class="alert-error">
-            {{ errorMessage }}
+            {{ errorMessage() }}
           </div>
         }
 
@@ -28,12 +28,11 @@
         <div class="two-col" style="margin-bottom: 20px">
           <div class="field">
             <label class="label">Nom d'utilisateur</label>
-            <!-- Using standard HTML disabled attribute -->
-            <input type="text" class="input input-disabled" [value]="username" disabled />
+            <input type="text" class="input input-disabled" [value]="username()" disabled />
           </div>
           <div class="field">
             <label class="label">Rôle</label>
-            <input type="text" class="input input-disabled" [value]="role" disabled />
+            <input type="text" class="input input-disabled" [value]="role()" disabled />
           </div>
         </div>
 
@@ -69,8 +68,8 @@
           style="padding: 0; border: none; display: flex; gap: 12px; justify-content: flex-end"
         >
           <button type="button" class="btn btn-outline" (click)="onCancel()">Annuler</button>
-          <button type="submit" class="btn btn-primary" [disabled]="isSaving">
-            {{ isSaving ? 'Enregistrement...' : 'Enregistrer les modifications' }}
+          <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
+            {{ isSaving() ? 'Enregistrement...' : 'Enregistrer les modifications' }}
           </button>
         </div>
       </form>

@@ -1,1 +1,578 @@
-<p>candidate-import works!</p>
+<div class="max-w-4xl mx-auto px-6 py-8">
+  <!-- Back Link & Header -->
+  <div class="mb-6">
+    <a
+      routerLink="/hr/candidates"
+      class="text-xs font-semibold text-slate hover:text-blue inline-flex items-center gap-1 mb-3 transition-colors"
+    >
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M15 19l-7-7 7-7"
+        ></path>
+      </svg>
+      Retour aux candidatures
+    </a>
+    <h1 class="text-2xl font-bold text-ink tracking-tight">Importer des Candidatures</h1>
+    <p class="text-xs text-slate mt-1">
+      Sélectionnez l'offre cible, puis déposez des CV individuels (PDF, DOCX) ou une archive ZIP
+      complète. L'IA extrait automatiquement les profils.
+    </p>
+  </div>
+
+  <!-- Step 1: Offer Selection with Custom Dropdown -->
+  <div class="card p-6 bg-white mb-6 border border-line shadow-xs">
+    <div class="flex items-center justify-between mb-3">
+      <label class="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-2">
+        <span
+          class="w-5 h-5 rounded-full bg-blue text-white flex items-center justify-center text-[10px] font-bold"
+          >1</span
+        >
+        Sélectionner l'offre d'emploi cible <span class="text-red">*</span>
+      </label>
+    </div>
+
+    <!-- Custom Offer Dropdown -->
+    <div class="relative w-full">
+      <button
+        type="button"
+        (click)="toggleOfferDropdown($event)"
+        [disabled]="isProcessing()"
+        class="w-full px-4 py-3 bg-bg border border-line rounded-lg text-xs font-semibold text-ink flex items-center justify-between gap-3 hover:border-slate/40 focus:border-blue transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        <div class="flex items-center gap-2.5 truncate">
+          <svg
+            class="w-4 h-4 text-slate flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            ></path>
+          </svg>
+          <span class="truncate" [ngClass]="{ 'text-slate': !selectedOfferId() }">{{
+            selectedOfferLabel()
+          }}</span>
+        </div>
+        <svg
+          class="w-4 h-4 text-slate flex-shrink-0 transition-transform duration-200"
+          [class.rotate-180]="isOfferDropdownOpen()"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M19 9l-7 7-7-7"
+          ></path>
+        </svg>
+      </button>
+
+      <!-- Floating Offer Menu -->
+      @if (isOfferDropdownOpen()) {
+        <div
+          class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-line rounded-xl shadow-lg z-30 py-1.5 max-h-64 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150"
+        >
+          @for (off of offers(); track off.id) {
+            <button
+              type="button"
+              (click)="selectOffer(off.id)"
+              class="w-full px-4 py-2.5 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors truncate"
+              [ngClass]="
+                selectedOfferId() === off.id ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
+              "
+            >
+              <span class="truncate">{{ off.title }}</span>
+              @if (selectedOfferId() === off.id) {
+                <svg
+                  class="w-4 h-4 text-blue flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  ></path>
+                </svg>
+              }
+            </button>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Step 2: Dropzone -->
+  <div
+    class="card p-6 bg-white mb-6 border border-line shadow-xs"
+    [class.opacity-60]="!selectedOfferId() || isProcessing()"
+  >
+    <div class="flex items-center justify-between mb-3">
+      <label class="text-xs font-bold text-ink uppercase tracking-wider flex items-center gap-2">
+        <span
+          class="w-5 h-5 rounded-full bg-blue text-white flex items-center justify-center text-[10px] font-bold"
+          >2</span
+        >
+        Déposer les CVs (PDF, DOCX ou ZIP) <span class="text-red">*</span>
+      </label>
+      <span class="text-[11px] text-slate">Jusqu'à 50 fichiers simultanés</span>
+    </div>
+
+    <div [class.pointer-events-none]="!selectedOfferId() || isProcessing()">
+      <app-file-dropzone
+        [allowMultiple]="true"
+        [maxFiles]="50"
+        (filesDropped)="onFilesDropped($event)"
+      >
+      </app-file-dropzone>
+    </div>
+  </div>
+
+  <!-- Step 3: Upload Queue -->
+  @if (uploadTasks().length > 0) {
+    <div class="card p-6 bg-white mb-6 border border-line shadow-xs">
+      <div class="flex items-center justify-between mb-4 pb-3 border-b border-line">
+        <div class="flex items-center gap-2">
+          <span
+            class="w-5 h-5 rounded-full bg-blue text-white flex items-center justify-center text-[10px] font-bold"
+            >3</span
+          >
+          <h3 class="text-xs font-bold text-ink uppercase tracking-wider">
+            Fichiers dans la file ({{ uploadTasks().length }})
+          </h3>
+        </div>
+        <div class="flex items-center gap-3">
+          @if (successCount() > 0 && !isProcessing()) {
+            <button
+              type="button"
+              (click)="clearCompletedTasks()"
+              class="text-xs text-slate hover:text-ink font-semibold transition-colors"
+            >
+              Effacer les terminés ({{ successCount() }})
+            </button>
+          }
+          <button
+            type="button"
+            (click)="clearAllTasks()"
+            [disabled]="isProcessing()"
+            class="text-xs text-red hover:text-red-700 disabled:opacity-40 font-semibold transition-colors"
+          >
+            Tout effacer
+          </button>
+        </div>
+      </div>
+
+      <!-- Files List -->
+      <div class="space-y-3">
+        @for (task of uploadTasks(); track task.filename; let i = $index) {
+          <div
+            class="border border-line rounded-lg p-3.5 flex flex-col gap-2.5 bg-bg/40 transition-colors"
+          >
+            <div class="flex items-center justify-between gap-3">
+              <!-- File Icon + Info -->
+              <div class="flex items-center gap-3 flex-1 min-w-0">
+                <!-- Icon -->
+                <div
+                  class="w-9 h-9 rounded-lg bg-white border border-line flex items-center justify-center flex-shrink-0 shadow-xs"
+                >
+                  @if (task.isZip) {
+                    <svg
+                      class="w-5 h-5 text-amber-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+                      ></path>
+                    </svg>
+                  } @else {
+                    <svg
+                      class="w-5 h-5 text-blue"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      ></path>
+                    </svg>
+                  }
+                </div>
+
+                <!-- File Name & Size -->
+                <div class="truncate">
+                  <span class="text-xs font-bold text-ink truncate block">{{ task.filename }}</span>
+                  <span class="text-[10px] text-slate">{{ formatFileSize(task.size) }}</span>
+                </div>
+              </div>
+
+              <!-- Status Badge + Actions -->
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <span
+                  class="text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0"
+                  [ngClass]="{
+                    'bg-bg text-slate border border-line': task.status === 'PENDING',
+                    'bg-blue-100 text-blue border border-blue/20': task.status === 'UPLOADING',
+                    'bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 animate-pulse':
+                      task.status === 'PARSING',
+                    'bg-green-bg text-green border border-green/20': task.status === 'SUCCESS',
+                    'bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30':
+                      task.status === 'DUPLICATE',
+                    'bg-red-bg text-red border border-red/20': task.status === 'FAILED',
+                  }"
+                >
+                  @switch (task.status) {
+                    @case ('PENDING') {
+                      En attente
+                    }
+                    @case ('UPLOADING') {
+                      Envoi...
+                    }
+                    @case ('PARSING') {
+                      Analyse IA...
+                    }
+                    @case ('SUCCESS') {
+                      Terminé
+                    }
+                    @case ('DUPLICATE') {
+                      Doublon
+                    }
+                    @case ('FAILED') {
+                      Échec
+                    }
+                  }
+                </span>
+
+                <!-- Direct Link on Single CV Success -->
+                @if (task.status === 'SUCCESS' && task.applicationId) {
+                  <a
+                    [routerLink]="['/hr/candidates', task.applicationId]"
+                    class="text-xs font-bold text-blue hover:underline flex items-center gap-1 px-2.5 py-1 bg-blue-100 rounded-md"
+                  >
+                    Voir profil &rarr;
+                  </a>
+                }
+
+                <!-- Direct Link on ZIP Success -->
+                @if (task.status === 'SUCCESS' && task.isZip) {
+                  <a
+                    routerLink="/hr/candidates"
+                    [queryParams]="{ offerId: selectedOfferId() }"
+                    class="text-xs font-bold text-green hover:underline flex items-center gap-1 px-2.5 py-1 bg-green-bg rounded-md"
+                  >
+                    Voir les candidatures &rarr;
+                  </a>
+                }
+
+                <!-- Remove Button (for PENDING, FAILED, DUPLICATE or completed tasks) -->
+                @if (
+                  task.status === 'PENDING' ||
+                  task.status === 'FAILED' ||
+                  task.status === 'DUPLICATE' ||
+                  task.status === 'SUCCESS'
+                ) {
+                  <button
+                    type="button"
+                    (click)="removeTask(i)"
+                    [disabled]="isProcessing()"
+                    class="p-1.5 text-slate hover:text-red transition-colors disabled:opacity-40"
+                    title="Supprimer ce fichier"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      ></path>
+                    </svg>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Progress Bar (Only during Uploading / Parsing) -->
+            @if (task.status === 'UPLOADING' || task.status === 'PARSING') {
+              <div class="w-full bg-bg rounded-full h-1.5 overflow-hidden border border-line/60">
+                <div
+                  class="h-full rounded-full transition-all duration-300"
+                  [ngClass]="{
+                    'bg-blue': task.status === 'UPLOADING',
+                    'bg-amber-500 animate-pulse': task.status === 'PARSING',
+                  }"
+                  [style.width.%]="task.progress"
+                ></div>
+              </div>
+            }
+
+            <!-- ZIP Processing Animated Pulse Indicator -->
+            @if (task.isZip && task.status === 'PARSING') {
+              <div
+                class="text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2 pt-0.5"
+              >
+                <svg
+                  class="animate-spin h-3.5 w-3.5 text-amber-600 dark:text-amber-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                <span>Décompression et extraction des CVs en cours...</span>
+              </div>
+            }
+
+            <!-- Single CV Processing Animated Pulse Indicator -->
+            @if (!task.isZip && task.status === 'PARSING') {
+              <div
+                class="text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-2 pt-0.5"
+              >
+                <svg
+                  class="animate-spin h-3.5 w-3.5 text-amber-600 dark:text-amber-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4"
+                  ></circle>
+                  <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                <span>Extraction et analyse NLP en cours...</span>
+              </div>
+            }
+
+            <!-- Single CV Success Message -->
+            @if (!task.isZip && task.status === 'SUCCESS') {
+              <div class="text-[11px] text-green font-medium flex items-center gap-1.5">
+                <svg
+                  class="w-3.5 h-3.5 text-green"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  ></path>
+                </svg>
+                <span>Analyse terminée avec succès. Candidat importé !</span>
+              </div>
+            }
+
+            <!-- ZIP Success Summary Message -->
+            @if (task.status === 'SUCCESS' && task.summaryMessage) {
+              <div
+                class="p-2.5 bg-green-bg border border-green/20 rounded-md text-[11px] text-green flex flex-col gap-1.5"
+              >
+                <div class="flex items-center gap-1.5 font-bold">
+                  <svg
+                    class="w-3.5 h-3.5 text-green flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    ></path>
+                  </svg>
+                  <span>{{ task.summaryMessage }}</span>
+                </div>
+                <!-- Sub-warnings inside ZIP if any -->
+                @if (task.subErrors && task.subErrors.length > 0) {
+                  <div
+                    class="mt-1 pt-1.5 border-t border-green/20 text-[10px] text-amber-800 dark:text-amber-300 space-y-0.5"
+                  >
+                    @for (subErr of task.subErrors; track $index) {
+                      <div class="flex items-center gap-1">
+                        <span>⚠️</span>
+                        <span>{{ subErr }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Duplicate Callout Box -->
+            @if (task.status === 'DUPLICATE' && task.errorMessage) {
+              <div
+                class="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-md text-[11px] text-amber-800 dark:text-amber-300 flex items-center gap-1.5"
+              >
+                <svg
+                  class="w-3.5 h-3.5 flex-shrink-0 text-amber-600 dark:text-amber-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  ></path>
+                </svg>
+                <span class="font-medium">{{ task.errorMessage }}</span>
+              </div>
+            }
+
+            <!-- Detailed Error Callout Box -->
+            @if (task.status === 'FAILED' && task.errorMessage) {
+              <div
+                class="p-2.5 bg-red-bg border border-red/20 rounded-md text-[11px] text-red flex flex-col gap-1.5"
+              >
+                <div class="flex items-center justify-between gap-2">
+                  <div class="flex items-center gap-1.5">
+                    <svg
+                      class="w-3.5 h-3.5 flex-shrink-0 text-red"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                      ></path>
+                    </svg>
+                    <span class="font-medium">{{ task.errorMessage }}</span>
+                  </div>
+                </div>
+                <!-- Sub-errors if ZIP failed -->
+                @if (task.isZip && task.subErrors && task.subErrors.length > 0) {
+                  <div class="mt-1 pt-1.5 border-t border-red/20 text-[10px] text-red space-y-0.5">
+                    @for (subErr of task.subErrors; track $index) {
+                      <div class="flex items-center gap-1">
+                        <span>•</span>
+                        <span>{{ subErr }}</span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Action Button Footer -->
+      <div class="mt-6 pt-4 border-t border-line flex items-center justify-between">
+        <!-- Queue Summary -->
+        <div class="text-xs text-slate">
+          @if (pendingCount() > 0) {
+            <span class="font-medium text-ink">{{ pendingCount() }} fichier(s) en attente</span>
+          }
+          @if (failedCount() > 0) {
+            <span class="text-red font-medium ml-2">• {{ failedCount() }} échec(s)</span>
+          }
+          @if (duplicateCount() > 0) {
+            <span class="text-amber-800 dark:text-amber-300 font-medium ml-2"
+              >• {{ duplicateCount() }} doublon(s)</span
+            >
+          }
+          @if (successCount() > 0) {
+            <span class="text-green font-medium ml-2">• {{ successCount() }} terminé(s)</span>
+          }
+        </div>
+
+        <!-- Main Action Button -->
+        <div>
+          @if (hasOnlySuccess()) {
+            <button
+              type="button"
+              (click)="clearAllTasks()"
+              class="btn btn-outline px-6 text-xs font-bold flex items-center gap-1.5 text-green border-green hover:bg-green-bg"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                ></path>
+              </svg>
+              Import terminé • Nouvel import
+            </button>
+          } @else {
+            <button
+              type="button"
+              (click)="startUpload()"
+              [disabled]="isProcessing() || !selectedOfferId() || tasksToProcess().length === 0"
+              class="btn btn-primary px-6 text-xs font-bold flex items-center gap-2"
+            >
+              @if (!isProcessing()) {
+                @if (failedCount() > 0 && pendingCount() === 0) {
+                  Relancer les {{ failedCount() }} échec(s) ↺
+                } @else {
+                  Démarrer l'importation ({{ tasksToProcess().length }})
+                }
+              } @else {
+                <span class="flex items-center gap-2">
+                  <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    ></circle>
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Traitement et analyse IA en cours...
+                </span>
+              }
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

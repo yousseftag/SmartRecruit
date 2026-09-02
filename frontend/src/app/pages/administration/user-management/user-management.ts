@@ -246,9 +246,10 @@ export class UserManagement implements OnInit {
         this.loadUsers();
         this.showToast('Utilisateur supprimé avec succès');
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.closeDeleteModal();
-        this.showErrorToast("Erreur lors de la suppression de l'utilisateur.");
+        const errorMsg = err.error?.message || "Erreur lors de la suppression de l'utilisateur.";
+        this.showErrorToast(errorMsg);
       },
     });
   }

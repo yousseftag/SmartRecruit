@@ -5,9 +5,12 @@
   "accountTheme": "smartrecruit",
   "registrationAllowed": false,
   "rememberMe": true,
+  "accessTokenLifespan": 86400,
+  "accessTokenLifespanForImplicitFlow": 86400,
+  "ssoSessionIdleTimeout": 86400,
+  "ssoSessionMaxLifespan": 86400,
   "ssoSessionIdleTimeoutRememberMe": 2592000,
   "ssoSessionMaxLifespanRememberMe": 2592000,
-  "ssoSessionIdleTimeout": 1800,
   "resetPasswordAllowed": true,
   "internationalizationEnabled": true,
   "supportedLocales": [
@@ -53,15 +56,46 @@
       "directAccessGrantsEnabled": true,
       "standardFlowEnabled": true,
       "redirectUris": [
-        "http://localhost:4200/*"
+        "http://localhost:4200/*",
+        "http://localhost:8080/*"
       ],
       "webOrigins": [
         "http://localhost:4200",
+        "http://localhost:8080",
         "+"
       ]
+    },
+    {
+      "clientId": "smartrecruit-backend",
+      "name": "Smart Recruit Backend Service",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "smartrecruit-backend-secret",
+      "bearerOnly": false,
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "authorizationServicesEnabled": false,
+      "fullScopeAllowed": true
     }
   ],
   "users": [
+    {
+      "username": "service-account-smartrecruit-backend",
+      "enabled": true,
+      "serviceAccountClientId": "smartrecruit-backend",
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-users",
+          "query-users",
+          "view-realm",
+          "query-clients",
+          "view-clients"
+        ]
+      }
+    },
     {
       "username": "admin",
       "enabled": true,
@@ -83,12 +117,6 @@
         "account": [
           "view-profile",
           "manage-account"
-        ],
-        "realm-management": [
-          "view-users",
-          "manage-users",
-          "view-realm",
-          "query-users"
         ]
       }
     },

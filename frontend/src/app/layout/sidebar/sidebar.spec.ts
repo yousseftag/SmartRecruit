@@ -7,8 +7,13 @@ import { AuthService } from '../../core/auth/auth.service';
 
 const mockAuthService = {
   isAuthenticated: signal(true),
+  roles: signal(['HR_ADMIN']),
   isAdmin: signal(true),
+  isRecruiter: signal(false),
+  isViewer: signal(false),
   hasRole: () => true,
+  hasAnyRole: () => true,
+  hasAllRoles: () => true,
 };
 
 describe('Sidebar', () => {

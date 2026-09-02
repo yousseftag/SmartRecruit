@@ -1,1 +1,1205 @@
-<p>candidate-profile works!</p>
+<div class="max-w-6xl mx-auto px-6 py-8">
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="flex flex-col justify-center items-center h-64 gap-3">
+      <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue"></div>
+      <span class="text-xs font-semibold text-slate">Chargement du profil candidat...</span>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (isError()) {
+    <div class="card bg-red-50 text-red-700 p-6 border border-red-200 shadow-xs">
+      <h3 class="font-bold text-base mb-1">Candidature introuvable</h3>
+      <p class="text-xs text-red-600 mb-4">
+        Impossible de charger les données de ce candidat ou la candidature a été supprimée.
+      </p>
+      <a
+        routerLink="/hr/candidates"
+        class="btn btn-outline text-xs font-bold text-red border-red hover:bg-red-50 inline-flex items-center gap-1"
+      >
+        &larr; Retour aux candidatures
+      </a>
+    </div>
+  }
+
+  <!-- Main Profile View -->
+  @if (!isLoading() && !isError() && application(); as app) {
+    <!-- Top Back Link & Offer Context -->
+    <div class="mb-4 flex items-center justify-between">
+      <a
+        routerLink="/hr/candidates"
+        class="text-xs font-semibold text-slate hover:text-blue inline-flex items-center gap-1 transition-colors"
+      >
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M15 19l-7-7 7-7"
+          ></path>
+        </svg>
+        Retour aux candidatures
+      </a>
+      @if (app.offerTitle) {
+        <div class="text-xs text-slate flex items-center gap-1.5">
+          <span>Offre cible :</span>
+          <span class="font-bold text-ink">{{ app.offerTitle }}</span>
+          @if (app.offerMinScore) {
+            <span class="text-[11px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-medium">
+              Seuil : {{ app.offerMinScore }}%
+            </span>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Candidate Header Card -->
+    <div class="card p-6 bg-white border border-line shadow-xs mb-6">
+      <div
+        class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-line"
+      >
+        <!-- Left Side: Candidate Name, Title & CV File Rectangle Card -->
+        <div class="flex flex-col sm:flex-row sm:items-center gap-5 min-w-0">
+          <!-- Name & Job Title -->
+          <div class="space-y-1">
+            <h1 class="text-2xl font-bold text-ink tracking-tight">
+              {{ candidateFullName() }}
+            </h1>
+            <p class="text-xs font-semibold text-blue flex items-center gap-1.5">
+              <svg
+                class="w-4 h-4 text-blue flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                ></path>
+              </svg>
+              {{
+                app.candidate?.currentJobTitle ||
+                  candidateInfo()?.current_job_title ||
+                  'Poste non spécifié'
+              }}
+            </p>
+          </div>
+
+          <!-- Original CV Document Interactive Rectangle -->
+          @if (app.cvOriginalFilename) {
+            <div class="sm:border-l sm:border-line sm:pl-5">
+              <button
+                type="button"
+                (click)="openCvModal()"
+                [disabled]="isLoadingCv()"
+                class="group flex items-center gap-3 px-3.5 py-2 bg-white hover:bg-bg border border-line hover:border-blue/40 rounded-xl transition-all shadow-2xs text-left cursor-pointer disabled:opacity-50"
+                title="Cliquez pour prévisualiser le document original"
+              >
+                <div
+                  class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform"
+                >
+                  <svg
+                    class="w-4 h-4 text-blue"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    ></path>
+                  </svg>
+                </div>
+                <div class="min-w-0 max-w-[260px] xl:max-w-[340px]">
+                  <div class="flex items-center gap-1.5">
+                    <span
+                      class="text-xs font-bold text-ink group-hover:text-blue truncate transition-colors"
+                    >
+                      {{ app.cvOriginalFilename }}
+                    </span>
+                    @if (!isLoadingCv()) {
+                      <svg
+                        class="w-3.5 h-3.5 text-slate group-hover:text-blue flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        ></path>
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        ></path>
+                      </svg>
+                    }
+                    @if (isLoadingCv()) {
+                      <svg
+                        class="animate-spin w-3.5 h-3.5 text-blue flex-shrink-0"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          class="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          stroke-width="4"
+                        ></circle>
+                        <path
+                          class="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                    }
+                  </div>
+                  <span class="text-[10px] text-slate block">Document CV (Cliquer pour voir)</span>
+                </div>
+              </button>
+            </div>
+          }
+        </div>
+
+        <!-- Header Actions: Re-Extract AI & Custom Status Dropdown -->
+        <div class="flex items-center gap-3">
+          <!-- Re-Analyze AI Button (HR & Recruiters) -->
+          @if (canManageStatus()) {
+            <button
+              type="button"
+              (click)="reAnalyze()"
+              [disabled]="isExtracting()"
+              class="btn btn-outline px-3.5 py-2 text-xs font-bold flex items-center gap-1.5 text-slate hover:text-blue hover:border-blue transition-colors disabled:opacity-50"
+              title="Relancer l'extraction et l'analyse IA de ce CV"
+            >
+              <svg
+                class="w-3.5 h-3.5 transition-transform"
+                [class.animate-spin]="isExtracting()"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                ></path>
+              </svg>
+              <span>{{ isExtracting() ? 'Analyse IA...' : "Relancer l'IA ↺" }}</span>
+            </button>
+
+            <!-- Custom Floating Status Dropdown (HR & Recruiters) -->
+            <div class="relative">
+              <button
+                type="button"
+                (click)="toggleStatusDropdown($event)"
+                [disabled]="isUpdatingStatus()"
+                class="px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 border shadow-xs transition-all"
+                [ngClass]="currentStatusOption().badgeClass"
+              >
+                <span
+                  class="w-2 h-2 rounded-full"
+                  [ngClass]="currentStatusOption().dotClass"
+                ></span>
+                <span>{{ currentStatusOption().label }}</span>
+                <svg
+                  class="w-3.5 h-3.5 opacity-60 ml-1 transition-transform"
+                  [class.rotate-180]="isStatusDropdownOpen()"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M19 9l-7 7-7-7"
+                  ></path>
+                </svg>
+              </button>
+
+              <!-- Floating Status Menu -->
+              @if (isStatusDropdownOpen()) {
+                <div
+                  class="absolute right-0 top-full mt-1.5 w-48 bg-white border border-line rounded-xl shadow-lg z-30 py-1.5 animate-in fade-in slide-in-from-top-1 duration-150"
+                >
+                  @for (opt of statusOptions; track opt.value) {
+                    <button
+                      type="button"
+                      (click)="updateStatus(opt.value)"
+                      class="w-full px-3.5 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
+                      [ngClass]="
+                        app.status === opt.value ? 'font-bold text-blue bg-blue-50/50' : 'text-ink'
+                      "
+                    >
+                      <div class="flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full" [ngClass]="opt.dotClass"></span>
+                        <span>{{ opt.label }}</span>
+                      </div>
+                      @if (app.status === opt.value) {
+                        <svg
+                          class="w-3.5 h-3.5 text-blue"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M5 13l4 4L19 7"
+                          ></path>
+                        </svg>
+                      }
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          } @else {
+            <!-- Read-Only Status Badge (Viewers) -->
+            <div
+              class="px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-2 border shadow-xs"
+              [ngClass]="currentStatusOption().badgeClass"
+            >
+              <span class="w-2 h-2 rounded-full" [ngClass]="currentStatusOption().dotClass"></span>
+              <span>{{ currentStatusOption().label }}</span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Quick Meta Badges Strip -->
+      <div class="mt-4 flex flex-wrap items-center gap-2">
+        <!-- Location -->
+        @if (cvData()?.localization) {
+          <span
+            class="inline-flex items-center gap-1 px-2.5 py-1 bg-bg border border-line rounded-md text-xs font-medium text-ink"
+          >
+            <svg
+              class="w-3.5 h-3.5 text-slate flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+              ></path>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+              ></path>
+            </svg>
+            {{ cvData()?.localization }}
+          </span>
+        }
+
+        <!-- Experience -->
+        @if (cvData()?.experience !== undefined && cvData()?.experience !== null) {
+          <span
+            class="inline-flex items-center gap-1 px-2.5 py-1 bg-bg border border-line rounded-md text-xs font-medium text-ink"
+          >
+            <svg
+              class="w-3.5 h-3.5 text-slate flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+            {{ cvData()?.experience | experienceFormat: true }}
+          </span>
+        }
+
+        <!-- Education / Coursework -->
+        @if (cvData()?.coursework && cvData()!.coursework!.length > 0) {
+          <span
+            class="inline-flex items-center gap-1 px-2.5 py-1 bg-bg border border-line rounded-md text-xs font-medium text-ink"
+          >
+            <svg
+              class="w-3.5 h-3.5 text-slate flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 14l9-5-9-5-9 5 9 5z"
+              ></path>
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
+              ></path>
+            </svg>
+            {{ cvData()?.coursework?.join(', ') }}
+          </span>
+        }
+
+        <!-- Languages -->
+        @if (cvData()?.languages && cvData()!.languages!.length > 0) {
+          <span
+            class="inline-flex items-center gap-1 px-2.5 py-1 bg-bg border border-line rounded-md text-xs font-medium text-ink"
+          >
+            <svg
+              class="w-3.5 h-3.5 text-slate flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"
+              ></path>
+            </svg>
+            {{ cvData()?.languages?.join(', ') }}
+          </span>
+        }
+
+        <!-- Email -->
+        @if (app.candidate?.email || candidateInfo()?.email) {
+          <span
+            class="inline-flex items-center gap-1 px-2.5 py-1 bg-bg border border-line rounded-md text-xs font-medium text-slate"
+          >
+            <svg
+              class="w-3.5 h-3.5 text-slate flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              ></path>
+            </svg>
+            {{ app.candidate?.email || candidateInfo()?.email }}
+          </span>
+        }
+
+        <!-- Phone -->
+        @if (app.candidate?.phone || candidateInfo()?.phone) {
+          <span
+            class="inline-flex items-center gap-1 px-2.5 py-1 bg-bg border border-line rounded-md text-xs font-medium text-slate"
+          >
+            <svg
+              class="w-3.5 h-3.5 text-slate flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+              ></path>
+            </svg>
+            {{ app.candidate?.phone || candidateInfo()?.phone }}
+          </span>
+        }
+      </div>
+    </div>
+
+    <!-- Banner 1: AI Extraction In-Progress (Orange Radar Pulse) -->
+    @if (isExtracting()) {
+      <div
+        class="card p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl mb-6 flex items-center justify-between gap-4 animate-in fade-in duration-200 shadow-xs"
+      >
+        <div class="flex items-center gap-3">
+          <span class="relative flex h-3 w-3">
+            <span
+              class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"
+            ></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+          </span>
+          <div>
+            <h4 class="text-xs font-bold text-amber-900 dark:text-amber-300">
+              Extraction et Analyse IA en cours...
+            </h4>
+            <p class="text-[11px] text-amber-700 dark:text-amber-400">
+              Le profil et les jauges de score se mettront à jour automatiquement dès la réception
+              des résultats.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 text-xs font-bold text-amber-800 dark:text-amber-300">
+          <svg
+            class="animate-spin h-4 w-4 text-amber-600 dark:text-amber-400"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          <span>Analyse en direct</span>
+        </div>
+      </div>
+    }
+
+    <!-- Banner 2: AI Extraction Failed (Red Banner) -->
+    @if (isExtractionFailed() && !isExtracting()) {
+      <div
+        class="card p-4 bg-red-bg border border-red/20 rounded-xl mb-6 flex items-center justify-between gap-4 animate-in fade-in duration-200 shadow-xs"
+      >
+        <div class="flex items-center gap-3">
+          <svg
+            class="w-5 h-5 text-red flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            ></path>
+          </svg>
+          <div>
+            <h4 class="text-xs font-bold text-red-900 dark:text-red-300">Échec de l'analyse IA</h4>
+            <p class="text-[11px] text-red-700 dark:text-red-400">
+              Le document n'a pas pu être analysé par l'IA. Vous pouvez retenter l'extraction en
+              cliquant sur "Relancer l'IA ↺".
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          (click)="reAnalyze()"
+          class="btn btn-outline text-xs font-bold text-red border-red hover:bg-red-bg flex items-center gap-1.5 flex-shrink-0"
+        >
+          <span>Relancer l'IA ↺</span>
+        </button>
+      </div>
+    }
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left 2 Columns: Matching & Extracted Details -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- CARD 1: Synthèse & Analyse de Compatibilité -->
+        <div class="card p-6 bg-white border border-line shadow-xs">
+          <!-- Section Title -->
+          <div class="flex items-center gap-2 mb-4 pb-3 border-b border-line">
+            <svg class="w-4 h-4 text-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              ></path>
+            </svg>
+            <h2 class="text-xs font-bold text-ink uppercase tracking-wider">
+              Synthèse & Analyse de Compatibilité
+            </h2>
+          </div>
+
+          <!-- Description Markdown / Synopsis -->
+          <div class="mb-6 bg-bg/50 p-4 rounded-lg border border-line">
+            <h3 class="text-[11px] font-bold text-slate uppercase tracking-wider mb-2">
+              Profil Général
+            </h3>
+            @if (cvData()?.description_markdown) {
+              <p class="text-xs text-ink leading-relaxed font-medium">
+                {{ cvData()?.description_markdown }}
+              </p>
+            } @else {
+              <div class="text-xs text-slate italic">
+                {{
+                  isExtracting()
+                    ? 'Génération du résumé du profil en cours...'
+                    : "Résumé non disponible (Échec de l'analyse IA)."
+                }}
+              </div>
+            }
+          </div>
+
+          <!-- Highlights: Strengths & Weaknesses -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <!-- Points Forts -->
+            <div class="bg-green-bg/60 border border-green/20 p-4 rounded-lg">
+              <h3 class="flex items-center gap-1.5 text-xs font-bold text-green mb-3">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M5 13l4 4L19 7"
+                  ></path>
+                </svg>
+                Points Forts
+                @if (hasExtractionSuccess()) {
+                  <span>({{ matchingData()?.strengths?.length || 0 }})</span>
+                }
+              </h3>
+
+              <!-- When SUCCESS -->
+              @if (hasExtractionSuccess()) {
+                <ul class="space-y-2">
+                  @for (strength of matchingData()?.strengths; track $index) {
+                    <li class="text-xs text-ink flex items-start gap-2">
+                      <span class="text-green font-bold">•</span>
+                      <span>{{ strength }}</span>
+                    </li>
+                  } @empty {
+                    <li class="text-xs text-slate italic">Aucun point fort spécifique détecté.</li>
+                  }
+                </ul>
+              } @else {
+                <!-- When NOT SUCCESS (PENDING / FAILED) -->
+                <div class="text-xs text-slate italic py-1">
+                  {{
+                    isExtracting()
+                      ? 'Analyse comparative en cours...'
+                      : 'Analyse non disponible (Échec extraction)'
+                  }}
+                </div>
+              }
+            </div>
+
+            <!-- Points d'Attention / Faibles -->
+            <div class="bg-red-bg/60 border border-red/20 p-4 rounded-lg">
+              <h3 class="flex items-center gap-1.5 text-xs font-bold text-red mb-3">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  ></path>
+                </svg>
+                Points d'Attention
+                @if (hasExtractionSuccess()) {
+                  <span>({{ matchingData()?.weaknesses?.length || 0 }})</span>
+                }
+              </h3>
+
+              <!-- When SUCCESS -->
+              @if (hasExtractionSuccess()) {
+                <ul class="space-y-2">
+                  @for (weakness of matchingData()?.weaknesses; track $index) {
+                    <li class="text-xs text-ink flex items-start gap-2">
+                      <span class="text-red font-bold">•</span>
+                      <span>{{ weakness }}</span>
+                    </li>
+                  } @empty {
+                    <li class="text-xs text-slate italic">Aucun point d'attention détecté.</li>
+                  }
+                </ul>
+              } @else {
+                <!-- When NOT SUCCESS (PENDING / FAILED) -->
+                <div class="text-xs text-slate italic py-1">
+                  {{
+                    isExtracting()
+                      ? 'Analyse comparative en cours...'
+                      : 'Analyse non disponible (Échec extraction)'
+                  }}
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Validation des Critères de l'Offre (4 Pillars Grid) -->
+          <div class="pt-4 border-t border-line">
+            <h3 class="text-[11px] font-bold text-slate uppercase tracking-wider mb-3">
+              Validation des Critères Clés
+            </h3>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <!-- 1. Experience Criteria -->
+              <div
+                class="p-3 bg-bg rounded-lg border border-line flex flex-col justify-between gap-1.5"
+              >
+                <span class="text-[10px] font-bold text-slate uppercase">Expérience requise</span>
+
+                @if (hasExtractionSuccess()) {
+                  <div
+                    class="flex items-center gap-1.5 text-xs font-bold"
+                    [ngClass]="matchedCriteria()?.experience ? 'text-green' : 'text-red'"
+                  >
+                    @if (matchedCriteria()?.experience) {
+                      <svg
+                        class="w-3.5 h-3.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M5 13l4 4L19 7"
+                        ></path>
+                      </svg>
+                    } @else {
+                      <svg
+                        class="w-3.5 h-3.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M6 18L18 6M6 6l12 12"
+                        ></path>
+                      </svg>
+                    }
+                    <span>{{ matchedCriteria()?.experience ? 'Validé' : 'Non validé' }}</span>
+                  </div>
+                } @else {
+                  <span class="text-xs font-medium text-slate">-</span>
+                }
+              </div>
+
+              <!-- 2. Coursework Criteria -->
+              <div
+                class="p-3 bg-bg rounded-lg border border-line flex flex-col justify-between gap-1.5"
+              >
+                <span class="text-[10px] font-bold text-slate uppercase">Formation</span>
+
+                @if (hasExtractionSuccess()) {
+                  <div
+                    class="text-xs font-bold truncate"
+                    [ngClass]="matchedCriteria()?.coursework?.length ? 'text-green' : 'text-slate'"
+                  >
+                    <span>{{ matchedCriteria()?.coursework?.join(', ') || 'Non requis' }}</span>
+                  </div>
+                } @else {
+                  <span class="text-xs font-medium text-slate">-</span>
+                }
+              </div>
+
+              <!-- 3. Languages Criteria -->
+              <div
+                class="p-3 bg-bg rounded-lg border border-line flex flex-col justify-between gap-1.5"
+              >
+                <span class="text-[10px] font-bold text-slate uppercase">Langues</span>
+
+                @if (hasExtractionSuccess()) {
+                  <div
+                    class="text-xs font-bold truncate"
+                    [ngClass]="matchedCriteria()?.languages?.length ? 'text-green' : 'text-slate'"
+                  >
+                    <span>{{ matchedCriteria()?.languages?.join(', ') || 'Non requis' }}</span>
+                  </div>
+                } @else {
+                  <span class="text-xs font-medium text-slate">-</span>
+                }
+              </div>
+
+              <!-- 4. Localization Criteria -->
+              <div
+                class="p-3 bg-bg rounded-lg border border-line flex flex-col justify-between gap-1.5"
+              >
+                <span class="text-[10px] font-bold text-slate uppercase">Localisation</span>
+
+                @if (hasExtractionSuccess()) {
+                  <div
+                    class="text-xs font-bold truncate"
+                    [ngClass]="matchedCriteria()?.localization ? 'text-green' : 'text-slate'"
+                  >
+                    <span>{{ matchedCriteria()?.localization || 'Non requis' }}</span>
+                  </div>
+                } @else {
+                  <span class="text-xs font-medium text-slate">-</span>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CARD 2: Matrice des Compétences (Skills Matrix) -->
+        <div class="card p-6 bg-white border border-line shadow-xs">
+          <div class="flex items-center justify-between mb-4 pb-3 border-b border-line">
+            <div class="flex items-center gap-2">
+              <svg class="w-4 h-4 text-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
+                ></path>
+              </svg>
+              <h2 class="text-xs font-bold text-ink uppercase tracking-wider">
+                Matrice des Compétences Techniques
+              </h2>
+            </div>
+            <span class="text-[11px] text-slate font-medium">
+              Total détecté :
+              {{ hasExtractionSuccess() ? allSkills().length : isExtracting() ? '...' : 0 }}
+            </span>
+          </div>
+
+          <!-- SUCCESS STATE: 3-Tier Skills Matrix -->
+          @if (hasExtractionSuccess()) {
+            <div class="space-y-4">
+              <!-- Tier 1: Compétences Requises Validées (Match) -->
+              <div>
+                <div class="flex items-center justify-between mb-2">
+                  <span
+                    class="text-[11px] font-bold text-green uppercase tracking-wider flex items-center gap-1.5"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M5 13l4 4L19 7"
+                      ></path>
+                    </svg>
+                    Compétences Requises Validées ({{ matchedSkills().length }})
+                  </span>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                  @for (skill of matchedSkills(); track skill) {
+                    <span
+                      class="px-2.5 py-1 bg-green-50 text-green border border-green/20 rounded-md text-xs font-bold flex items-center gap-1 shadow-2xs"
+                    >
+                      <svg
+                        class="w-3 h-3 text-green"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2.5"
+                          d="M5 13l4 4L19 7"
+                        ></path>
+                      </svg>
+                      {{ skill }}
+                    </span>
+                  } @empty {
+                    <span class="text-xs text-slate italic">
+                      Aucune compétence requise validée.
+                    </span>
+                  }
+                </div>
+              </div>
+
+              <!-- Tier 2: Compétences Requises Manquantes (Missing from Offer) -->
+              @if (missingSkills().length > 0) {
+                <div class="pt-3 border-t border-line/60">
+                  <div class="flex items-center justify-between mb-2">
+                    <span
+                      class="text-[11px] font-bold text-red uppercase tracking-wider flex items-center gap-1.5"
+                    >
+                      <svg
+                        class="w-3.5 h-3.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M6 18L18 6M6 6l12 12"
+                        ></path>
+                      </svg>
+                      Compétences Requises Manquantes ({{ missingSkills().length }})
+                    </span>
+                  </div>
+                  <div class="flex flex-wrap gap-2">
+                    @for (skill of missingSkills(); track skill) {
+                      <span
+                        class="px-2.5 py-1 bg-red-50 text-red border border-red/20 rounded-md text-xs font-bold flex items-center gap-1 shadow-2xs"
+                      >
+                        <svg
+                          class="w-3 h-3 text-red"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2.5"
+                            d="M6 18L18 6M6 6l12 12"
+                          ></path>
+                        </svg>
+                        {{ skill }}
+                      </span>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Tier 3: Compétences Complémentaires (Bonus) -->
+              @if (additionalSkills().length > 0) {
+                <div class="pt-3 border-t border-line/60">
+                  <span
+                    class="text-[11px] font-bold text-slate uppercase tracking-wider block mb-2"
+                  >
+                    Compétences Complémentaires Détectées ({{ additionalSkills().length }})
+                  </span>
+                  <div class="flex flex-wrap gap-1.5">
+                    @for (skill of additionalSkills(); track skill) {
+                      <span
+                        class="px-2.5 py-1 bg-bg border border-line rounded-md text-xs font-medium text-ink"
+                      >
+                        {{ skill }}
+                      </span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- IN-PROGRESS STATE (PENDING): Neutral loading text -->
+          @if (isExtracting()) {
+            <div class="py-1">
+              <span class="text-xs text-slate italic">
+                Extraction et identification des compétences en cours...
+              </span>
+            </div>
+          }
+
+          <!-- FAILED STATE: Clean failure placeholder -->
+          @if (isExtractionFailed() && !isExtracting()) {
+            <div class="py-1">
+              <span class="text-xs text-slate italic">
+                Aucune compétence extraite (Échec de l'analyse IA).
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Right Column: Compatibility Score & Category Progress Bars -->
+      <div class="space-y-6">
+        <!-- Score Card (Sticky) -->
+        <div
+          class="card p-6 bg-white border border-line shadow-xs flex flex-col items-center justify-center text-center sticky top-6"
+        >
+          <h2 class="text-xs font-bold text-ink uppercase tracking-wider mb-6">
+            Score de Compatibilité IA
+          </h2>
+
+          <!-- Score Gauge Component -->
+          <div class="my-2">
+            <app-score-gauge
+              [score]="hasExtractionSuccess() ? totalScore() || 0 : 0"
+            ></app-score-gauge>
+          </div>
+
+          <!-- Synchronized Threshold Badge -->
+          <div class="mt-4 flex items-center gap-2">
+            <!-- When SUCCESS -->
+            @if (hasExtractionSuccess() && totalScore() !== null && minScore() !== null) {
+              <span
+                class="text-xs font-bold px-3 py-1 rounded-full border shadow-2xs flex items-center gap-1.5"
+                [ngClass]="
+                  isScoreAdmissible()
+                    ? 'bg-green-bg text-green border-green/20'
+                    : 'bg-red-bg text-red border-red/20'
+                "
+              >
+                <span
+                  class="w-1.5 h-1.5 rounded-full"
+                  [ngClass]="isScoreAdmissible() ? 'bg-green' : 'bg-red'"
+                ></span>
+                <span
+                  >{{ isScoreAdmissible() ? 'ADMISSIBLE' : 'SOUS SEUIL' }} ({{ minScore() }}%
+                  min)</span
+                >
+              </span>
+            }
+
+            <!-- When In-Progress -->
+            @if (isExtracting()) {
+              <span
+                class="text-xs font-bold px-3 py-1 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1.5 animate-pulse"
+              >
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                <span>EN COURS D'ANALYSE</span>
+              </span>
+            }
+
+            <!-- When Failed -->
+            @if (isExtractionFailed() && !isExtracting()) {
+              <span
+                class="text-xs font-bold px-3 py-1 rounded-full bg-red-bg text-red border border-red/20 flex items-center gap-1.5"
+              >
+                <span class="w-1.5 h-1.5 rounded-full bg-red"></span>
+                <span>NON CALCULÉ (ÉCHEC)</span>
+              </span>
+            }
+
+            <!-- When Not Calculated -->
+            @if (!hasExtractionSuccess() && !isExtracting() && !isExtractionFailed()) {
+              <span class="text-xs text-slate font-medium"> Score non calculé </span>
+            }
+          </div>
+
+          <!-- Category Scores Progress Breakdown -->
+          <div class="w-full mt-6 pt-6 border-t border-line text-left">
+            <h3 class="text-[11px] font-bold text-slate uppercase tracking-wider mb-4 text-center">
+              Détail par Catégorie (/20)
+            </h3>
+
+            <!-- SUCCESS State: Render Calculated Bars -->
+            @if (hasExtractionSuccess() && categoryScoresList().length > 0) {
+              <div class="flex flex-col gap-3.5">
+                @for (score of categoryScoresList(); track score.key) {
+                  <div class="flex flex-col gap-1">
+                    <div class="flex justify-between items-center text-xs">
+                      <span class="text-slate font-medium">{{ score.label }}</span>
+                      <span class="text-ink font-bold">{{ score.value }} / 20</span>
+                    </div>
+
+                    <!-- Category Progress Bar (Out of 20) -->
+                    <div
+                      class="w-full bg-bg h-1.5 rounded-full overflow-hidden border border-line/60"
+                    >
+                      <div
+                        class="h-full rounded-full transition-all duration-700"
+                        [style.width.%]="(score.value / 20) * 100"
+                        [ngClass]="{
+                          'bg-green': score.value >= 14,
+                          'bg-blue': score.value >= 10 && score.value < 14,
+                          'bg-amber-500': score.value >= 6 && score.value < 10,
+                          'bg-red': score.value < 6,
+                        }"
+                      ></div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Non-SUCCESS State: Neutral Placeholder Bars -->
+            @if (!hasExtractionSuccess()) {
+              <div class="flex flex-col gap-3.5">
+                @for (
+                  cat of ['Compétences', 'Expérience', 'Formation', 'Langues', 'Localisation'];
+                  track cat
+                ) {
+                  <div class="flex flex-col gap-1">
+                    <div class="flex justify-between items-center text-xs">
+                      <span class="text-slate font-medium">{{ cat }}</span>
+                      <span class="text-slate font-medium">- / 20</span>
+                    </div>
+                    <div
+                      class="w-full bg-bg h-1.5 rounded-full overflow-hidden border border-line/60"
+                    >
+                      <div class="h-full rounded-full bg-slate-200" style="width: 0%"></div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Toast Feedback Notification -->
+  @if (toastMessage()) {
+    <div
+      class="fixed bottom-6 right-6 px-5 py-3 rounded-xl shadow-xl font-semibold text-xs text-white transition-all duration-300 z-50 flex items-center gap-2.5 animate-in fade-in slide-in-from-bottom-2"
+      [ngClass]="toastType() === 'success' ? 'bg-ink' : 'bg-red-600'"
+    >
+      @if (toastType() === 'success') {
+        <svg class="w-4 h-4 text-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5 13l4 4L19 7"
+          ></path>
+        </svg>
+      }
+      @if (toastType() === 'error') {
+        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+      }
+      <span>{{ toastMessage() }}</span>
+    </div>
+  }
+
+  <!-- ==================== PDF PREVIEW MODAL ==================== -->
+  @if (isPreviewModalOpen()) {
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-200"
+    >
+      <!-- Backdrop -->
+      <div class="fixed inset-0 bg-ink/60 backdrop-blur-xs" (click)="closeCvModal()"></div>
+
+      <!-- Modal Window -->
+      <div
+        class="relative w-full max-w-5xl h-[88vh] bg-white rounded-2xl border border-line shadow-2xl flex flex-col overflow-hidden z-10"
+      >
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-line bg-bg/50">
+          <!-- Document Title & Details -->
+          <div class="flex items-center gap-3 min-w-0">
+            <div
+              class="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0"
+            >
+              <svg class="w-5 h-5 text-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                ></path>
+              </svg>
+            </div>
+            <div class="truncate">
+              <h3 class="text-sm font-bold text-ink truncate">
+                {{ application()?.cvOriginalFilename || 'Document CV' }}
+              </h3>
+              <p class="text-xs text-slate">Candidature de {{ candidateFullName() }}</p>
+            </div>
+          </div>
+
+          <!-- Action Controls -->
+          <div class="flex items-center gap-2">
+            <!-- Open in New Tab -->
+            <button
+              type="button"
+              (click)="openInNewTab()"
+              class="btn btn-sm btn-outline flex items-center gap-1.5 text-xs text-slate hover:text-ink cursor-pointer"
+              title="Ouvrir dans un nouvel onglet"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                ></path>
+              </svg>
+              <span class="hidden sm:inline">Nouvel onglet</span>
+            </button>
+
+            <!-- Download Button -->
+            <button
+              type="button"
+              (click)="downloadCvFile()"
+              class="btn btn-sm btn-outline flex items-center gap-1.5 text-xs text-slate hover:text-ink cursor-pointer"
+              title="Télécharger le fichier"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                ></path>
+              </svg>
+              <span class="hidden sm:inline">Télécharger</span>
+            </button>
+
+            <!-- Close Button -->
+            <button
+              type="button"
+              (click)="closeCvModal()"
+              class="p-2 text-slate hover:text-ink hover:bg-bg rounded-lg transition-colors ml-2 cursor-pointer"
+              title="Fermer (Échap)"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal Body (PDF Viewer / Loader) -->
+        <div
+          class="flex-1 bg-slate-100 dark:bg-slate-950 relative flex items-center justify-center overflow-hidden"
+        >
+          <!-- Spinner while downloading from MinIO -->
+          @if (isLoadingCv()) {
+            <div class="flex flex-col items-center gap-3">
+              <svg class="animate-spin h-8 w-8 text-blue" fill="none" viewBox="0 0 24 24">
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <span class="text-xs font-semibold text-slate"
+                >Chargement sécurisé du document CV...</span
+              >
+            </div>
+          }
+
+          <!-- Embedded PDF iframe -->
+          @if (!isLoadingCv() && cvPreviewUrl()) {
+            <iframe
+              [src]="cvPreviewUrl()"
+              class="w-full h-full border-0"
+              title="CV Preview"
+            ></iframe>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

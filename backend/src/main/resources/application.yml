@@ -5,11 +5,14 @@ spring:
   application:
     name: smartrecruit-backend
 
+  config:
+    import: optional:file:../.env[.properties]
+  
   # Database Configuration
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/smartrecruit}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/${POSTGRES_DB:smartrecruit}}
+    username: ${SPRING_DATASOURCE_USER:${POSTGRES_USER:postgres}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${POSTGRES_PASSWORD:postgres}}
     driver-class-name: org.postgresql.Driver
   
   # Flyway Configuration
@@ -50,12 +53,29 @@ spring:
           starttls:
             enable: false
 
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: 5672
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASS:guest}
+
 keycloak:
   realm: smartrecruit
   url: ${KEYCLOAK_URL:http://localhost:8081}/realms/${keycloak.realm}
   admin:
     server-url: ${KEYCLOAK_SERVER_URL:http://localhost:8081}
-    admin-realm: master
-    client-id: admin-cli
-    username: ${KEYCLOAK_ADMIN:admin}
-    password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
+    client-id: ${KEYCLOAK_BACKEND_CLIENT_ID:smartrecruit-backend}
+    client-secret: ${KEYCLOAK_BACKEND_SECRET:smartrecruit-backend-secret}
+
+# Custom MinIO properties
+minio:
+  url: ${MINIO_URL:http://localhost:9000}
+  access-key: ${MINIO_ROOT_USER:minioadmin}
+  secret-key: ${MINIO_ROOT_PASSWORD:minioadmin}
+  bucket: resumes
+
+springdoc:
+  swagger-ui:
+    persist-authorization: true
+    oauth:
+      clientId: smartrecruit-frontend

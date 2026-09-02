@@ -1,31 +1,80 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import Keycloak from 'keycloak-js';
 import { Observable, from, of, Subject } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-
-import { UserProfile } from '../models/user.model';
+import { UserProfile, UserRole } from '../models/user.model';
+import { UserService } from '../services/user.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private keycloak = inject(Keycloak);
+  private userService = inject(UserService);
 
-  isAuthenticated = signal<boolean>(false);
-  isAdmin = signal<boolean>(false);
-  profileUpdated = new Subject<void>();
+  readonly isAuthenticated = signal<boolean>(false);
+  readonly roles = signal<string[]>([]);
+  readonly currentUser = signal<UserProfile | null>(null);
+
+  readonly isAdmin = computed(() => this.hasRole(UserRole.HR_ADMIN));
+  readonly isRecruiter = computed(() => this.hasRole(UserRole.RECRUITER));
+  readonly isViewer = computed(() => this.hasRole(UserRole.VIEWER));
+
+  readonly profileUpdated = new Subject<void>();
 
   constructor() {
-    this.isAuthenticated.set(!!this.keycloak.authenticated);
-    if (this.keycloak.authenticated) {
-      this.isAdmin.set(this.hasRole('HR_ADMIN'));
+    this.syncAuthState();
+  }
+
+  syncAuthState(): void {
+    const isAuth = !!this.keycloak.authenticated;
+    this.isAuthenticated.set(isAuth);
+
+    if (isAuth) {
+      const realmRoles =
+        this.keycloak.realmAccess?.roles ||
+        (this.keycloak.tokenParsed as any)?.realm_access?.roles ||
+        [];
+      this.roles.set(realmRoles);
+      this.currentUser.set(this.getUserProfile());
+
+      // Proactively sync/self-heal PostgreSQL user state with verified JWT claims on login
+      this.userService.getMyProfile().subscribe({
+        next: (profile) => {
+          if (profile && profile.role) {
+            const roleStr = profile.role as string;
+            if (!this.roles().includes(roleStr)) {
+              this.roles.update((r) => [...r, roleStr]);
+            }
+          }
+        },
+        error: (err) => console.debug('Background profile sync:', err?.message || err),
+      });
+    } else {
+      this.roles.set([]);
+      this.currentUser.set(null);
     }
   }
 
-  hasRole(role: string): boolean {
+  hasRole(role: UserRole | string): boolean {
+    const target = typeof role === 'string' ? role : (role as string);
+    if (this.roles().length > 0 && this.roles().includes(target)) {
+      return true;
+    }
     if (!this.keycloak.authenticated) return false;
-    const roles = this.keycloak.realmAccess?.roles || [];
-    return roles.includes(role);
+    const currentRoles =
+      this.keycloak.realmAccess?.roles ||
+      (this.keycloak.tokenParsed as any)?.realm_access?.roles ||
+      [];
+    return currentRoles.includes(target);
+  }
+
+  hasAnyRole(roles: (UserRole | string)[]): boolean {
+    return roles.some((role) => this.hasRole(role));
+  }
+
+  hasAllRoles(roles: (UserRole | string)[]): boolean {
+    return roles.every((role) => this.hasRole(role));
   }
 
   getUserProfile(): UserProfile | null {
@@ -33,6 +82,7 @@ export class AuthService {
       const token = this.keycloak.tokenParsed as any;
       const firstName = token.given_name || '';
       const lastName = token.family_name || '';
+      const realmRoles = this.keycloak.realmAccess?.roles || token.realm_access?.roles || [];
       return {
         sub: token.sub || '',
         firstName,
@@ -40,6 +90,7 @@ export class AuthService {
         fullName: `${firstName} ${lastName}`.trim(),
         email: token.email || '',
         preferredUsername: token.preferred_username || '',
+        roles: realmRoles,
       };
     }
     return null;
@@ -52,7 +103,7 @@ export class AuthService {
     });
   }
 
-  logout(redirectUri: string = window.location.origin): Observable<void> {
+  logout(redirectUri: string = `${window.location.origin}/hr`): Observable<void> {
     return from(this.keycloak.logout({ redirectUri }));
   }
 

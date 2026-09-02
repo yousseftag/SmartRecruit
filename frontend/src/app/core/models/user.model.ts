@@ -1,3 +1,9 @@
+export enum UserRole {
+  HR_ADMIN = 'HR_ADMIN',
+  RECRUITER = 'RECRUITER',
+  VIEWER = 'VIEWER',
+}
+
 export interface UserResponse {
   id: string;
   keycloakSub: string;
@@ -5,7 +11,7 @@ export interface UserResponse {
   firstName: string;
   lastName: string;
   email: string;
-  role: string;
+  role: UserRole;
   createdAt: string;
   warning?: string;
 }
@@ -38,4 +44,5 @@ export interface UserProfile {
   fullName: string;
   email: string;
   preferredUsername: string;
+  roles?: string[];
 }

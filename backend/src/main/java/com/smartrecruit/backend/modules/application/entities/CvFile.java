@@ -3,6 +3,7 @@ package com.smartrecruit.backend.modules.application.entities;
 import com.smartrecruit.backend.modules.application.enums.ExtractionStatus;
 import jakarta.persistence.*;
 import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.UUID;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -42,7 +43,7 @@ public class CvFile {
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "extracted_data", columnDefinition = "jsonb")
-  private String extractedData;
+  private Map<String, Object> extractedData;
 
   @CreationTimestamp
   @Column(name = "uploaded_at", nullable = false, updatable = false)
@@ -50,4 +51,13 @@ public class CvFile {
 
   @Column(name = "processed_at")
   private OffsetDateTime processedAt;
+
+  public String getCurrentJobTitle() {
+    if (extractedData != null
+        && extractedData.get("candidate_info") instanceof Map<?, ?> candidateInfo) {
+      Object jobTitle = candidateInfo.get("current_job_title");
+      return jobTitle != null ? jobTitle.toString() : null;
+    }
+    return null;
+  }
 }
