@@ -2,8 +2,8 @@ package com.smartrecruit.backend.modules.dashboard.services;
 
 import com.smartrecruit.backend.modules.application.enums.ApplicationStatus;
 import com.smartrecruit.backend.modules.application.repositories.ApplicationRepository;
+import com.smartrecruit.backend.modules.application.repositories.WorkflowStatusHistoryRepository;
 import com.smartrecruit.backend.modules.dashboard.dtos.*;
-import com.smartrecruit.backend.modules.dashboard.repositories.WorkflowStatusHistoryRepository;
 import com.smartrecruit.backend.modules.offer.entities.Offer;
 import com.smartrecruit.backend.modules.offer.repositories.OfferRepository;
 import java.time.Instant;

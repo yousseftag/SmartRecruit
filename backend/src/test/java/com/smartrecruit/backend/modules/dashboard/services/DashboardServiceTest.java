@@ -4,9 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
 import com.smartrecruit.backend.modules.application.repositories.ApplicationRepository;
+import com.smartrecruit.backend.modules.application.repositories.WorkflowStatusHistoryRepository;
 import com.smartrecruit.backend.modules.dashboard.dtos.ActivityDto;
 import com.smartrecruit.backend.modules.dashboard.dtos.DashboardStatsDto;
-import com.smartrecruit.backend.modules.dashboard.repositories.WorkflowStatusHistoryRepository;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Collections;
