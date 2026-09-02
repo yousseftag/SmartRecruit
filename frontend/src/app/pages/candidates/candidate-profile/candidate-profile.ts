@@ -36,7 +36,14 @@ export interface StatusOption {
 @Component({
   selector: 'app-candidate-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule, ScoreGauge, ExperienceFormatPipe, SendEmailModal, LucideDynamicIcon],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ScoreGauge,
+    ExperienceFormatPipe,
+    SendEmailModal,
+    LucideDynamicIcon,
+  ],
   templateUrl: './candidate-profile.html',
 })
 export class CandidateProfile implements OnInit, OnDestroy {

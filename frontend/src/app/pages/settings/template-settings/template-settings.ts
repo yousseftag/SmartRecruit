@@ -1,12 +1,4 @@
-import {
-  Component,
-  OnInit,
-  inject,
-  signal,
-  computed,
-  ViewChild,
-  ElementRef,
-} from '@angular/core';
+import { Component, OnInit, inject, signal, computed, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -57,7 +49,7 @@ export class TemplateSettings implements OnInit {
   // Minimal variable chips
   readonly quickVariables = [
     { tag: 'nom_candidat', label: 'Nom candidat' },
-    { tag: 'titre_offre', label: "Titre offre" },
+    { tag: 'titre_offre', label: 'Titre offre' },
     { tag: 'nom_recruteur', label: 'Nom recruteur' },
     { tag: 'email_candidat', label: 'Email candidat' },
   ];
@@ -84,7 +76,9 @@ export class TemplateSettings implements OnInit {
   sampleContext = computed(() => {
     const user = this.authService.currentUser();
     const recruiterName = user
-      ? user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.preferredUsername
+      ? user.fullName ||
+        `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+        user.preferredUsername
       : 'Sophie Martin';
 
     return {

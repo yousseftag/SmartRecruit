@@ -1,6 +1,8 @@
 <div class="w-full px-4 sm:px-8 py-6 space-y-6">
   <!-- Page Header & Template Selector Bar -->
-  <div class="bg-white rounded-xl border border-line p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+  <div
+    class="bg-white rounded-xl border border-line p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4"
+  >
     <div>
       <h1 class="text-lg font-bold text-ink flex items-center gap-2">
         <svg [lucideIcon]="LucideMail" class="w-5 h-5 text-blue-600"></svg>
@@ -56,7 +58,6 @@
   <!-- Main 2-Column Split: Editor & Live Preview (Full Width Grid) -->
   @if (!isLoading()) {
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-      
       <!-- ================= LEFT: COMPACT EDITOR ================= -->
       <div class="bg-white rounded-xl border border-line p-5 shadow-xs space-y-4">
         <div class="flex items-center justify-between pb-2 border-b border-line">
@@ -186,7 +187,9 @@
             class="btn bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5 transition-colors shadow-xs"
           >
             @if (isSaving()) {
-              <div class="animate-spin rounded-full h-3.5 w-3.5 border-t-2 border-b-2 border-white"></div>
+              <div
+                class="animate-spin rounded-full h-3.5 w-3.5 border-t-2 border-b-2 border-white"
+              ></div>
               Enregistrement...
             } @else {
               <svg [lucideIcon]="LucideSave" class="w-3.5 h-3.5"></svg>
@@ -203,7 +206,9 @@
             <svg [lucideIcon]="LucideEye" class="w-4 h-4 text-slate-600"></svg>
             <span class="text-xs font-bold text-ink">Aperçu en direct (Simulation)</span>
           </div>
-          <span class="text-[10px] text-slate-500 bg-white px-2 py-0.5 rounded border border-line font-medium">
+          <span
+            class="text-[10px] text-slate-500 bg-white px-2 py-0.5 rounded border border-line font-medium"
+          >
             Variables résolues
           </span>
         </div>
@@ -212,11 +217,15 @@
         <div class="p-4 bg-white border-b border-slate-100 space-y-1.5 text-xs">
           <div class="flex items-center gap-2 text-slate-500">
             <span class="font-semibold text-slate-700 w-16">À :</span>
-            <span class="text-ink font-medium">Jean Dupont &lt;jean.dupont&#64;example.com&gt;</span>
+            <span class="text-ink font-medium"
+              >Jean Dupont &lt;jean.dupont&#64;example.com&gt;</span
+            >
           </div>
           <div class="flex items-center gap-2 text-slate-500">
             <span class="font-semibold text-slate-700 w-16">De :</span>
-            <span class="text-ink font-medium">{{ sampleContext().nom_recruteur }} &lt;recrutement&#64;norsys.fr&gt;</span>
+            <span class="text-ink font-medium"
+              >{{ sampleContext().nom_recruteur }} &lt;recrutement&#64;norsys.fr&gt;</span
+            >
           </div>
           <div class="flex items-start gap-2 pt-1 border-t border-slate-100">
             <span class="font-semibold text-slate-700 w-16">Objet :</span>
@@ -225,18 +234,21 @@
         </div>
 
         <!-- Rendered Email Body -->
-        <div class="p-5 bg-slate-50/50 min-h-[300px] text-xs text-slate-800 leading-relaxed font-sans prose prose-xs max-w-none">
+        <div
+          class="p-5 bg-slate-50/50 min-h-[300px] text-xs text-slate-800 leading-relaxed font-sans prose prose-xs max-w-none"
+        >
           <div [innerHTML]="previewBodyHtml()"></div>
         </div>
       </div>
-
     </div>
   }
 </div>
 
 <!-- Delete Confirmation Modal -->
 @if (showDeleteConfirm()) {
-  <div class="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
+  <div
+    class="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in"
+  >
     <div class="bg-white rounded-2xl border border-line shadow-2xl max-w-md w-full p-6 space-y-4">
       <div class="flex items-center gap-3 text-red-600">
         <div class="p-2.5 bg-red-50 rounded-xl">
@@ -269,7 +281,9 @@
           class="btn bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5 transition-colors shadow-xs"
         >
           @if (isDeleting()) {
-            <div class="animate-spin rounded-full h-3.5 w-3.5 border-t-2 border-b-2 border-white"></div>
+            <div
+              class="animate-spin rounded-full h-3.5 w-3.5 border-t-2 border-b-2 border-white"
+            ></div>
             Suppression...
           } @else {
             <svg [lucideIcon]="LucideTrash2" class="w-3.5 h-3.5"></svg>
@@ -289,12 +303,22 @@
   >
     @if (toastType() === 'success') {
       <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M5 13l4 4L19 7"
+        ></path>
       </svg>
     }
     @if (toastType() === 'error') {
       <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M6 18L18 6M6 6l12 12"
+        ></path>
       </svg>
     }
     <span>{{ toastMessage() }}</span>

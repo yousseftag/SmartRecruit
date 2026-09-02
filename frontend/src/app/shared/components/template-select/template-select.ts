@@ -1,12 +1,4 @@
-import {
-  Component,
-  input,
-  output,
-  signal,
-  ElementRef,
-  HostListener,
-  inject,
-} from '@angular/core';
+import { Component, input, output, signal, ElementRef, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   LucideDynamicIcon,

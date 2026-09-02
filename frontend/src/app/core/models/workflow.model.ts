@@ -1,9 +1,5 @@
 export type TemplateKey =
-  | 'INTERVIEW_INVITATION'
-  | 'FOLLOW_UP'
-  | 'REJECTION'
-  | 'OTHER'
-  | (string & {});
+  'INTERVIEW_INVITATION' | 'FOLLOW_UP' | 'REJECTION' | 'OTHER' | (string & {});
 
 export interface EmailTemplateResponse {
   id: string;

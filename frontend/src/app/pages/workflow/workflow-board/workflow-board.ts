@@ -1,11 +1,4 @@
-import {
-  Component,
-  OnInit,
-  inject,
-  signal,
-  computed,
-  HostListener,
-} from '@angular/core';
+import { Component, OnInit, inject, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
@@ -28,16 +21,10 @@ import {
 } from '@lucide/angular';
 import { ApplicationService } from '../../../core/services/application.service';
 import { OfferService } from '../../../core/services/offer.service';
-import {
-  ApplicationSummaryResponse,
-  WorkflowStatus,
-} from '../../../core/models/application.model';
+import { ApplicationSummaryResponse, WorkflowStatus } from '../../../core/models/application.model';
 import { OfferTitleResponse } from '../../../core/models/offer.model';
 import { SendEmailModal } from '../../../shared/components/send-email-modal/send-email-modal';
-import {
-  CustomSelect,
-  SelectOption,
-} from '../../../shared/components/custom-select/custom-select';
+import { CustomSelect, SelectOption } from '../../../shared/components/custom-select/custom-select';
 
 export interface WorkflowColumn {
   key: WorkflowStatus;
@@ -225,7 +212,8 @@ export class WorkflowBoard implements OnInit {
 
     if (query) {
       list = list.filter((app) => {
-        const name = `${app.candidate?.firstName || ''} ${app.candidate?.lastName || ''}`.toLowerCase();
+        const name =
+          `${app.candidate?.firstName || ''} ${app.candidate?.lastName || ''}`.toLowerCase();
         const email = (app.candidate?.email || '').toLowerCase();
         const offer = (app.offerTitle || '').toLowerCase();
         return name.includes(query) || email.includes(query) || offer.includes(query);
@@ -425,7 +413,8 @@ export class WorkflowBoard implements OnInit {
   }
 
   getScoreBadgeClass(score: number | null): string {
-    if (score === null || score === undefined) return 'bg-slate-100 text-slate-600 border-slate-200';
+    if (score === null || score === undefined)
+      return 'bg-slate-100 text-slate-600 border-slate-200';
     if (score >= 80) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
     if (score >= 60) return 'bg-amber-50 text-amber-700 border-amber-200';
     return 'bg-rose-50 text-rose-700 border-rose-200';

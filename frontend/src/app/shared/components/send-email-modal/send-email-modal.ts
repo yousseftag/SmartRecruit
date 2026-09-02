@@ -95,8 +95,10 @@ export class SendEmailModal implements OnInit, OnChanges {
   recruiterName = computed(() => {
     const user = this.authService.currentUser();
     return user
-      ? user.fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.preferredUsername
-      : 'L\'équipe de recrutement';
+      ? user.fullName ||
+          `${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+          user.preferredUsername
+      : "L'équipe de recrutement";
   });
 
   // Dynamic context for live preview
@@ -268,23 +270,19 @@ export class SendEmailModal implements OnInit, OnChanges {
     this.isSending.set(true);
     this.errorMessage.set(null);
 
-    this.workflowService
-      .sendEmail(appId, { subject, bodyHtml })
-      .subscribe({
-        next: () => {
-          this.isSending.set(false);
-          this.emailSent.emit();
-          this.close.emit();
-        },
-        error: (err) => {
-          this.isSending.set(false);
-          const msg =
-            err.error?.message ||
-            "Une erreur est survenue lors de l'envoi de l'email.";
-          this.errorMessage.set(msg);
-          console.error('Failed to send email', err);
-        },
-      });
+    this.workflowService.sendEmail(appId, { subject, bodyHtml }).subscribe({
+      next: () => {
+        this.isSending.set(false);
+        this.emailSent.emit();
+        this.close.emit();
+      },
+      error: (err) => {
+        this.isSending.set(false);
+        const msg = err.error?.message || "Une erreur est survenue lors de l'envoi de l'email.";
+        this.errorMessage.set(msg);
+        console.error('Failed to send email', err);
+      },
+    });
   }
 
   private interpolate(text: string, variables: Record<string, string>): string {

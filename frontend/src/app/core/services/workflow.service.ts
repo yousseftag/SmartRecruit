@@ -46,9 +46,6 @@ export class WorkflowService {
 
   /** Dispatches an email to the candidate linked to the application */
   sendEmail(applicationId: string, request: SendEmailRequest): Observable<void> {
-    return this.http.post<void>(
-      `${this.apiUrl}/applications/${applicationId}/send-email`,
-      request,
-    );
+    return this.http.post<void>(`${this.apiUrl}/applications/${applicationId}/send-email`, request);
   }
 }

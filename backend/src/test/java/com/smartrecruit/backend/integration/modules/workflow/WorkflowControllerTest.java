@@ -173,14 +173,16 @@ class WorkflowControllerTest {
   @Test
   @WithMockUser(roles = "RECRUITER")
   void shouldReturn400WhenCandidateHasNoEmail() throws Exception {
-    // Ghost candidate from V3 seed data (null email)
-    UUID ghostApplicationId = UUID.fromString("52000000-0000-0000-0000-000000000005");
+    UUID applicationId = UUID.fromString("52000000-0000-0000-0000-000000000005");
+    var application = applicationRepository.findById(applicationId).orElseThrow();
+    application.getCandidate().setEmail(null);
+    applicationRepository.save(application);
 
     SendEmailRequest request = new SendEmailRequest("Sujet", "<p>Corps</p>");
 
     mockMvc
         .perform(
-            post("/api/v1/workflow/applications/" + ghostApplicationId + "/send-email")
+            post("/api/v1/workflow/applications/" + applicationId + "/send-email")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
         .andExpect(status().isBadRequest())

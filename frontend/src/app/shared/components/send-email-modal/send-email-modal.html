@@ -6,7 +6,9 @@
       class="bg-white rounded-2xl border border-line shadow-2xl max-w-6xl w-full h-[88vh] flex flex-col overflow-hidden animate-in zoom-in-95"
     >
       <!-- Modal Top Header & Context Bar -->
-      <div class="px-6 py-3.5 bg-slate-50 border-b border-line flex items-center justify-between gap-4 shrink-0">
+      <div
+        class="px-6 py-3.5 bg-slate-50 border-b border-line flex items-center justify-between gap-4 shrink-0"
+      >
         <div class="flex flex-wrap items-center gap-3 min-w-0">
           <div class="flex items-center gap-2">
             <div class="p-2 bg-blue-100 text-blue-700 rounded-lg shrink-0">
@@ -16,22 +18,32 @@
           </div>
 
           <!-- Recipient Candidate Pill -->
-          <div class="flex items-center gap-1.5 bg-white border border-line px-2.5 py-1 rounded-lg text-xs">
+          <div
+            class="flex items-center gap-1.5 bg-white border border-line px-2.5 py-1 rounded-lg text-xs"
+          >
             <svg [lucideIcon]="LucideUser" class="w-3.5 h-3.5 text-blue-600 shrink-0"></svg>
-            <span class="font-bold text-ink truncate max-w-[150px] sm:max-w-[200px]">{{ candidateName() }}</span>
+            <span class="font-bold text-ink truncate max-w-[150px] sm:max-w-[200px]">{{
+              candidateName()
+            }}</span>
             @if (candidateEmail()) {
-              <span class="text-slate-500 font-mono text-[11px] truncate max-w-[150px] sm:max-w-[220px]">
+              <span
+                class="text-slate-500 font-mono text-[11px] truncate max-w-[150px] sm:max-w-[220px]"
+              >
                 &lt;{{ candidateEmail() }}&gt;
               </span>
             } @else {
-              <span class="text-rose-600 font-bold text-[10px] bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200">
+              <span
+                class="text-rose-600 font-bold text-[10px] bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200"
+              >
                 Sans email
               </span>
             }
           </div>
 
           <!-- Target Offer Pill -->
-          <div class="hidden sm:flex items-center gap-1.5 bg-white border border-line px-2.5 py-1 rounded-lg text-xs text-slate-700">
+          <div
+            class="hidden sm:flex items-center gap-1.5 bg-white border border-line px-2.5 py-1 rounded-lg text-xs text-slate-700"
+          >
             <svg [lucideIcon]="LucideBriefcase" class="w-3.5 h-3.5 text-slate-400 shrink-0"></svg>
             <span class="font-medium truncate max-w-[200px]">{{ offerTitle() }}</span>
           </div>
@@ -49,25 +61,28 @@
 
       <!-- Main 2-Column Split: Editor (Left) & Live Preview (Right) -->
       <div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 overflow-y-auto items-start">
-        
         <!-- ================= LEFT COLUMN: COMPACT EDITOR ================= -->
         <div class="flex flex-col space-y-4 min-w-0">
           <!-- Ghost Candidate Warning -->
           @if (hasGhostEmail()) {
-            <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-start gap-2">
-              <svg [lucideIcon]="LucideAlertCircle" class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"></svg>
+            <div
+              class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-start gap-2"
+            >
+              <svg
+                [lucideIcon]="LucideAlertCircle"
+                class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"
+              ></svg>
               <div>
                 <span class="font-bold">Adresse email manquante :</span>
-                Ce candidat n'a pas d'adresse email valide enregistrée. L'envoi direct est indisponible.
+                Ce candidat n'a pas d'adresse email valide enregistrée. L'envoi direct est
+                indisponible.
               </div>
             </div>
           }
 
           <!-- Template Selector -->
           <div>
-            <label class="block text-xs font-bold text-ink mb-1">
-              Modèle d'email
-            </label>
+            <label class="block text-xs font-bold text-ink mb-1"> Modèle d'email </label>
             <app-template-select
               [templates]="templates()"
               [selectedTemplateId]="selectedTemplate()?.id || null"
@@ -163,13 +178,17 @@
         </div>
 
         <!-- ================= RIGHT COLUMN: LIVE SIMULATION PREVIEW ================= -->
-        <div class="bg-white rounded-xl border border-line shadow-xs overflow-hidden flex flex-col h-full">
+        <div
+          class="bg-white rounded-xl border border-line shadow-xs overflow-hidden flex flex-col h-full"
+        >
           <div class="px-4 py-3 bg-slate-50 border-b border-line flex items-center justify-between">
             <div class="flex items-center gap-2">
               <svg [lucideIcon]="LucideEye" class="w-4 h-4 text-slate-600"></svg>
               <span class="text-xs font-bold text-ink">Aperçu en direct (Rendu réel)</span>
             </div>
-            <span class="text-[10px] text-slate-500 bg-white px-2 py-0.5 rounded border border-line font-medium flex items-center gap-1">
+            <span
+              class="text-[10px] text-slate-500 bg-white px-2 py-0.5 rounded border border-line font-medium flex items-center gap-1"
+            >
               <svg [lucideIcon]="LucideSparkles" class="w-2.5 h-2.5 text-blue-600"></svg>
               Variables résolues
             </span>
@@ -196,15 +215,18 @@
           </div>
 
           <!-- Rendered HTML Message Body -->
-          <div class="p-5 bg-slate-50/50 flex-1 min-h-[300px] text-xs text-slate-800 leading-relaxed font-sans prose prose-xs max-w-none overflow-y-auto">
+          <div
+            class="p-5 bg-slate-50/50 flex-1 min-h-[300px] text-xs text-slate-800 leading-relaxed font-sans prose prose-xs max-w-none overflow-y-auto"
+          >
             <div [innerHTML]="previewBodyHtml()"></div>
           </div>
         </div>
-
       </div>
 
       <!-- Modal Bottom Actions Bar -->
-      <div class="px-6 py-3.5 bg-slate-50 border-t border-line flex items-center justify-between gap-3 shrink-0">
+      <div
+        class="px-6 py-3.5 bg-slate-50 border-t border-line flex items-center justify-between gap-3 shrink-0"
+      >
         <!-- Error Banner (if any) -->
         <div class="min-w-0 flex-1">
           @if (errorMessage()) {
@@ -232,7 +254,9 @@
             class="btn bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold px-5 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-xs"
           >
             @if (isSending()) {
-              <div class="animate-spin rounded-full h-3.5 w-3.5 border-t-2 border-b-2 border-white"></div>
+              <div
+                class="animate-spin rounded-full h-3.5 w-3.5 border-t-2 border-b-2 border-white"
+              ></div>
               Envoi en cours...
             } @else {
               <svg [lucideIcon]="LucideSend" class="w-3.5 h-3.5"></svg>
@@ -241,7 +265,6 @@
           </button>
         </div>
       </div>
-
     </div>
   </div>
 }

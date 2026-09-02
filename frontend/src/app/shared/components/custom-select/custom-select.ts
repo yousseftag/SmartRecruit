@@ -10,12 +10,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import {
-  LucideDynamicIcon,
-  LucideChevronDown,
-  LucideCheck,
-  LucideSearch,
-} from '@lucide/angular';
+import { LucideDynamicIcon, LucideChevronDown, LucideCheck, LucideSearch } from '@lucide/angular';
 
 export interface SelectOption<T = any> {
   value: T;
