@@ -1,62 +1,174 @@
 <div class="page page-wide" style="width: 100%">
-  <div class="page-head" style="display: flex; justify-content: space-between; width: 100%">
+  <div
+    class="page-head"
+    style="
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 24px;
+    "
+  >
     <div>
       <h1 class="h1">Gestion des Utilisateurs</h1>
       <p class="subtitle">Gérez les comptes, rôles et accès de votre équipe.</p>
     </div>
     <div>
-      <button class="btn btn-primary" (click)="openCreateModal()">
-        <svg lucidePlus></svg> Ajouter un compte
+      <button class="btn btn-primary flex items-center gap-2" (click)="openCreateModal()">
+        <svg lucidePlus size="16"></svg>
+        <span>Ajouter un compte</span>
       </button>
     </div>
   </div>
 
   <div class="card card-pad-lg" style="width: 100%">
+    <!-- Toolbar: Search Bar + Role Filter Dropdown -->
     <div
       class="toolbar"
-      style="display: flex; justify-content: space-between; width: 100%; padding: 0 24px"
+      style="
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 20px;
+        gap: 16px;
+      "
     >
-      <div class="search-lg" style="flex: 1; max-width: 450px">
-        <i class="search-icon-wrap"><svg lucideSearch></svg></i>
+      <!-- Search Input with centered icon -->
+      <div class="relative flex-1 max-w-md">
+        <svg
+          class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-faint pointer-events-none"
+          lucideSearch
+          size="16"
+        ></svg>
         <input
           type="text"
-          placeholder="Rechercher par nom, prénom ou nom d'utilisateur..."
-          [value]="searchQuery()"
-          (input)="onSearchChange($event)"
+          placeholder="Rechercher par nom, prénom, email ou identifiant..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearchModelChange($event)"
+          class="w-full pl-10 pr-4 py-2.5 bg-white border border-line rounded-lg focus:border-blue focus:ring-1 focus:ring-blue outline-none transition-colors text-xs text-ink placeholder:text-faint"
         />
       </div>
 
-      <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0">
-        <label for="roleFilter" class="text-slate" style="font-size: 13.5px; font-weight: 500"
-          >Filtrer par rôle :</label
+      <!-- Custom Role Filter Dropdown -->
+      <div class="relative w-56">
+        <button
+          type="button"
+          (click)="toggleRoleDropdown($event)"
+          class="w-full px-3.5 py-2.5 bg-white border border-line rounded-lg text-xs font-semibold text-ink flex items-center justify-between gap-2 hover:border-slate/40 focus:border-blue transition-all"
         >
-        <select
-          id="roleFilter"
-          class="role-select"
-          [value]="selectedRole()"
-          (change)="onRoleChange($event)"
-        >
-          <option value="ALL">Tous les rôles</option>
-          <option value="HR_ADMIN">Admin RH</option>
-          <option value="RECRUITER">Recruteur</option>
-          <option value="VIEWER">Consultation</option>
-        </select>
+          <div class="flex items-center gap-2 truncate">
+            <svg class="w-3.5 h-3.5 text-slate flex-shrink-0" lucideFilter size="14"></svg>
+            <span class="truncate">{{ selectedRoleLabel() }}</span>
+          </div>
+          <svg
+            class="w-3.5 h-3.5 text-slate flex-shrink-0 transition-transform duration-200"
+            [class.rotate-180]="isRoleDropdownOpen()"
+            lucideChevronDown
+            size="14"
+          ></svg>
+        </button>
+
+        @if (isRoleDropdownOpen()) {
+          <div
+            class="absolute right-0 top-full mt-1.5 w-56 bg-white border border-line rounded-xl shadow-lg z-30 py-1 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150"
+            (click)="$event.stopPropagation()"
+          >
+            <button
+              type="button"
+              (click)="selectRole('ALL')"
+              class="w-full px-3.5 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
+              [ngClass]="
+                selectedRole() === 'ALL' ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
+              "
+            >
+              <span>Tous les rôles</span>
+              @if (selectedRole() === 'ALL') {
+                <svg class="w-3.5 h-3.5 text-blue flex-shrink-0" lucideCheck size="14"></svg>
+              }
+            </button>
+
+            <div class="border-t border-line/60 my-1"></div>
+
+            <button
+              type="button"
+              (click)="selectRole('HR_ADMIN')"
+              class="w-full px-3.5 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
+              [ngClass]="
+                selectedRole() === 'HR_ADMIN' ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
+              "
+            >
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-blue"></span>
+                <span>Admin RH</span>
+              </div>
+              @if (selectedRole() === 'HR_ADMIN') {
+                <svg class="w-3.5 h-3.5 text-blue flex-shrink-0" lucideCheck size="14"></svg>
+              }
+            </button>
+
+            <button
+              type="button"
+              (click)="selectRole('RECRUITER')"
+              class="w-full px-3.5 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
+              [ngClass]="
+                selectedRole() === 'RECRUITER' ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
+              "
+            >
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-green"></span>
+                <span>Recruteur</span>
+              </div>
+              @if (selectedRole() === 'RECRUITER') {
+                <svg class="w-3.5 h-3.5 text-blue flex-shrink-0" lucideCheck size="14"></svg>
+              }
+            </button>
+
+            <button
+              type="button"
+              (click)="selectRole('VIEWER')"
+              class="w-full px-3.5 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
+              [ngClass]="
+                selectedRole() === 'VIEWER' ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
+              "
+            >
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-slate"></span>
+                <span>Consultation</span>
+              </div>
+              @if (selectedRole() === 'VIEWER') {
+                <svg class="w-3.5 h-3.5 text-blue flex-shrink-0" lucideCheck size="14"></svg>
+              }
+            </button>
+          </div>
+        }
       </div>
     </div>
 
     @if (isLoading()) {
-      <div class="loading-state">Chargement des utilisateurs...</div>
+      <div
+        class="loading-state"
+        style="padding: 40px; text-align: center; color: var(--muted); font-size: 13px"
+      >
+        Chargement des utilisateurs...
+      </div>
     } @else if (errorMessage()) {
-      <div class="error-state">{{ errorMessage() }}</div>
+      <div
+        class="error-state"
+        style="padding: 20px; text-align: center; color: var(--red); font-size: 13px"
+      >
+        {{ errorMessage() }}
+      </div>
     } @else {
       <div class="table" style="width: 100%">
+        <!-- Table Header -->
         <div
           class="thead"
           style="
             display: grid;
             grid-template-columns:
-              minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1.2fr)
-              minmax(0, 2fr) 120px;
+              minmax(0, 1.8fr) minmax(0, 1.4fr) minmax(0, 1.4fr) minmax(0, 1.2fr)
+              minmax(0, 2fr) 100px;
             gap: 16px;
             width: 100%;
           "
@@ -64,40 +176,48 @@
           <div>Utilisateur</div>
           <div>Nom</div>
           <div>Prénom</div>
-          <div style="padding-left: 11px">Rôle</div>
+          <div>Rôle</div>
           <div>Email</div>
           <div style="text-align: center">Actions</div>
         </div>
 
+        <!-- Table Rows -->
         @for (user of paginatedUsers(); track user.id) {
           <div
             class="trow"
             style="
               display: grid;
               grid-template-columns:
-                minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 1.2fr)
-                minmax(0, 2fr) 120px;
+                minmax(0, 1.8fr) minmax(0, 1.4fr) minmax(0, 1.4fr) minmax(0, 1.2fr)
+                minmax(0, 2fr) 100px;
               gap: 16px;
+              align-items: center;
               width: 100%;
             "
           >
             <div
-              class="cell-title"
+              class="cell-title flex items-center gap-2.5"
               style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap"
             >
-              {{ user.username }}
+              <div
+                class="w-7 h-7 rounded-full bg-blue-100 text-blue font-bold text-[11px] flex items-center justify-center flex-shrink-0"
+              >
+                {{ (user.firstName[0] || user.username[0] || 'U').toUpperCase()
+                }}{{ (user.lastName[0] || '').toUpperCase() }}
+              </div>
+              <span class="truncate font-semibold">{{ user.username }}</span>
             </div>
             <div
               class="cell"
               style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap"
             >
-              {{ user.lastName }}
+              {{ user.lastName || '—' }}
             </div>
             <div
               class="cell"
               style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap"
             >
-              {{ user.firstName }}
+              {{ user.firstName || '—' }}
             </div>
             <div class="cell">
               <span
@@ -112,19 +232,23 @@
               </span>
             </div>
             <div
-              class="cell"
+              class="cell text-slate"
               style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap"
             >
               {{ user.email }}
             </div>
 
-            <div class="cell-actions" style="display: flex; justify-content: center; gap: 16px">
-              <button class="btn-icon" (click)="openEditModal(user)" title="Modifier">
-                <svg lucidePencil></svg>
+            <div class="cell-actions" style="display: flex; justify-content: center; gap: 8px">
+              <button class="btn-icon" (click)="openEditModal(user)" title="Modifier le compte">
+                <svg lucidePencil size="15"></svg>
               </button>
               @if (user.username !== currentUsername()) {
-                <button class="btn-icon text-red" (click)="openDeleteModal(user)" title="Supprimer">
-                  <svg lucideTrash2></svg>
+                <button
+                  class="btn-icon text-red"
+                  (click)="openDeleteModal(user)"
+                  title="Supprimer l'utilisateur"
+                >
+                  <svg lucideTrash2 size="15"></svg>
                 </button>
               }
             </div>
@@ -132,31 +256,98 @@
         }
 
         @if (filteredUsers().length === 0) {
-          <div class="empty-state">Aucun utilisateur trouvé.</div>
+          <div
+            class="empty-state"
+            style="padding: 48px 16px; text-align: center; color: var(--muted); font-size: 13px"
+          >
+            <div style="font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 4px">
+              Aucun utilisateur trouvé
+            </div>
+            <div>Modifiez vos critères de recherche ou réinitialisez les filtres.</div>
+          </div>
         }
       </div>
 
-      <div class="pager-container">
-        <div class="page-size">
-          <label>Lignes par page :</label>
-          <select [value]="pageSize()" (change)="onPageSizeChange($event)">
-            <option value="10">10</option>
-            <option value="20">20</option>
-            <option value="30">30</option>
-          </select>
+      <!-- Pagination Footer -->
+      <div
+        class="pager-container"
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding-top: 16px;
+          margin-top: 16px;
+          border-top: 1px solid var(--line);
+          font-size: 12px;
+          color: var(--muted);
+        "
+      >
+        <!-- Custom Page Size Dropdown -->
+        <div class="flex items-center gap-2 relative">
+          <span class="text-slate font-medium text-xs">Lignes par page :</span>
+          <div class="relative">
+            <button
+              type="button"
+              (click)="togglePageSizeDropdown($event)"
+              class="px-2.5 py-1 bg-white border border-line rounded-lg text-xs font-semibold text-ink flex items-center gap-1.5 hover:border-slate/40 focus:border-blue transition-all"
+            >
+              <span>{{ pageSize() }}</span>
+              <svg
+                class="w-3 h-3 text-slate flex-shrink-0 transition-transform duration-200"
+                [class.rotate-180]="isPageSizeDropdownOpen()"
+                lucideChevronDown
+                size="12"
+              ></svg>
+            </button>
+
+            @if (isPageSizeDropdownOpen()) {
+              <div
+                class="absolute bottom-full left-0 mb-1.5 w-20 bg-white border border-line rounded-xl shadow-lg z-30 py-1 overflow-hidden animate-in fade-in slide-in-from-bottom-1 duration-150"
+                (click)="$event.stopPropagation()"
+              >
+                @for (size of [10, 20, 30]; track size) {
+                  <button
+                    type="button"
+                    (click)="selectPageSize(size)"
+                    class="w-full px-3 py-1.5 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
+                    [ngClass]="
+                      pageSize() === size ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
+                    "
+                  >
+                    <span>{{ size }}</span>
+                    @if (pageSize() === size) {
+                      <svg class="w-3 h-3 text-blue flex-shrink-0" lucideCheck size="12"></svg>
+                    }
+                  </button>
+                }
+              </div>
+            }
+          </div>
         </div>
 
-        <div class="pager-controls">
-          <button class="pg-btn" [disabled]="currentPage() === 1" (click)="prevPage()">
-            <svg lucideChevronLeft></svg>
-          </button>
-          <span class="pg-info">Page {{ currentPage() }} sur {{ totalPages() }}</span>
+        <div style="display: flex; align-items: center; gap: 8px">
           <button
-            class="pg-btn"
+            type="button"
+            class="btn-icon"
+            style="border: 1px solid var(--border); border-radius: var(--r-sm)"
+            [disabled]="currentPage() === 1"
+            (click)="prevPage()"
+            title="Page précédente"
+          >
+            <svg lucideChevronLeft size="16"></svg>
+          </button>
+          <span style="font-weight: 500; white-space: nowrap; color: var(--ink)">
+            Page {{ currentPage() }} sur {{ totalPages() }}
+          </span>
+          <button
+            type="button"
+            class="btn-icon"
+            style="border: 1px solid var(--border); border-radius: var(--r-sm)"
             [disabled]="currentPage() === totalPages() || totalPages() === 0"
             (click)="nextPage()"
+            title="Page suivante"
           >
-            <svg lucideChevronRight></svg>
+            <svg lucideChevronRight size="16"></svg>
           </button>
         </div>
       </div>
@@ -169,8 +360,10 @@
 }
 
 @if (isCreateModalOpen()) {
-  <app-create-user-modal (closeModal)="closeCreateModal()" (save)="onCreateUser($event)">
-  </app-create-user-modal>
+  <app-create-user-modal
+    (closeModal)="closeCreateModal()"
+    (save)="onCreateUser($event)"
+  ></app-create-user-modal>
 }
 
 @if (selectedUserForEdit()) {
@@ -178,8 +371,7 @@
     [user]="selectedUserForEdit()!"
     (closeModal)="closeEditModal()"
     (save)="onEditUser($event)"
-  >
-  </app-edit-user-modal>
+  ></app-edit-user-modal>
 }
 
 @if (selectedUserForDelete()) {
@@ -187,23 +379,27 @@
     [user]="selectedUserForDelete()!"
     (closeModal)="closeDeleteModal()"
     (confirm)="onDeleteUser($event)"
-  >
-  </app-confirm-delete-modal>
+  ></app-confirm-delete-modal>
 }
 
+<!-- Toast Notification -->
 @if (successMessage()) {
   <div class="toast-notification">
-    <svg lucideCircleCheck size="20"></svg>
+    <svg lucideCircleCheck size="18"></svg>
     <span>{{ successMessage() }}</span>
   </div>
 }
 
 @if (warningMessage()) {
   <div
-    class="toast-notification toast-warning"
-    style="bottom: 80px; background-color: #fffbeb; color: #b45309; border-left: 4px solid #f59e0b"
+    class="toast-notification"
+    style="
+      background: var(--amber-bg, #fef3c7);
+      color: var(--amber-d, #b45309);
+      border-color: #fcd34d;
+    "
   >
-    <svg lucideAlertTriangle size="20"></svg>
+    <svg lucideAlertTriangle size="18"></svg>
     <span>{{ warningMessage() }}</span>
   </div>
 }
@@ -211,9 +407,9 @@
 @if (errorToastMessage()) {
   <div
     class="toast-notification"
-    style="background-color: #fef2f2; color: #991b1b; border-left: 4px solid #ef4444"
+    style="background: var(--red-bg, #fef2f2); color: var(--red-d, #dc2626); border-color: #fecaca"
   >
-    <svg lucideXCircle size="20"></svg>
+    <svg lucideXCircle size="18"></svg>
     <span>{{ errorToastMessage() }}</span>
   </div>
 }

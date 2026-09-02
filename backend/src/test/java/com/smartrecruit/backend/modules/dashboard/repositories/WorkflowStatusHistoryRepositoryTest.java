@@ -25,7 +25,7 @@ class WorkflowStatusHistoryRepositoryTest {
         () -> {
           List<Object[]> results = repository.fetchRecentActivities();
 
-          // Flyway injects our dummy data (V5__dashboard_dummy_data.sql) even in the H2 database.
+          // Flyway injects our dummy data (V6__dashboard_dummy_data.sql) even in the H2 database.
           // The result will not be empty. The most important thing is that there are no SQL syntax
           // errors.
           assertThat(results).isNotNull();

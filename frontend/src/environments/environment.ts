@@ -8,7 +8,12 @@ export const environment = {
     tokenRefreshThresholdSeconds: 30,
   },
   apiUrl: 'http://localhost:8080',
-  // Unified polling configuration (3 seconds interval, 90 seconds max timeout)
-  pollingIntervalMs: 3000,
-  pollingMaxAttempts: 30,
+  polling: {
+    intervalMs: 3000,
+    backoffMultiplier: 1.5,
+    maxIntervalMs: 15_000,
+    stalledAfterAttempts: 10,
+    maxAttempts: 30,
+    maxRestorePollAgeMs: 180_000,
+  },
 };

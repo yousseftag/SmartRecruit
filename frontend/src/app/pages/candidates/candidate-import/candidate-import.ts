@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 import { OfferService } from '../../../core/services/offer.service';
 import { ApplicationService } from '../../../core/services/application.service';
@@ -34,7 +35,7 @@ export class CandidateImport implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   private readonly SESSION_STORAGE_KEY = 'smartrecruit_active_import_tasks';
-  private activePollers = new Map<string, ReturnType<typeof setInterval>>();
+  private activePollers = new Map<string, Subscription>();
 
   readonly offers = signal<OfferTitleResponse[]>([]);
   readonly selectedOfferId = signal<string>('');
@@ -42,6 +43,16 @@ export class CandidateImport implements OnInit {
 
   readonly uploadTasks = signal<UploadTask[]>([]);
   readonly isUploading = signal(false);
+
+  readonly statusLabels: Readonly<Record<TaskStatus, string>> = {
+    PENDING: 'En attente',
+    UPLOADING: 'Envoi...',
+    PARSING: 'Analyse IA...',
+    STALLED: 'Bloqué',
+    SUCCESS: 'Terminé',
+    DUPLICATE: 'Doublon',
+    FAILED: 'Échec',
+  };
 
   // --- Computed States for the State Machine ---
 
@@ -72,6 +83,9 @@ export class CandidateImport implements OnInit {
   );
   readonly failedCount = computed(
     () => this.uploadTasks().filter((t) => t.status === 'FAILED').length,
+  );
+  readonly stalledCount = computed(
+    () => this.uploadTasks().filter((t) => t.status === 'STALLED').length,
   );
   readonly duplicateCount = computed(
     () => this.uploadTasks().filter((t) => t.status === 'DUPLICATE').length,
@@ -122,6 +136,7 @@ export class CandidateImport implements OnInit {
         errorMessage: t.errorMessage,
         summaryMessage: t.summaryMessage,
         subErrors: t.subErrors,
+        savedAt: t.savedAt ?? Date.now(),
       }));
 
       const sessionData: StoredImportSession = {
@@ -167,10 +182,53 @@ export class CandidateImport implements OnInit {
 
           this.uploadTasks.set(sanitizedTasks);
 
-          // Resume live polling with instant 0ms check for in-flight parsing tasks
+          const maxAgeMs = environment.polling.maxRestorePollAgeMs;
+
+          // Resume status checking for in-flight or stalled tasks
           sanitizedTasks.forEach((t) => {
-            if (t.status === 'PARSING' && t.applicationId) {
-              this.pollStatus(t.applicationId);
+            if ((t.status === 'PARSING' || t.status === 'STALLED') && t.applicationId) {
+              const ageMs = Date.now() - (t.savedAt ?? 0);
+
+              if (t.status === 'STALLED' || ageMs > maxAgeMs) {
+                // If it was already STALLED or session is older than threshold — do a single status probe
+                this.applicationService.pollExtractionStatus(t.applicationId).subscribe({
+                  next: (res) => {
+                    if (res.extractionStatus === 'SUCCESS') {
+                      this.updateTaskStatus(t.applicationId!, 'SUCCESS', 100);
+                      this.checkAllDone();
+                    } else if (
+                      res.extractionStatus === 'FAILED' ||
+                      res.extractionStatus === 'STALLED'
+                    ) {
+                      this.updateTaskStatus(
+                        t.applicationId!,
+                        res.extractionStatus === 'STALLED' ? 'STALLED' : 'FAILED',
+                        0,
+                        res.extractionStatus === 'STALLED'
+                          ? "L'analyse IA a dépassé le délai limite. Relancez manuellement."
+                          : 'Analyse expirée ou échouée. Veuillez relancer.',
+                      );
+                      this.checkAllDone();
+                    } else {
+                      // Still PENDING on backend — resume normal polling
+                      this.pollStatus(t.applicationId!);
+                    }
+                  },
+                  error: () => {
+                    if (t.status !== 'STALLED') {
+                      this.updateTaskStatus(
+                        t.applicationId!,
+                        'FAILED',
+                        0,
+                        "Statut de l'analyse inconnu.",
+                      );
+                    }
+                    this.checkAllDone();
+                  },
+                });
+              } else {
+                this.pollStatus(t.applicationId);
+              }
             }
           });
         }
@@ -245,12 +303,7 @@ export class CandidateImport implements OnInit {
         if (existingIdx >= 0) {
           const existing = updated[existingIdx];
           // Block re-processing if already completed or active
-          if (
-            existing.status === 'SUCCESS' ||
-            existing.status === 'PARSING' ||
-            existing.status === 'UPLOADING' ||
-            existing.status === 'DUPLICATE'
-          ) {
+          if (existing.status !== 'PENDING' && existing.status !== 'FAILED') {
             continue;
           }
 
@@ -434,22 +487,20 @@ export class CandidateImport implements OnInit {
     });
   }
 
-  // --- Resilient Status Polling for Direct CVs with Instant 0ms Check ---
+  // --- Resilient Status Polling — reactive, non-overlapping, exponential backoff ---
   private pollStatus(applicationId: string) {
     if (this.activePollers.has(applicationId)) return;
 
-    const intervalMs = environment.pollingIntervalMs;
-    const maxPolls = environment.pollingMaxAttempts;
-    let pollCount = 0;
-
-    const checkStatus = () => {
-      this.applicationService.pollExtractionStatus(applicationId).subscribe({
-        next: (statusData) => {
-          if (statusData.extractionStatus === 'SUCCESS') {
+    const sub = this.applicationService.watchExtractionStatus$(applicationId).subscribe({
+      next: (event) => {
+        switch (event.kind) {
+          case 'SUCCESS':
             this.stopPolling(applicationId);
             this.updateTaskStatus(applicationId, 'SUCCESS', 100);
             this.checkAllDone();
-          } else if (statusData.extractionStatus === 'FAILED') {
+            break;
+
+          case 'FAILED':
             this.stopPolling(applicationId);
             this.updateTaskStatus(
               applicationId,
@@ -458,52 +509,83 @@ export class CandidateImport implements OnInit {
               "Échec de l'analyse IA : document illisible ou non reconnu.",
             );
             this.checkAllDone();
-          }
-        },
-        error: (err) => {
-          this.stopPolling(applicationId);
-          const errorMessage =
-            err?.error?.message || err?.message || "Erreur lors de l'extraction IA.";
-          this.updateTaskStatus(applicationId, 'FAILED', 0, errorMessage);
-          this.checkAllDone();
-        },
-      });
-    };
+            break;
 
-    // Immediate 0ms check on invocation (vital when returning to the page)
-    checkStatus();
+          case 'BACKEND_STALLED':
+          case 'TIMEOUT':
+            this.stopPolling(applicationId);
+            this.updateTaskStatus(
+              applicationId,
+              'STALLED',
+              0,
+              "L'analyse IA a dépassé le délai limite. Relancez manuellement.",
+            );
+            this.checkAllDone();
+            break;
 
-    // Recurring polling
-    const intervalId = setInterval(() => {
-      pollCount++;
-      if (pollCount > maxPolls) {
+          case 'STALLED':
+            // AI is taking longer than expected — update informational message but keep polling
+            this.updateTaskStatus(
+              applicationId,
+              'PARSING',
+              75,
+              "L'analyse IA prend plus de temps que prévu. Veuillez patienter…",
+            );
+            break;
+
+          case 'ERROR':
+            this.stopPolling(applicationId);
+            this.updateTaskStatus(
+              applicationId,
+              'FAILED',
+              0,
+              "Erreur réseau lors du suivi de l'extraction IA.",
+            );
+            this.checkAllDone();
+            break;
+        }
+      },
+      error: () => {
         this.stopPolling(applicationId);
-        this.updateTaskStatus(applicationId, 'FAILED', 0, "Délai d'attente d'extraction dépassé.");
+        this.updateTaskStatus(applicationId, 'FAILED', 0, "Erreur lors de l'extraction IA.");
         this.checkAllDone();
-        return;
-      }
-      checkStatus();
-    }, intervalMs);
+      },
+    });
 
-    this.activePollers.set(applicationId, intervalId);
+    this.activePollers.set(applicationId, sub);
+  }
+
+  relaunchStalled(task: UploadTask) {
+    if (!task.applicationId || task.status === 'PARSING' || task.status === 'UPLOADING') return;
+    const appId = task.applicationId;
+    this.updateTaskStatus(appId, 'PARSING', 75, undefined);
+    this.applicationService.reExtractCv(appId).subscribe({
+      next: () => {
+        this.pollStatus(appId);
+      },
+      error: (err) => {
+        const msg = err?.error?.message || err?.message || "Échec de la relance de l'analyse.";
+        this.updateTaskStatus(appId, 'FAILED', 0, msg);
+      },
+    });
   }
 
   private stopPolling(applicationId: string) {
-    const timer = this.activePollers.get(applicationId);
-    if (timer) {
-      clearInterval(timer);
+    const sub = this.activePollers.get(applicationId);
+    if (sub) {
+      sub.unsubscribe();
       this.activePollers.delete(applicationId);
     }
   }
 
   private stopAllPolling() {
-    this.activePollers.forEach((timer) => clearInterval(timer));
+    this.activePollers.forEach((sub) => sub.unsubscribe());
     this.activePollers.clear();
   }
 
   private updateTaskStatus(
     applicationId: string,
-    status: 'SUCCESS' | 'FAILED',
+    status: 'SUCCESS' | 'FAILED' | 'PARSING' | 'STALLED',
     progress: number,
     errorMessage?: string,
   ) {

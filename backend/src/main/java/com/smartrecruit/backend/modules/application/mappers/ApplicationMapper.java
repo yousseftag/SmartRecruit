@@ -23,6 +23,7 @@ public class ApplicationMapper {
         application.getCvFileId(),
         application.getCvOriginalFilename(),
         application.getTotalScore(),
+        application.getPassedMinScore(),
         application.getCategoryScores(),
         application.getExtractedMatching(),
         application.getCvExtractedData(),
@@ -38,10 +39,10 @@ public class ApplicationMapper {
         toCandidateResponse(application.getCandidate(), application.getCandidateJobTitle()),
         application.getOfferId(),
         application.getOfferTitle(),
-        application.getOfferMinScore(),
         application.getStatus(),
         application.getExtractionStatus(),
         application.getTotalScore(),
+        application.getPassedMinScore(),
         application.getAppliedAt());
   }
 

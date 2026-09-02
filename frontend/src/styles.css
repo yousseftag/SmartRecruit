@@ -5,6 +5,8 @@
 */
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-blue: #2563eb;
   --color-blue-d: #1d4ed8;
@@ -521,10 +523,44 @@
     border: 1px solid var(--border);
     color: var(--ink);
   }
+  .btn-outline:hover {
+    background: var(--bg);
+  }
   .btn-outline-blue {
     background: var(--white);
-    border: 1px solid var(--line);
+    border: 1px solid var(--blue);
     color: var(--blue);
+  }
+  .btn-outline-blue:hover {
+    background: var(--blue-50);
+  }
+  .btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--r-sm);
+    background: transparent;
+    border: none;
+    color: var(--slate);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .btn-icon:hover {
+    background: var(--bg);
+    color: var(--ink);
+  }
+  .btn-icon:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .btn-icon.text-red {
+    color: var(--red);
+  }
+  .btn-icon.text-red:hover {
+    background: var(--red-bg);
+    color: var(--red-d);
   }
   .btn-danger {
     background: var(--red);
@@ -584,7 +620,7 @@
     color: var(--red-d);
   }
   .badge-gray {
-    background: var(--line-2);
+    background: var(--line);
     color: var(--muted);
   }
   .badge-blue {
@@ -676,11 +712,33 @@
   .search-lg input {
     width: 100%;
     padding: 12px 14px 12px 40px;
-    border: 1px solid var(--line);
+    border: 1px solid var(--border);
     border-radius: var(--r);
     background: var(--white);
-    font-size: 13.5px;
     color: var(--ink);
+    font-size: 13.5px;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  .search-lg input::placeholder {
+    color: var(--faint);
+  }
+  .search-lg input:focus {
+    border-color: var(--blue);
+  }
+  .role-select {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    background: var(--white);
+    color: var(--ink);
+    font-size: 13.5px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .role-select:focus {
+    border-color: var(--blue);
   }
 
   /* ---- table ---- */
@@ -699,11 +757,12 @@
     letter-spacing: 0.4px;
     color: var(--slate);
     text-transform: uppercase;
-    border-bottom: 1px solid var(--line-2);
+    border-bottom: 1px solid var(--line);
   }
   .trow {
     padding: 16px 24px;
-    border-bottom: 1px solid var(--line-2);
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
   }
   .trow:hover {
     background: var(--bg);
@@ -720,6 +779,7 @@
   .list-head .t {
     font-size: 15px;
     font-weight: 700;
+    color: var(--ink);
   }
   .list-head i {
     color: var(--faint);
@@ -728,6 +788,7 @@
   .cell-title {
     font-size: 14.5px;
     font-weight: 700;
+    color: var(--ink);
   }
   .cell-sub {
     font-size: 12px;
@@ -862,7 +923,7 @@
     display: block;
     font-size: 13px;
     font-weight: 600;
-    color: var(--ink);
+    color: var(--slate);
   }
   .input,
   .textarea,
@@ -873,12 +934,14 @@
     border-radius: var(--r);
     font-size: 14px;
     color: var(--ink);
-    background: var(--bg);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.15s ease;
   }
-  .input::placeholder,
-  .textarea::placeholder,
-  .search-lg input::placeholder {
-    color: var(--muted);
+  .input:focus,
+  .textarea:focus,
+  .select:focus {
+    border-color: var(--blue);
   }
   .textarea {
     min-height: 230px;
@@ -1164,8 +1227,8 @@
     overflow: hidden;
   }
   .feat-card {
-    background: #fff;
-    border: 1px solid var(--line);
+    background: var(--white);
+    border: 1px solid var(--border);
     border-radius: 14px;
     padding: 20px;
     display: flex;
@@ -1210,7 +1273,7 @@
     width: 24px;
     height: 24px;
     border-radius: 7px;
-    background: #eef2f7;
+    background: var(--line-2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1227,11 +1290,11 @@
     transition: background 0.12s;
   }
   .kan-list.drag-over {
-    background: #eaf2ff;
+    background: var(--blue-100);
   }
   .kan-card {
-    background: #fff;
-    border: 1px solid var(--line);
+    background: var(--white);
+    border: 1px solid var(--border);
     border-radius: 14px;
     padding: 16px;
     cursor: grab;
@@ -1275,6 +1338,8 @@
   .modal {
     width: 100%;
     background: var(--white);
+    color: var(--ink);
+    border: 1px solid var(--border);
     border-radius: 18px;
     box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
     position: relative;

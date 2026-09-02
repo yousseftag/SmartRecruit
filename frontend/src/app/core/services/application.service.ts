@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, defer, timer, switchMap, expand, takeWhile, map, catchError, of } from 'rxjs';
 import {
   ApplicationResponse,
   ApplicationExtractionStatusResponse,
@@ -9,6 +9,18 @@ import {
   UpdateApplicationStatusRequest,
 } from '../models/application.model';
 import { environment } from '../../../environments/environment';
+
+// ── Polling Event Types ───────────────────────────────────────────────────────
+export type PollingEventKind =
+  'PENDING' | 'STALLED' | 'BACKEND_STALLED' | 'SUCCESS' | 'FAILED' | 'TIMEOUT' | 'ERROR';
+
+export interface PollingEvent {
+  kind: PollingEventKind;
+  /** Attempt index (1-based) */
+  attempt: number;
+  /** Next interval that will be used (ms) */
+  nextIntervalMs: number;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -27,10 +39,101 @@ export class ApplicationService {
     return this.http.post<ImportResponse>(`${this.apiUrl}/import?offerId=${offerId}`, formData);
   }
 
-  /** Polls the current NLP extraction status of an application */
+  /** Single-shot lightweight HTTP check — used by the reactive stream and restore probe. */
   pollExtractionStatus(id: string): Observable<ApplicationExtractionStatusResponse> {
     return this.http.get<ApplicationExtractionStatusResponse>(
       `${this.apiUrl}/${id}/extraction-status`,
+    );
+  }
+
+  /**
+   * Reactive, non-overlapping polling stream with exponential backoff.
+   *
+   * Emits a `PollingEvent` after each HTTP response. The stream completes
+   * (or emits a terminal event) when one of the following is reached:
+   *   - `SUCCESS` / `FAILED` — AI worker returned a terminal state
+   *   - `BACKEND_STALLED` — Backend detected timeout (>5 min pending)
+   *   - `STALLED` — `stalledAfterAttempts` (10 polls) reached without terminal state (warning shown, keeps polling)
+   *   - `TIMEOUT` — `maxAttempts` (30 polls) exceeded, stream completes
+   *   - `ERROR` — HTTP error, stream completes
+   */
+  watchExtractionStatus$(id: string): Observable<PollingEvent> {
+    const cfg = environment.polling;
+
+    interface State {
+      attempt: number;
+      intervalMs: number;
+      _status?: string;
+      _terminal?: 'TIMEOUT';
+      _error?: boolean;
+    }
+
+    const initialState: State = { attempt: 0, intervalMs: cfg.intervalMs };
+
+    return defer(() =>
+      of(initialState).pipe(
+        expand((state: State) => {
+          if (state.attempt >= cfg.maxAttempts) {
+            return of({ ...state, _terminal: 'TIMEOUT' as const });
+          }
+
+          const nextInterval = Math.min(
+            state.intervalMs * cfg.backoffMultiplier,
+            cfg.maxIntervalMs,
+          );
+
+          return timer(state.attempt === 0 ? 0 : state.intervalMs).pipe(
+            switchMap(() =>
+              this.pollExtractionStatus(id).pipe(
+                map((res) => ({
+                  attempt: state.attempt + 1,
+                  intervalMs: nextInterval,
+                  _status: res.extractionStatus,
+                })),
+                catchError(() =>
+                  of({
+                    attempt: state.attempt + 1,
+                    intervalMs: nextInterval,
+                    _error: true,
+                  }),
+                ),
+              ),
+            ),
+          );
+        }),
+        takeWhile(
+          (state: State) =>
+            !state._terminal &&
+            !state._error &&
+            state._status !== 'SUCCESS' &&
+            state._status !== 'FAILED' &&
+            state._status !== 'STALLED',
+          /* inclusive */ true,
+        ),
+        map((state: State): PollingEvent => {
+          const attempt = state.attempt;
+          const nextIntervalMs = Math.min(
+            state.intervalMs * cfg.backoffMultiplier,
+            cfg.maxIntervalMs,
+          );
+
+          if (state._terminal === 'TIMEOUT') return { kind: 'TIMEOUT', attempt, nextIntervalMs: 0 };
+          if (state._error) return { kind: 'ERROR', attempt, nextIntervalMs: 0 };
+          if (state._status === 'SUCCESS') return { kind: 'SUCCESS', attempt, nextIntervalMs: 0 };
+          if (state._status === 'FAILED') return { kind: 'FAILED', attempt, nextIntervalMs: 0 };
+          if (state._status === 'STALLED') {
+            return {
+              kind: 'BACKEND_STALLED',
+              attempt,
+              nextIntervalMs: 0,
+            };
+          }
+          if (attempt >= cfg.stalledAfterAttempts) {
+            return { kind: 'STALLED', attempt, nextIntervalMs };
+          }
+          return { kind: 'PENDING', attempt, nextIntervalMs };
+        }),
+      ),
     );
   }
 
