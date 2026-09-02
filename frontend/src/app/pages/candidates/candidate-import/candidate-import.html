@@ -534,14 +534,10 @@
             <span class="text-red font-medium ml-2">• {{ failedCount() }} échec(s)</span>
           }
           @if (stalledCount() > 0) {
-            <span class="text-amber-d font-medium ml-2"
-              >• {{ stalledCount() }} bloqué(s)</span
-            >
+            <span class="text-amber-d font-medium ml-2">• {{ stalledCount() }} bloqué(s)</span>
           }
           @if (duplicateCount() > 0) {
-            <span class="text-amber-d font-medium ml-2"
-              >• {{ duplicateCount() }} doublon(s)</span
-            >
+            <span class="text-amber-d font-medium ml-2">• {{ duplicateCount() }} doublon(s)</span>
           }
           @if (successCount() > 0) {
             <span class="text-green font-medium ml-2">• {{ successCount() }} terminé(s)</span>
