@@ -202,8 +202,8 @@
               <div
                 class="w-7 h-7 rounded-full bg-blue-100 text-blue font-bold text-[11px] flex items-center justify-center flex-shrink-0"
               >
-                {{ (user.firstName?.[0] || user.username[0] || 'U').toUpperCase()
-                }}{{ (user.lastName?.[0] || '').toUpperCase() }}
+                {{ (user.firstName[0] || user.username[0] || 'U').toUpperCase()
+                }}{{ (user.lastName[0] || '').toUpperCase() }}
               </div>
               <span class="truncate font-semibold">{{ user.username }}</span>
             </div>
