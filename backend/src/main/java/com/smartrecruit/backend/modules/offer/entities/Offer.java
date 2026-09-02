@@ -1,8 +1,11 @@
 package com.smartrecruit.backend.modules.offer.entities;
 
 import com.smartrecruit.backend.modules.auth.entities.AppUser;
+import com.smartrecruit.backend.modules.offer.enums.OfferAiStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -72,6 +75,11 @@ public class Offer {
 
   @Column(name = "contract_type")
   private String contractType;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "offer_ai_status", nullable = false)
+  @Builder.Default
+  private OfferAiStatus offerAiStatus = OfferAiStatus.PENDING;
 
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "extracted_requirements", columnDefinition = "jsonb")
