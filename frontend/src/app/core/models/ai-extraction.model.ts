@@ -1,6 +1,6 @@
 import { ExtractedCandidateInfo } from './candidate.model';
 
-export type ExtractionStatus = 'PENDING' | 'SUCCESS' | 'FAILED';
+export type ExtractionStatus = 'PENDING' | 'STALLED' | 'SUCCESS' | 'FAILED';
 
 export interface ExtractedData {
   candidate_info?: ExtractedCandidateInfo | null;

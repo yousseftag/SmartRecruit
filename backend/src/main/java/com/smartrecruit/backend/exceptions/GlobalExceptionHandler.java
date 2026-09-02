@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
-
   private ResponseEntity<ApiErrorResponse> buildResponse(HttpStatus status, String message) {
     ApiErrorResponse body =
         new ApiErrorResponse(

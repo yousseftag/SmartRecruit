@@ -1,5 +1,6 @@
 package com.smartrecruit.backend.modules.offer.dtos;
 
+import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
 
@@ -10,4 +11,4 @@ public record OfferPublicResponse(
     Map<String, Object> categoryCriteria,
     Integer durationMonths,
     String contractType,
-    java.time.OffsetDateTime createdAt) {}
+    OffsetDateTime createdAt) {}

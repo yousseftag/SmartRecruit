@@ -6,7 +6,9 @@ spring:
     name: smartrecruit-backend
 
   config:
-    import: optional:file:../.env[.properties]
+    import:
+      - optional:file:.env[.properties]
+      - optional:file:../.env[.properties]
   
   # Database Configuration
   datasource:
@@ -58,6 +60,15 @@ spring:
     port: 5672
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASS:guest}
+    listener:
+      simple:
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-retries: 3
+          initial-interval: 2000ms
+          multiplier: 2.0
+          max-interval: 10000ms
 
 keycloak:
   realm: smartrecruit
@@ -79,3 +90,11 @@ springdoc:
     persist-authorization: true
     oauth:
       clientId: smartrecruit-frontend
+
+app:
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:8080}
+  cv-ingestion:
+    stall-threshold-minutes: ${CV_STALL_THRESHOLD_MINUTES:5}
+  ai-simulation:
+    enabled: ${AI_SIMULATION_ENABLED:true}

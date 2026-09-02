@@ -43,7 +43,6 @@ public class CvIngestionService {
   private final CvFileRepository cvFileRepository;
   private final FileStorageService fileStorageService;
   private final CvIngestionProducer cvIngestionProducer;
-  private final SimulationNlpService simulationNlpService;
 
   /** Public Apply: Direct candidate application with known form data. */
   @Transactional
@@ -88,8 +87,6 @@ public class CvIngestionService {
           request.file().getBytes(),
           originalFilename,
           request.file().getContentType());
-    } catch (DuplicateResourceException | ResourceNotFoundException | IllegalArgumentException e) {
-      throw e;
     } catch (Exception e) {
       log.error("Failed to process uploaded file", e);
       throw new RuntimeException("Failed to read file", e);
@@ -320,6 +317,7 @@ public class CvIngestionService {
 
     // 1. Reset scoring and match states
     application.setTotalScore(null);
+    application.setPassedMinScore(null);
     application.setCategoryScores(null);
     application.setExtractedMatching(null);
     application.setScoredAt(null);
@@ -336,14 +334,13 @@ public class CvIngestionService {
     return application;
   }
 
-  /** Helper to dispatch CV to RabbitMQ ingestion queue and local MVP simulation. */
+  /** Helper to dispatch CV to RabbitMQ ingestion queue for asynchronous processing. */
   private void triggerNlpProcessing(Application application, CvFile cvFile) {
     cvIngestionProducer.sendCvForProcessing(
         application.getId(),
         application.getOffer().getId(),
         cvFile.getId(),
         cvFile.getStorageKey());
-    simulationNlpService.simulateNlpProcessing(application, cvFile);
   }
 
   /** Helper: Calculates a SHA-256 hash of the file bytes to prevent duplicate storage. */

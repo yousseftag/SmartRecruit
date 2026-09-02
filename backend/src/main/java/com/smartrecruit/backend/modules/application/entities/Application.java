@@ -1,13 +1,32 @@
 package com.smartrecruit.backend.modules.application.entities;
 
 import com.smartrecruit.backend.modules.application.enums.ApplicationStatus;
+import com.smartrecruit.backend.modules.application.enums.ExtractionStatus;
 import com.smartrecruit.backend.modules.offer.entities.Offer;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -51,6 +70,9 @@ public class Application {
   @Column(name = "total_score", precision = 5, scale = 2)
   private BigDecimal totalScore;
 
+  @Column(name = "passed_min_score")
+  private Boolean passedMinScore;
+
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "category_scores", columnDefinition = "jsonb")
   private Map<String, Object> categoryScores;
@@ -78,12 +100,16 @@ public class Application {
     return offer != null ? offer.getMinScore() : null;
   }
 
-  public java.util.List<String> getOfferRequiredSkills() {
-    return offer != null ? offer.getRequiredSkills() : java.util.Collections.emptyList();
+  public List<String> getOfferRequiredSkills() {
+    return offer != null ? offer.getRequiredSkills() : Collections.emptyList();
   }
 
-  public com.smartrecruit.backend.modules.application.enums.ExtractionStatus getExtractionStatus() {
-    return cvFile != null ? cvFile.getExtractionStatus() : null;
+  public ExtractionStatus getExtractionStatus() {
+    if (cvFile == null) return null;
+    if (cvFile.getExtractionStatus() == ExtractionStatus.FAILED) return ExtractionStatus.FAILED;
+    if (cvFile.getExtractionStatus() == ExtractionStatus.STALLED) return ExtractionStatus.STALLED;
+    if (this.totalScore != null || this.scoredAt != null) return ExtractionStatus.SUCCESS;
+    return ExtractionStatus.PENDING;
   }
 
   public UUID getCvFileId() {
