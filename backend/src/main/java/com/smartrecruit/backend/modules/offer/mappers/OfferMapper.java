@@ -45,6 +45,7 @@ public class OfferMapper {
         offer.getTitle(),
         offer.getDescriptionMarkdown(),
         offer.getStatus(),
+        offer.getOfferAiStatus(),
         offer.getCategoryWeights(),
         offer.getCategoryCriteria(),
         offer.getMinScore(),
