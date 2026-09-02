@@ -53,10 +53,12 @@ export class CandidatesList implements OnInit, OnDestroy {
   readonly selectedPeriod = signal<DatePeriod>('ALL');
   readonly sortBy = signal<SortOption>('NEWEST');
 
+  private readonly PAGE_SIZE_KEY = 'smartrecruit_candidates_page_size';
+
   // Pagination Signals
   readonly currentPage = signal(1);
-  readonly pageSize = signal(10);
   readonly pageSizes = [10, 25, 50];
+  readonly pageSize = signal(this.getInitialPageSize());
 
   // Custom Dropdown Open States
   readonly isOfferDropdownOpen = signal(false);
@@ -310,9 +312,29 @@ export class CandidatesList implements OnInit, OnDestroy {
     }
   }
 
+  private getInitialPageSize(): number {
+    try {
+      const saved = localStorage.getItem(this.PAGE_SIZE_KEY);
+      if (saved) {
+        const parsed = parseInt(saved, 10);
+        if (this.pageSizes.includes(parsed)) {
+          return parsed;
+        }
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+    return 10;
+  }
+
   setPageSize(size: number) {
     this.pageSize.set(size);
     this.currentPage.set(1);
+    try {
+      localStorage.setItem(this.PAGE_SIZE_KEY, size.toString());
+    } catch {
+      // Ignore
+    }
   }
 
   fetchApplications(offerId?: string) {
@@ -339,7 +361,9 @@ export class CandidatesList implements OnInit, OnDestroy {
   private isExtractionPending(app: ApplicationSummaryResponse): boolean {
     return (
       app.extractionStatus === 'PENDING' ||
-      (app.totalScore === null && app.extractionStatus !== 'FAILED')
+      (app.totalScore === null &&
+        app.extractionStatus !== 'FAILED' &&
+        app.extractionStatus !== 'STALLED')
     );
   }
 
@@ -349,8 +373,8 @@ export class CandidatesList implements OnInit, OnDestroy {
     const hasPending = apps.some((app) => this.isExtractionPending(app));
     if (!hasPending) return;
 
-    const intervalMs = environment.pollingIntervalMs;
-    const maxPolls = environment.pollingMaxAttempts;
+    const intervalMs = environment.polling.intervalMs;
+    const maxPolls = environment.polling.maxAttempts;
     let pollCount = 0;
 
     this.pollingSub = interval(intervalMs)
@@ -419,14 +443,12 @@ export class CandidatesList implements OnInit, OnDestroy {
 
   getScoreColorClass(
     score: number | null | undefined,
-    minScore: number | null | undefined,
+    passedMinScore: boolean | null | undefined,
   ): string {
     if (score === null || score === undefined) return 'text-slate';
-    if (minScore !== null && minScore !== undefined) {
-      return score >= minScore ? 'text-green' : 'text-red';
+    if (passedMinScore !== null && passedMinScore !== undefined) {
+      return passedMinScore ? 'text-green' : 'text-red';
     }
-    if (score >= 75) return 'text-green';
-    if (score >= 50) return 'text-amber-700 dark:text-amber-400';
-    return 'text-red';
+    return score >= 70 ? 'text-green' : 'text-red';
   }
 }

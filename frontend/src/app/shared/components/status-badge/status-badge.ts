@@ -32,36 +32,35 @@ export class StatusBadge {
       case 'INTERVIEWING':
         return {
           label: 'Entretien',
-          classes:
-            'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-300 dark:border-amber-700/50',
-          dotClass: 'bg-amber-600 dark:bg-amber-400',
+          classes: 'bg-amber-bg text-amber-d border border-amber/20 font-semibold',
+          dotClass: 'bg-amber',
           pulsing: false,
         };
       case 'FOLLOW_UP':
         return {
           label: 'Suivi RH',
-          classes: 'bg-violet-50 text-violet-700 border-violet-200',
+          classes: 'bg-violet-50 text-violet-700 border border-violet-200',
           dotClass: 'bg-violet',
           pulsing: false,
         };
       case 'HIRED':
         return {
           label: 'Recruté',
-          classes: 'bg-green-bg text-green border-green/30 font-bold',
+          classes: 'bg-green-bg text-green border border-green/30 font-bold',
           dotClass: 'bg-green',
           pulsing: false,
         };
       case 'REJECTED':
         return {
           label: 'Refusé',
-          classes: 'bg-red-bg text-red-d border-red/20',
+          classes: 'bg-red-bg text-red border border-red/20',
           dotClass: 'bg-red',
           pulsing: false,
         };
       case 'ARCHIVED':
         return {
           label: 'Archivé',
-          classes: 'bg-bg text-muted border-line',
+          classes: 'bg-bg text-muted border border-line',
           dotClass: 'bg-faint',
           pulsing: false,
         };
@@ -70,21 +69,28 @@ export class StatusBadge {
       case 'PENDING':
         return {
           label: 'Analyse IA en cours...',
-          classes: 'bg-blue-50 text-blue border-blue/20 animate-pulse',
+          classes: 'bg-blue-100 text-blue border border-blue/20 animate-pulse',
           dotClass: 'bg-blue animate-ping',
           pulsing: true,
+        };
+      case 'STALLED':
+        return {
+          label: 'Analyse bloquée',
+          classes: 'bg-amber-bg text-amber-d border border-amber/20 font-semibold',
+          dotClass: 'bg-amber',
+          pulsing: false,
         };
       case 'SUCCESS':
         return {
           label: 'Analyse terminée',
-          classes: 'bg-green-bg text-green border-green/20',
+          classes: 'bg-green-bg text-green border border-green/20',
           dotClass: 'bg-green',
           pulsing: false,
         };
       case 'FAILED':
         return {
           label: 'Échec analyse IA',
-          classes: 'bg-red-bg text-red-d border-red/20',
+          classes: 'bg-red-bg text-red border border-red/20 font-semibold',
           dotClass: 'bg-red',
           pulsing: false,
         };

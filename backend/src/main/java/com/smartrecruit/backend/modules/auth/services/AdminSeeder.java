@@ -47,6 +47,17 @@ public class AdminSeeder {
         if (adminKC.getEmail() != null && !adminKC.getEmail().isBlank()) {
           email = adminKC.getEmail();
         }
+        try {
+          keycloakAdminService.assignRealmRole(keycloakSub, UserRole.HR_ADMIN.name());
+        } catch (Exception e) {
+          logger.debug("HR_ADMIN role already assigned or: {}", e.getMessage());
+        }
+        try {
+          keycloakAdminService.assignClientRole(keycloakSub, "account", "view-profile");
+          keycloakAdminService.assignClientRole(keycloakSub, "account", "manage-account");
+        } catch (Exception e) {
+          logger.debug("Account client roles already assigned or: {}", e.getMessage());
+        }
         logger.info("Found existing 'admin' user in Keycloak with sub: {}", keycloakSub);
       } else {
         logger.info(
@@ -54,17 +65,32 @@ public class AdminSeeder {
         keycloakSub =
             keycloakAdminService.createUser("admin", firstName, lastName, email, "admin", false);
         keycloakAdminService.assignRealmRole(keycloakSub, UserRole.HR_ADMIN.name());
+        try {
+          keycloakAdminService.assignClientRole(keycloakSub, "account", "view-profile");
+          keycloakAdminService.assignClientRole(keycloakSub, "account", "manage-account");
+        } catch (Exception e) {
+          logger.debug("Account client roles assignment: {}", e.getMessage());
+        }
         logger.info("Successfully created default 'admin' in Keycloak with sub: {}", keycloakSub);
       }
 
-      // 2. Ensure 'admin' exists in PostgreSQL with the matching keycloakSub
+      // 2. Ensure 'admin' exists in PostgreSQL with the matching keycloakSub and HR_ADMIN role
       Optional<AppUser> existingAdmin = userRepository.findByUsername("admin");
       if (existingAdmin.isPresent()) {
         AppUser user = existingAdmin.get();
+        boolean changed = false;
         if (!keycloakSub.equals(user.getKeycloakSub())) {
           user.setKeycloakSub(keycloakSub);
+          changed = true;
+        }
+        if (user.getRole() != UserRole.HR_ADMIN) {
+          user.setRole(UserRole.HR_ADMIN);
+          changed = true;
+        }
+        if (changed) {
           userRepository.save(user);
-          logger.info("Updated 'admin' PostgreSQL keycloakSub to: {}", keycloakSub);
+          logger.info(
+              "Updated 'admin' PostgreSQL record to sub: {} and role: HR_ADMIN", keycloakSub);
         } else {
           logger.info("Admin user already synced in PostgreSQL with sub: {}", keycloakSub);
         }

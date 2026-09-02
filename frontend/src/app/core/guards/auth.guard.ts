@@ -3,6 +3,7 @@ import { CanActivateFn, Router } from '@angular/router';
 import Keycloak from 'keycloak-js';
 import { AuthService } from '../auth/auth.service';
 import { KeycloakInitService } from '../auth/keycloak-init.service';
+import { UserRole } from '../models/user.model';
 
 export const authGuard: CanActivateFn = async (route, state) => {
   const keycloak = inject(Keycloak);
@@ -23,19 +24,22 @@ export const authGuard: CanActivateFn = async (route, state) => {
 
   authService.syncAuthState();
 
-  const requiredRoles = route.data?.['roles'] as string[];
+  const requiredRoles = route.data?.['roles'] as (UserRole | string)[];
 
   if (!requiredRoles || requiredRoles.length === 0) {
     return true;
   }
 
-  const userRoles = keycloak.realmAccess?.roles || [];
-
-  const hasRequiredRole = requiredRoles.some((role) => userRoles.includes(role));
-
-  if (hasRequiredRole) {
+  if (authService.hasAnyRole(requiredRoles)) {
     return true;
   }
+
+  console.warn(
+    `Access denied for route '${state.url}'. Required roles:`,
+    requiredRoles,
+    'Current user roles:',
+    authService.roles(),
+  );
 
   router.navigate(['/hr/dashboard']);
   return false;

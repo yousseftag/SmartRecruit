@@ -1,12 +1,28 @@
 package com.smartrecruit.backend.modules.offer.entities;
 
 import com.smartrecruit.backend.modules.auth.entities.AppUser;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.time.OffsetDateTime;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.type.SqlTypes;
 
 @Entity
@@ -25,6 +41,10 @@ public class Offer {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "created_by")
   private AppUser createdBy;
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "updated_by")
+  private AppUser updatedBy;
 
   @Column(name = "title", nullable = false)
   private String title;
@@ -59,11 +79,11 @@ public class Offer {
 
   @CreationTimestamp
   @Column(name = "created_at", nullable = false, updatable = false)
-  private java.time.OffsetDateTime createdAt;
+  private OffsetDateTime createdAt;
 
-  @org.hibernate.annotations.UpdateTimestamp
+  @UpdateTimestamp
   @Column(name = "updated_at", nullable = false)
-  private java.time.OffsetDateTime updatedAt;
+  private OffsetDateTime updatedAt;
 
   public String getLocalization() {
     if (categoryCriteria != null && categoryCriteria.get("localization") instanceof String s) {
@@ -79,11 +99,10 @@ public class Offer {
     return null;
   }
 
-  public java.util.List<String> getRequiredSkills() {
-    if (categoryCriteria != null
-        && categoryCriteria.get("skills") instanceof java.util.List<?> list) {
+  public List<String> getRequiredSkills() {
+    if (categoryCriteria != null && categoryCriteria.get("skills") instanceof List<?> list) {
       return list.stream().map(Object::toString).toList();
     }
-    return java.util.Collections.emptyList();
+    return Collections.emptyList();
   }
 }

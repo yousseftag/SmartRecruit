@@ -1,4 +1,12 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  signal,
+  computed,
+  HostListener,
+  ElementRef,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
@@ -7,6 +15,9 @@ import {
   LucidePencil,
   LucideChevronLeft,
   LucideChevronRight,
+  LucideChevronDown,
+  LucideCheck,
+  LucideFilter,
   LucideTrash2,
   LucideCircleCheck,
   LucideAlertTriangle,
@@ -36,6 +47,9 @@ import { ConfirmDeleteModalComponent } from './components/confirm-delete-modal/c
     LucideTrash2,
     LucideChevronLeft,
     LucideChevronRight,
+    LucideChevronDown,
+    LucideCheck,
+    LucideFilter,
     LucideCircleCheck,
     LucideAlertTriangle,
     LucideXCircle,
@@ -49,6 +63,7 @@ import { ConfirmDeleteModalComponent } from './components/confirm-delete-modal/c
 export class UserManagement implements OnInit {
   private userService = inject(UserService);
   private authService = inject(AuthService);
+  private elementRef = inject(ElementRef);
 
   allUsers = signal<UserResponse[]>([]);
   isLoading = signal<boolean>(false);
@@ -56,6 +71,8 @@ export class UserManagement implements OnInit {
 
   searchQuery = signal<string>('');
   selectedRole = signal<string>('ALL');
+  isRoleDropdownOpen = signal<boolean>(false);
+  isPageSizeDropdownOpen = signal<boolean>(false);
   pageSize = signal<number>(10);
   currentPage = signal<number>(1);
 
@@ -69,6 +86,27 @@ export class UserManagement implements OnInit {
   successMessage = signal<string>('');
   warningMessage = signal<string>('');
   errorToastMessage = signal<string>('');
+
+  selectedRoleLabel = computed(() => {
+    switch (this.selectedRole()) {
+      case 'HR_ADMIN':
+        return 'Admin RH';
+      case 'RECRUITER':
+        return 'Recruteur';
+      case 'VIEWER':
+        return 'Consultation';
+      default:
+        return 'Tous les rôles';
+    }
+  });
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    if (!this.elementRef.nativeElement.contains(event.target)) {
+      this.isRoleDropdownOpen.set(false);
+      this.isPageSizeDropdownOpen.set(false);
+    }
+  }
 
   showToast(message: string) {
     this.successMessage.set(message);
@@ -101,7 +139,7 @@ export class UserManagement implements OnInit {
       const searchTerms = query.split(' ').filter((term) => term.trim() !== '');
       users = users.filter((u) => {
         const searchableText =
-          `${u.username || ''} ${u.firstName || ''} ${u.lastName || ''}`.toLowerCase();
+          `${u.username || ''} ${u.firstName || ''} ${u.lastName || ''} ${u.email || ''}`.toLowerCase();
         return searchTerms.every((term) => searchableText.includes(term));
       });
     }
@@ -153,8 +191,37 @@ export class UserManagement implements OnInit {
     }
   }
 
+  onSearchModelChange(query: string) {
+    this.searchQuery.set(query);
+    this.currentPage.set(1);
+  }
+
   onSearchChange(event: any) {
     this.searchQuery.set(event.target.value);
+    this.currentPage.set(1);
+  }
+
+  toggleRoleDropdown(event: Event) {
+    event.stopPropagation();
+    this.isPageSizeDropdownOpen.set(false);
+    this.isRoleDropdownOpen.update((open) => !open);
+  }
+
+  selectRole(role: string) {
+    this.selectedRole.set(role);
+    this.isRoleDropdownOpen.set(false);
+    this.currentPage.set(1);
+  }
+
+  togglePageSizeDropdown(event: Event) {
+    event.stopPropagation();
+    this.isRoleDropdownOpen.set(false);
+    this.isPageSizeDropdownOpen.update((open) => !open);
+  }
+
+  selectPageSize(size: number) {
+    this.pageSize.set(size);
+    this.isPageSizeDropdownOpen.set(false);
     this.currentPage.set(1);
   }
 

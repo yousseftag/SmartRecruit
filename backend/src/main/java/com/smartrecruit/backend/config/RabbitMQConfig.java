@@ -18,6 +18,9 @@ public class RabbitMQConfig {
   public static final String OFFER_QUEUE = "offer.processing.queue";
   public static final String OFFER_ROUTING_KEY = "offer.routing.key";
 
+  public static final String CV_SYNC_QUEUE = "cv.sync.queue";
+  public static final String CV_SYNC_ROUTING_KEY = "cv.sync.routing.key";
+
   public static final String EXCHANGE = "ai.exchange";
 
   @Bean
@@ -28,6 +31,11 @@ public class RabbitMQConfig {
   @Bean
   public Queue offerQueue() {
     return new Queue(OFFER_QUEUE, true); // durable
+  }
+
+  @Bean
+  public Queue cvSyncQueue() {
+    return new Queue(CV_SYNC_QUEUE, true); // durable
   }
 
   @Bean
@@ -43,6 +51,11 @@ public class RabbitMQConfig {
   @Bean
   public Binding offerBinding(Queue offerQueue, DirectExchange exchange) {
     return BindingBuilder.bind(offerQueue).to(exchange).with(OFFER_ROUTING_KEY);
+  }
+
+  @Bean
+  public Binding cvSyncBinding(Queue cvSyncQueue, DirectExchange exchange) {
+    return BindingBuilder.bind(cvSyncQueue).to(exchange).with(CV_SYNC_ROUTING_KEY);
   }
 
   @Bean

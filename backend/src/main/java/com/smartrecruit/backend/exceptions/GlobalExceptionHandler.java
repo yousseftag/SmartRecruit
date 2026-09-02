@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
-
   private ResponseEntity<ApiErrorResponse> buildResponse(HttpStatus status, String message) {
     ApiErrorResponse body =
         new ApiErrorResponse(
@@ -88,11 +87,25 @@ public class GlobalExceptionHandler {
     return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
   }
 
-  // --- 502 Bad Gateway ---
+  // --- 502 Bad Gateway / Keycloak Integration Mapping ---
   @ExceptionHandler(KeycloakIntegrationException.class)
   public ResponseEntity<ApiErrorResponse> handleKeycloakIntegrationException(
       KeycloakIntegrationException ex) {
     log.error("Keycloak Integration Error: {}", ex.getMessage(), ex);
+    String msg = ex.getMessage();
+    if (msg != null && msg.contains("error-username-invalid-character")) {
+      return buildResponse(
+          HttpStatus.BAD_REQUEST,
+          "Le nom d'utilisateur contient des caractères non autorisés ou des espaces.");
+    }
+    if (msg != null && msg.contains("User exists with same username")) {
+      return buildResponse(
+          HttpStatus.CONFLICT, "Un utilisateur avec ce nom d'utilisateur existe déjà.");
+    }
+    if (msg != null && msg.contains("User exists with same email")) {
+      return buildResponse(
+          HttpStatus.CONFLICT, "Un utilisateur avec cette adresse email existe déjà.");
+    }
     return buildResponse(HttpStatus.BAD_GATEWAY, ex.getMessage());
   }
 

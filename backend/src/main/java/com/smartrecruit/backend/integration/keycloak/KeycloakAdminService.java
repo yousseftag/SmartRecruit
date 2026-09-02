@@ -4,10 +4,13 @@ import jakarta.ws.rs.core.Response;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import org.keycloak.OAuth2Constants;
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.KeycloakBuilder;
 import org.keycloak.admin.client.resource.RealmResource;
+import org.keycloak.admin.client.resource.UserResource;
 import org.keycloak.admin.client.resource.UsersResource;
+import org.keycloak.representations.idm.ClientRepresentation;
 import org.keycloak.representations.idm.CredentialRepresentation;
 import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
@@ -23,19 +26,17 @@ public class KeycloakAdminService {
   public KeycloakAdminService(
       @Value("${keycloak.admin.server-url}") String serverUrl,
       @Value("${keycloak.admin.client-id}") String clientId,
-      @Value("${keycloak.admin.username}") String username,
-      @Value("${keycloak.admin.password}") String password,
-      @Value("${keycloak.admin.admin-realm:master}") String adminRealm,
+      @Value("${keycloak.admin.client-secret}") String clientSecret,
       @Value("${keycloak.realm}") String realm) {
 
     this.realm = realm;
     this.keycloak =
         KeycloakBuilder.builder()
             .serverUrl(serverUrl)
-            .realm(adminRealm) // authenticate via 'master' realm where admin-cli lives
+            .realm(realm)
+            .grantType(OAuth2Constants.CLIENT_CREDENTIALS)
             .clientId(clientId)
-            .username(username)
-            .password(password)
+            .clientSecret(clientSecret)
             .build();
   }
 
@@ -45,12 +46,19 @@ public class KeycloakAdminService {
 
   public void updateUser(String userId, String firstName, String lastName, String email) {
     try {
-      UserRepresentation user = new UserRepresentation();
-      user.setFirstName(firstName);
-      user.setLastName(lastName);
-      user.setEmail(email);
+      UserResource userResource = getRealmResource().users().get(userId);
+      UserRepresentation user = userResource.toRepresentation();
+      if (firstName != null) {
+        user.setFirstName(firstName);
+      }
+      if (lastName != null) {
+        user.setLastName(lastName);
+      }
+      if (email != null && !email.isBlank()) {
+        user.setEmail(email);
+      }
 
-      getRealmResource().users().get(userId).update(user);
+      userResource.update(user);
     } catch (Exception e) {
       throw new KeycloakIntegrationException(
           "Failed to update user in Keycloak: " + e.getMessage(), e);
@@ -101,8 +109,16 @@ public class KeycloakAdminService {
       Response response = getRealmResource().users().create(user);
 
       if (response.getStatus() != 201) {
+        String errorDetail = "";
+        try {
+          errorDetail = response.readEntity(String.class);
+        } catch (Exception ignored) {
+        }
         throw new KeycloakIntegrationException(
-            "Failed to create user in Keycloak, status: " + response.getStatus(), null);
+            "Failed to create user in Keycloak, status: "
+                + response.getStatus()
+                + (errorDetail.isBlank() ? "" : " - " + errorDetail),
+            null);
       }
 
       String path = response.getLocation().getPath();
@@ -141,6 +157,26 @@ public class KeycloakAdminService {
     } catch (Exception e) {
       throw new KeycloakIntegrationException(
           "Failed to remove role in Keycloak: " + e.getMessage(), e);
+    }
+  }
+
+  public void assignClientRole(String userId, String clientName, String roleName) {
+    try {
+      List<ClientRepresentation> clients = getRealmResource().clients().findByClientId(clientName);
+      if (clients != null && !clients.isEmpty()) {
+        String clientUuid = clients.get(0).getId();
+        RoleRepresentation role =
+            getRealmResource().clients().get(clientUuid).roles().get(roleName).toRepresentation();
+        getRealmResource()
+            .users()
+            .get(userId)
+            .roles()
+            .clientLevel(clientUuid)
+            .add(Collections.singletonList(role));
+      }
+    } catch (Exception e) {
+      throw new KeycloakIntegrationException(
+          "Failed to assign client role in Keycloak: " + e.getMessage(), e);
     }
   }
 

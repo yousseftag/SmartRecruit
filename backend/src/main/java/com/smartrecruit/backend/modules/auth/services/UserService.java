@@ -64,6 +64,12 @@ public class UserService {
       updated = true;
     }
 
+    Optional<UserRole> jwtRoleOpt = extractRoleFromJwt(jwt);
+    if (jwtRoleOpt.isPresent() && user.getRole() != jwtRoleOpt.get()) {
+      user.setRole(jwtRoleOpt.get());
+      updated = true;
+    }
+
     if (updated) {
       log.info("Self-healing: Updated PostgreSQL user {} from Keycloak token claims", sub);
       user = userRepository.save(user);
@@ -76,24 +82,31 @@ public class UserService {
     String sub = jwt.getSubject();
     AppUser user = userRepository.findByKeycloakSub(sub).orElseGet(() -> provisionOrLinkUser(jwt));
 
-    if (!user.getEmail().equalsIgnoreCase(request.email())) {
-      if (userRepository.existsByEmailAndIdNot(request.email(), user.getId())) {
-        throw new UserAlreadyExistsException("Email is already in use by another account.");
-      }
-    }
-
     String previousFirstName = user.getFirstName();
     String previousLastName = user.getLastName();
     String previousEmail = user.getEmail();
 
+    String newFirstName = (request.firstName() != null) ? request.firstName() : previousFirstName;
+    String newLastName = (request.lastName() != null) ? request.lastName() : previousLastName;
+    String newEmail =
+        (request.email() != null && !request.email().isBlank()) ? request.email() : previousEmail;
+
+    if (request.email() != null
+        && !request.email().isBlank()
+        && !user.getEmail().equalsIgnoreCase(request.email())) {
+      if (userRepository.existsByEmailAndIdNot(newEmail, user.getId())) {
+        throw new UserAlreadyExistsException("Email is already in use by another account.");
+      }
+    }
+
     // 1. Update Keycloak external identity provider
-    keycloakAdminService.updateUser(sub, request.firstName(), request.lastName(), request.email());
+    keycloakAdminService.updateUser(sub, newFirstName, newLastName, newEmail);
 
     // 2. Persist to PostgreSQL database with Compensating Rollback if DB write fails
     try {
-      user.setFirstName(request.firstName());
-      user.setLastName(request.lastName());
-      user.setEmail(request.email());
+      user.setFirstName(newFirstName);
+      user.setLastName(newLastName);
+      user.setEmail(newEmail);
       AppUser savedUser = userRepository.save(user);
       return UserMapper.toResponse(savedUser);
     } catch (Exception dbException) {
@@ -122,7 +135,14 @@ public class UserService {
 
   @Transactional
   public UserResponse createUser(CreateUserRequest request) {
-    if (userRepository.existsByUsername(request.getUsername())) {
+    String username = request.getUsername() != null ? request.getUsername().trim() : "";
+    if (username.isBlank()) {
+      throw new IllegalArgumentException("Le nom d'utilisateur est requis.");
+    }
+    if (username.contains(" ")) {
+      throw new IllegalArgumentException("Le nom d'utilisateur ne doit pas contenir d'espaces.");
+    }
+    if (userRepository.existsByUsername(username)) {
       throw new UserAlreadyExistsException("Username is already taken.");
     }
     if (userRepository.existsByEmail(request.getEmail())) {
@@ -130,35 +150,56 @@ public class UserService {
     }
 
     String password = generateRandomPassword();
-    String firstName = request.getFirstName() != null ? request.getFirstName() : "";
-    String lastName = request.getLastName() != null ? request.getLastName() : "";
+    String firstName = request.getFirstName() != null ? request.getFirstName().trim() : "";
+    String lastName = request.getLastName() != null ? request.getLastName().trim() : "";
 
     String sub =
         keycloakAdminService.createUser(
-            request.getUsername(), firstName, lastName, request.getEmail(), password);
-    keycloakAdminService.assignRealmRole(sub, request.getRole());
+            username, firstName, lastName, request.getEmail().trim(), password);
 
-    AppUser user =
-        AppUser.builder()
-            .keycloakSub(sub)
-            .username(request.getUsername())
-            .email(request.getEmail())
-            .firstName(firstName)
-            .lastName(lastName)
-            .role(UserRole.valueOf(request.getRole()))
-            .build();
-
-    AppUser savedUser = userRepository.save(user);
-
-    String warning = null;
     try {
-      emailService.sendWelcomeEmail(request.getEmail(), request.getUsername(), password);
-    } catch (Exception e) {
-      log.warn("Welcome email failed for user {}: {}", request.getUsername(), e.getMessage());
-      warning = "L'utilisateur a été créé, mais l'envoi de l'email a échoué.";
-    }
+      keycloakAdminService.assignRealmRole(sub, request.getRole());
+      try {
+        keycloakAdminService.assignClientRole(sub, "account", "view-profile");
+        keycloakAdminService.assignClientRole(sub, "account", "manage-account");
+      } catch (Exception e) {
+        log.debug("Account client roles assignment for new user: {}", e.getMessage());
+      }
 
-    return UserMapper.toResponse(savedUser, warning);
+      AppUser user =
+          AppUser.builder()
+              .keycloakSub(sub)
+              .username(username)
+              .email(request.getEmail().trim())
+              .firstName(firstName)
+              .lastName(lastName)
+              .role(UserRole.valueOf(request.getRole()))
+              .build();
+
+      AppUser savedUser = userRepository.save(user);
+
+      String warning = null;
+      try {
+        emailService.sendWelcomeEmail(request.getEmail().trim(), username, password);
+      } catch (Exception e) {
+        log.warn("Welcome email failed for user {}: {}", username, e.getMessage());
+        warning = "L'utilisateur a été créé, mais l'envoi de l'email a échoué.";
+      }
+
+      return UserMapper.toResponse(savedUser, warning);
+    } catch (Exception ex) {
+      log.error(
+          "Failed to complete user creation for sub {}, initiating compensating deletion in Keycloak",
+          sub,
+          ex);
+      try {
+        keycloakAdminService.deleteUser(sub);
+      } catch (Exception cleanupEx) {
+        log.error(
+            "Failed to delete Keycloak user {} during rollback: {}", sub, cleanupEx.getMessage());
+      }
+      throw ex;
+    }
   }
 
   @Transactional
@@ -231,6 +272,8 @@ public class UserService {
       existing = userRepository.findByEmail(email);
     }
 
+    UserRole role = extractRoleFromJwt(jwt).orElse(UserRole.VIEWER);
+
     if (existing.isPresent()) {
       AppUser user = existing.get();
       log.info(
@@ -243,11 +286,11 @@ public class UserService {
         user.setLastName(lastName);
       }
       user.setEmail(email);
+      extractRoleFromJwt(jwt).ifPresent(user::setRole);
       return userRepository.save(user);
     }
 
     // 2. Otherwise JIT provision new user in PostgreSQL
-    UserRole role = extractRoleFromJwt(jwt);
     log.info(
         "JIT Provisioning new user in PostgreSQL: username={}, sub={}, role={}",
         username,
@@ -267,20 +310,26 @@ public class UserService {
   }
 
   @SuppressWarnings("unchecked")
-  private UserRole extractRoleFromJwt(Jwt jwt) {
+  private Optional<UserRole> extractRoleFromJwt(Jwt jwt) {
+    if (jwt == null) {
+      return Optional.empty();
+    }
     Map<String, Object> realmAccess = jwt.getClaim("realm_access");
     if (realmAccess != null && !realmAccess.isEmpty()) {
       Collection<String> roles = (Collection<String>) realmAccess.get("roles");
       if (roles != null) {
         if (roles.contains("HR_ADMIN")) {
-          return UserRole.HR_ADMIN;
+          return Optional.of(UserRole.HR_ADMIN);
         }
         if (roles.contains("RECRUITER")) {
-          return UserRole.RECRUITER;
+          return Optional.of(UserRole.RECRUITER);
+        }
+        if (roles.contains("VIEWER")) {
+          return Optional.of(UserRole.VIEWER);
         }
       }
     }
-    return UserRole.VIEWER;
+    return Optional.empty();
   }
 
   private String generateRandomPassword() {

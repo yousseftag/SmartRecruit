@@ -18,10 +18,10 @@ export interface ApplicationSummaryResponse {
   candidate?: CandidateResponse | null;
   offerId: string;
   offerTitle: string;
-  offerMinScore: number | null;
   status: WorkflowStatus | string;
   extractionStatus?: ExtractionStatus | null;
   totalScore: number | null;
+  passedMinScore?: boolean | null;
   appliedAt: string;
 }
 
@@ -37,6 +37,7 @@ export interface ApplicationResponse {
   cvFileId?: string | null;
   cvOriginalFilename?: string | null;
   totalScore: number | null;
+  passedMinScore?: boolean | null;
   categoryScores?: CategoryScores | null;
   extractedMatching?: ExtractedMatching | null;
   cvExtractedData?: ExtractedData | null;
@@ -68,7 +69,8 @@ export interface UpdateApplicationStatusRequest {
   status: WorkflowStatus | string;
 }
 
-export type TaskStatus = 'PENDING' | 'UPLOADING' | 'PARSING' | 'SUCCESS' | 'FAILED' | 'DUPLICATE';
+export type TaskStatus =
+  'PENDING' | 'UPLOADING' | 'PARSING' | 'STALLED' | 'SUCCESS' | 'FAILED' | 'DUPLICATE';
 
 export interface UploadTask {
   file?: File;
@@ -82,4 +84,5 @@ export interface UploadTask {
   errorMessage?: string;
   summaryMessage?: string;
   subErrors?: string[];
+  savedAt?: number;
 }

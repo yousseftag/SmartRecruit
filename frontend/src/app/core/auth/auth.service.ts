@@ -31,12 +31,23 @@ export class AuthService {
     this.isAuthenticated.set(isAuth);
 
     if (isAuth) {
-      const realmRoles = this.keycloak.realmAccess?.roles || [];
+      const realmRoles =
+        this.keycloak.realmAccess?.roles ||
+        (this.keycloak.tokenParsed as any)?.realm_access?.roles ||
+        [];
       this.roles.set(realmRoles);
       this.currentUser.set(this.getUserProfile());
 
       // Proactively sync/self-heal PostgreSQL user state with verified JWT claims on login
       this.userService.getMyProfile().subscribe({
+        next: (profile) => {
+          if (profile && profile.role) {
+            const roleStr = profile.role as string;
+            if (!this.roles().includes(roleStr)) {
+              this.roles.update((r) => [...r, roleStr]);
+            }
+          }
+        },
         error: (err) => console.debug('Background profile sync:', err?.message || err),
       });
     } else {
@@ -47,11 +58,14 @@ export class AuthService {
 
   hasRole(role: UserRole | string): boolean {
     const target = typeof role === 'string' ? role : (role as string);
-    if (this.roles().length > 0) {
-      return this.roles().includes(target);
+    if (this.roles().length > 0 && this.roles().includes(target)) {
+      return true;
     }
     if (!this.keycloak.authenticated) return false;
-    const currentRoles = this.keycloak.realmAccess?.roles || [];
+    const currentRoles =
+      this.keycloak.realmAccess?.roles ||
+      (this.keycloak.tokenParsed as any)?.realm_access?.roles ||
+      [];
     return currentRoles.includes(target);
   }
 
@@ -68,6 +82,7 @@ export class AuthService {
       const token = this.keycloak.tokenParsed as any;
       const firstName = token.given_name || '';
       const lastName = token.family_name || '';
+      const realmRoles = this.keycloak.realmAccess?.roles || token.realm_access?.roles || [];
       return {
         sub: token.sub || '',
         firstName,
@@ -75,7 +90,7 @@ export class AuthService {
         fullName: `${firstName} ${lastName}`.trim(),
         email: token.email || '',
         preferredUsername: token.preferred_username || '',
-        roles: this.keycloak.realmAccess?.roles || [],
+        roles: realmRoles,
       };
     }
     return null;

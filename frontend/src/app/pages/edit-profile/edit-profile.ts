@@ -31,8 +31,8 @@ export class EditProfile implements OnInit {
 
   constructor() {
     this.profileForm = this.fb.group({
-      firstName: ['', Validators.required],
-      lastName: ['', Validators.required],
+      firstName: [''],
+      lastName: [''],
       email: ['', [Validators.required, Validators.email]],
     });
   }

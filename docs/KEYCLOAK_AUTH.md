@@ -38,10 +38,12 @@ SmartRecruit uses a **hybrid identity and persistence architecture**: Keycloak o
 │ 2. IDENTITY LAYER   │         │ 3. RESOURCE SERVER LAYER (Spring Boot :8080) │
 │  Keycloak (:8081)   │         │   • SecurityFilterChain (Stateless JWT)      │
 │  Realm: smartrecruit│◀────────│   • JwtAuthConverter  (role extraction)      │
-│  Client: smartrecruit│ Admin  │   • KeycloakAdminService (Admin REST API)    │
-│          -frontend  │   API   │   • UserService (CRUD + JIT Provisioning)    │
-│  RSA-256 Signing    │         │   • SecurityUtils  (request identity)        │
-│  admin-cli in master│         │   • AdminSeeder  (startup bootstrap)         │
+│  Clients:           │ Admin   │   • KeycloakAdminService (Admin REST API)    │
+│   • smartrecruit-   │   API   │   • UserService (CRUD + JIT Provisioning)    │
+│     frontend        │ (Client │   • SecurityUtils  (request identity)        │
+│   • smartrecruit-   │  Creds) │   • AdminSeeder  (startup bootstrap)         │
+│     backend         │         │                                              │
+│  RSA-256 Signing    │         │                                              │
 └─────────────────────┘         └──────────────────────────────────────────────┘
                                                    │ JDBC
                                                    ▼
@@ -70,7 +72,7 @@ SmartRecruit uses a **hybrid identity and persistence architecture**: Keycloak o
 | Layer | Host | Key Files | Responsibility |
 |:------|:-----|:----------|:---------------|
 | **Client** | Browser (`:4200`) | [`auth.guard.ts`](../frontend/src/app/core/guards/auth.guard.ts)<br>[`keycloak-bearer.interceptor.ts`](../frontend/src/app/core/auth/keycloak-bearer.interceptor.ts)<br>[`keycloak-init.service.ts`](../frontend/src/app/core/auth/keycloak-init.service.ts)<br>[`auth.service.ts`](../frontend/src/app/core/auth/auth.service.ts) | Lazy Keycloak bootstrap, token attachment & auto-refresh, reactive auth state signals |
-| **Identity** | Docker (`:8081`) | Realm: `smartrecruit`<br>Client: `smartrecruit-frontend`<br>Admin client: `admin-cli` (in `master` realm) | Credentials, RSA-256 token signing, SSO sessions, Admin REST API |
+| **Identity** | Docker (`:8081`) | Realm: `smartrecruit`<br>Client: `smartrecruit-frontend` (public SPA)<br>Admin client: `smartrecruit-backend` (service account in `smartrecruit`) | Credentials, RSA-256 token signing, SSO sessions, Admin REST API |
 | **Backend** | Spring Boot (`:8080`) | [`SecurityConfig.java`](../backend/src/main/java/com/smartrecruit/backend/config/SecurityConfig.java)<br>[`JwtAuthConverter.java`](../backend/src/main/java/com/smartrecruit/backend/security/JwtAuthConverter.java)<br>[`SecurityUtils.java`](../backend/src/main/java/com/smartrecruit/backend/security/SecurityUtils.java)<br>[`KeycloakAdminService.java`](../backend/src/main/java/com/smartrecruit/backend/integration/keycloak/KeycloakAdminService.java)<br>[`UserService.java`](../backend/src/main/java/com/smartrecruit/backend/modules/auth/services/UserService.java)<br>[`AdminSeeder.java`](../backend/src/main/java/com/smartrecruit/backend/modules/auth/services/AdminSeeder.java) | Stateless JWT verification, role extraction, dual-write sync, JIT provisioning, admin bootstrap |
 | **Persistence** | PostgreSQL (`:5432`) | Entity: [`AppUser.java`](../backend/src/main/java/com/smartrecruit/backend/modules/auth/entities/AppUser.java) | Local user metadata, FK target for domain entities |
 
@@ -86,14 +88,12 @@ keycloak:
   url: ${KEYCLOAK_URL:http://localhost:8081}/realms/${keycloak.realm}
   admin:
     server-url: ${KEYCLOAK_SERVER_URL:http://localhost:8081}
-    admin-realm: master          # IMPORTANT: admin-cli lives in the 'master' realm
-    client-id: admin-cli
-    username: ${KEYCLOAK_ADMIN:admin}
-    password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
+    client-id: ${KEYCLOAK_BACKEND_CLIENT_ID:smartrecruit-backend}
+    client-secret: ${KEYCLOAK_BACKEND_SECRET:smartrecruit-backend-secret}
 ```
 
 > [!IMPORTANT]
-> `admin-realm: master` is critical. The `admin-cli` client with `admin`/`admin` credentials exists **only** in the `master` realm. Pointing it at `smartrecruit` causes `401 Unauthorized` on every admin API call and silently breaks the seeder.
+> **Strict Realm Isolation**: Spring Boot operates strictly within the `smartrecruit` realm using the `smartrecruit-backend` service account client (Client Credentials grant). No human credentials or `master` realm access are used.
 
 ---
 
@@ -116,7 +116,7 @@ flowchart TD
 ```
 
 > [!NOTE]
-> The `admin` user is **no longer seeded via `realm-export.json`**. It is created entirely by the backend on startup, making the system self-sufficient against any fresh Keycloak deployment.
+> The `admin` user is pre-configured in `realm-export.json` with the `HR_ADMIN` realm role and `account` client roles (`view-profile`, `manage-account`). In addition, `AdminSeeder.java` dynamically checks and enforces these role mappings on every startup, ensuring complete self-healing across both fresh and existing Keycloak deployments.
 
 ---
 
@@ -189,8 +189,8 @@ Optional<AppUser> user = securityUtils.getCurrentUser();
 
 [`KeycloakAdminService`](../backend/src/main/java/com/smartrecruit/backend/integration/keycloak/KeycloakAdminService.java) wraps the Keycloak Admin REST API using the official `keycloak-admin-client`.
 
-> [!WARNING]
-> `KeycloakAdminService` authenticates against the **`master` realm** (`admin-realm: master` in config) using `admin-cli`. This is a Keycloak built-in; attempting to use it from the `smartrecruit` realm will return `401 Unauthorized`.
+> [!NOTE]
+> `KeycloakAdminService` authenticates directly against the **`smartrecruit` realm** using the `smartrecruit-backend` service account client with the least-privilege `realm-management` roles: `manage-users`, `view-users`, `query-users`, `view-realm`, `query-clients`, and `view-clients`. It never touches or accesses the `master` realm. All profile updates use a **fetch-before-update** pattern to preserve existing user representation attributes.
 
 ---
 
@@ -228,11 +228,11 @@ On every `GET /api/v1/users/me`, [`UserService.getMyProfile()`](../backend/src/m
 All admin user management operations go through `POST/PUT/DELETE /api/v1/users/**` and require `HR_ADMIN` role.
 
 ### 8.1 Create User
-1. Validate `username` and `email` are unique in PostgreSQL.
+1. Validate `username` (pattern format without spaces) and `email` are unique in PostgreSQL.
 2. Generate a secure 12-character random password.
 3. Create user in Keycloak with **temporary** password (`temporary: true`).
-4. Assign the requested realm role in Keycloak.
-5. Insert `app_user` record in PostgreSQL.
+4. Assign the requested realm role (`HR_ADMIN`, `RECRUITER`, `VIEWER`) and `account` client roles (`view-profile`, `manage-account`).
+5. Insert `app_user` record in PostgreSQL. If database save or role assignment fails, a **compensating deletion** in Keycloak is triggered to maintain atomicity.
 6. Send welcome email with temporary credentials.
 
 ### 8.2 Delete User
