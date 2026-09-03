@@ -2,22 +2,41 @@ import { Component, EventEmitter, Output, inject } from '@angular/core';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { LucideX } from '@lucide/angular';
 import { CreateUserRequest } from '../../../../../core/models/user.model';
+import {
+  CustomSelectComponent,
+  SelectOption,
+} from '../../../../../shared/components/custom-select/custom-select';
 
 @Component({
   selector: 'app-create-user-modal',
   standalone: true,
-  imports: [ReactiveFormsModule, LucideX],
+  imports: [ReactiveFormsModule, LucideX, CustomSelectComponent],
   template: `
     <div class="modal-backdrop">
-      <div class="modal modal-content" style="padding: 24px;">
+      <div
+        class="modal modal-content"
+        style="
+          padding: 36px 40px;
+          max-width: 680px;
+          width: 92%;
+          min-height: 520px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        "
+      >
         <button class="modal-x" type="button" (click)="onClose()">
           <svg lucideX></svg>
         </button>
 
-        <h2 class="h2" style="margin-bottom: 24px;">Ajouter un utilisateur</h2>
+        <h2 class="h2" style="margin-bottom: 28px;">Ajouter un utilisateur</h2>
 
-        <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
-          <div style="display: grid; gap: 16px;">
+        <form
+          [formGroup]="userForm"
+          (ngSubmit)="onSubmit()"
+          style="display: flex; flex-direction: column; flex: 1; justify-content: space-between;"
+        >
+          <div style="display: grid; gap: 20px;">
             <div class="form-group">
               <label>Nom d'utilisateur <span class="text-red">*</span></label>
               <input type="text" formControlName="username" class="input" placeholder="ex: jdoe" />
@@ -71,12 +90,11 @@ import { CreateUserRequest } from '../../../../../core/models/user.model';
 
             <div class="form-group">
               <label>Rôle <span class="text-red">*</span></label>
-              <select formControlName="role" class="input">
-                <option value="" disabled selected>Sélectionner le rôle</option>
-                <option value="VIEWER">Consultation</option>
-                <option value="RECRUITER">Recruteur</option>
-                <option value="HR_ADMIN">Admin RH</option>
-              </select>
+              <app-custom-select
+                formControlName="role"
+                [options]="roleOptions"
+                placeholder="Sélectionner le rôle"
+              ></app-custom-select>
               @if (userForm.get('role')?.invalid && userForm.get('role')?.touched) {
                 <div style="color: #ef4444; font-size: 0.875rem; margin-top: 4px;">
                   <span>Veuillez sélectionner un rôle.</span>
@@ -85,7 +103,7 @@ import { CreateUserRequest } from '../../../../../core/models/user.model';
             </div>
           </div>
 
-          <div class="modal-actions" style="margin-top: 32px;">
+          <div class="modal-actions" style="margin-top: 32px; padding-top: 16px;">
             <button type="button" class="btn btn-secondary" (click)="onClose()">Annuler</button>
             <button type="submit" class="btn btn-primary">Créer l'utilisateur</button>
           </div>
@@ -99,6 +117,12 @@ export class CreateUserModalComponent {
   @Output() save = new EventEmitter<CreateUserRequest>();
 
   private fb = inject(FormBuilder);
+
+  readonly roleOptions: SelectOption[] = [
+    { value: 'VIEWER', label: 'Consultation' },
+    { value: 'RECRUITER', label: 'Recruteur' },
+    { value: 'HR_ADMIN', label: 'Admin RH' },
+  ];
 
   userForm: FormGroup = this.fb.group({
     username: [
