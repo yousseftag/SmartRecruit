@@ -113,4 +113,13 @@ public class Offer {
     }
     return Collections.emptyList();
   }
+
+  @SuppressWarnings("unchecked")
+  public Map<String, Integer> getSkillWeights() {
+    if (categoryCriteria != null
+        && categoryCriteria.get("skill_weights") instanceof Map<?, ?> map) {
+      return (Map<String, Integer>) map;
+    }
+    return Collections.emptyMap();
+  }
 }

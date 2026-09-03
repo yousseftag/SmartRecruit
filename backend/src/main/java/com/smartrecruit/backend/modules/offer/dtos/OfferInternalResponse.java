@@ -1,6 +1,5 @@
 package com.smartrecruit.backend.modules.offer.dtos;
 
-import com.smartrecruit.backend.modules.auth.dtos.AppUserResponse;
 import com.smartrecruit.backend.modules.offer.enums.OfferAiStatus;
 import java.time.OffsetDateTime;
 import java.util.Map;
@@ -8,7 +7,8 @@ import java.util.UUID;
 
 public record OfferInternalResponse(
     UUID id,
-    AppUserResponse createdBy,
+    UUID createdBy,
+    UUID updatedBy,
     String title,
     String descriptionMarkdown,
     String status,
