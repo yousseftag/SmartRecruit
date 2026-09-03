@@ -94,6 +94,10 @@ springdoc:
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:8080}
+  security:
+    password:
+      length: ${APP_SECURITY_PASSWORD_LENGTH:12}
+      chars: ${APP_SECURITY_PASSWORD_CHARS:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789}
   cv-ingestion:
     stall-threshold-minutes: ${CV_STALL_THRESHOLD_MINUTES:5}
   ai-simulation:
