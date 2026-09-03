@@ -15,6 +15,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "app_user")
@@ -48,7 +49,7 @@ public class AppUser {
   @Column(nullable = false)
   private UserRole role;
 
-  @org.hibernate.annotations.CreationTimestamp
+  @CreationTimestamp
   @Column(updatable = false)
   private Instant createdAt;
 }

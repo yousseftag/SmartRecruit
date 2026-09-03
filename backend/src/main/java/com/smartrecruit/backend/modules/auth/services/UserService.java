@@ -12,6 +12,7 @@ import com.smartrecruit.backend.modules.auth.exceptions.UserAlreadyExistsExcepti
 import com.smartrecruit.backend.modules.auth.exceptions.UserNotFoundException;
 import com.smartrecruit.backend.modules.auth.mappers.UserMapper;
 import com.smartrecruit.backend.modules.auth.repositories.AppUserRepository;
+import com.smartrecruit.backend.security.SecurityUtils;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -30,51 +31,23 @@ public class UserService {
   private final AppUserRepository userRepository;
   private final KeycloakAdminService keycloakAdminService;
   private final EmailService emailService;
+  private final SecurityUtils securityUtils;
 
   public UserService(
       AppUserRepository userRepository,
       KeycloakAdminService keycloakAdminService,
-      EmailService emailService) {
+      EmailService emailService,
+      SecurityUtils securityUtils) {
     this.userRepository = userRepository;
     this.keycloakAdminService = keycloakAdminService;
     this.emailService = emailService;
+    this.securityUtils = securityUtils;
   }
 
-  @Transactional
+  @Transactional(readOnly = true)
   public UserResponse getMyProfile(Jwt jwt) {
     String sub = jwt.getSubject();
     AppUser user = userRepository.findByKeycloakSub(sub).orElseGet(() -> provisionOrLinkUser(jwt));
-
-    // Self-healing: auto-sync local database with any direct updates from Keycloak token claims
-    boolean updated = false;
-    String jwtEmail = jwt.getClaimAsString("email");
-    String jwtFirstName = jwt.getClaimAsString("given_name");
-    String jwtLastName = jwt.getClaimAsString("family_name");
-
-    if (jwtEmail != null && !jwtEmail.equalsIgnoreCase(user.getEmail())) {
-      user.setEmail(jwtEmail);
-      updated = true;
-    }
-    if (jwtFirstName != null && !jwtFirstName.equals(user.getFirstName())) {
-      user.setFirstName(jwtFirstName);
-      updated = true;
-    }
-    if (jwtLastName != null && !jwtLastName.equals(user.getLastName())) {
-      user.setLastName(jwtLastName);
-      updated = true;
-    }
-
-    Optional<UserRole> jwtRoleOpt = extractRoleFromJwt(jwt);
-    if (jwtRoleOpt.isPresent() && user.getRole() != jwtRoleOpt.get()) {
-      user.setRole(jwtRoleOpt.get());
-      updated = true;
-    }
-
-    if (updated) {
-      log.info("Self-healing: Updated PostgreSQL user {} from Keycloak token claims", sub);
-      user = userRepository.save(user);
-    }
-
     return UserMapper.toResponse(user);
   }
 
@@ -137,10 +110,10 @@ public class UserService {
   public UserResponse createUser(CreateUserRequest request) {
     String username = request.getUsername() != null ? request.getUsername().trim() : "";
     if (username.isBlank()) {
-      throw new IllegalArgumentException("Le nom d'utilisateur est requis.");
+      throw new IllegalArgumentException("Username is required.");
     }
     if (username.contains(" ")) {
-      throw new IllegalArgumentException("Le nom d'utilisateur ne doit pas contenir d'espaces.");
+      throw new IllegalArgumentException("Username must not contain spaces.");
     }
     if (userRepository.existsByUsername(username)) {
       throw new UserAlreadyExistsException("Username is already taken.");
@@ -149,12 +122,12 @@ public class UserService {
       throw new UserAlreadyExistsException("Email is already in use.");
     }
 
-    String password = generateRandomPassword();
+    String password = securityUtils.generateRandomPassword();
     String firstName = request.getFirstName() != null ? request.getFirstName().trim() : "";
     String lastName = request.getLastName() != null ? request.getLastName().trim() : "";
 
     String sub =
-        keycloakAdminService.createUser(
+        keycloakAdminService.createTemporaryUser(
             username, firstName, lastName, request.getEmail().trim(), password);
 
     try {
@@ -183,7 +156,7 @@ public class UserService {
         emailService.sendWelcomeEmail(request.getEmail().trim(), username, password);
       } catch (Exception e) {
         log.warn("Welcome email failed for user {}: {}", username, e.getMessage());
-        warning = "L'utilisateur a été créé, mais l'envoi de l'email a échoué.";
+        warning = "User created successfully, but sending welcome email failed.";
       }
 
       return UserMapper.toResponse(savedUser, warning);
@@ -330,16 +303,5 @@ public class UserService {
       }
     }
     return Optional.empty();
-  }
-
-  private String generateRandomPassword() {
-    int length = 12;
-    String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    StringBuilder pwd = new StringBuilder();
-    java.security.SecureRandom random = new java.security.SecureRandom();
-    for (int i = 0; i < length; i++) {
-      pwd.append(chars.charAt(random.nextInt(chars.length())));
-    }
-    return pwd.toString();
   }
 }
