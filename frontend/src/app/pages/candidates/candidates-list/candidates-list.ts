@@ -20,6 +20,11 @@ import {
 } from '../../../core/models';
 import { AuthService } from '../../../core/auth/auth.service';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
+import {
+  WORKFLOW_STATUSES,
+  WORKFLOW_STATUS_LIST,
+  WorkflowStatusDefinition,
+} from '../../../core/constants/status.constants';
 import { Subscription, interval, switchMap, takeWhile } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
@@ -42,6 +47,12 @@ export class CandidatesList implements OnInit, OnDestroy {
 
   readonly canImport = computed(() =>
     this.authService.hasAnyRole([UserRole.HR_ADMIN, UserRole.RECRUITER]),
+  );
+
+  readonly canManageStatus = computed(
+    () =>
+      this.authService.hasAnyRole([UserRole.HR_ADMIN, UserRole.RECRUITER]) ||
+      this.authService.isAdmin(),
   );
 
   readonly offers = signal<OfferTitleResponse[]>([]);
@@ -75,14 +86,16 @@ export class CandidatesList implements OnInit, OnDestroy {
     color: string;
   }[] = [
     { label: 'Tous les statuts', value: 'ALL', color: 'bg-slate-400' },
-    { label: 'Nouveau', value: 'NEW', color: 'bg-blue' },
-    { label: 'Présélectionné', value: 'SHORTLISTED', color: 'bg-green' },
-    { label: 'En entretien', value: 'INTERVIEWING', color: 'bg-purple-500' },
-    { label: 'Relancé / Suivi', value: 'FOLLOW_UP', color: 'bg-amber-500' },
-    { label: 'Embauché', value: 'HIRED', color: 'bg-emerald-600' },
-    { label: 'Refusé', value: 'REJECTED', color: 'bg-red' },
-    { label: 'Archivé', value: 'ARCHIVED', color: 'bg-slate-500' },
+    ...WORKFLOW_STATUS_LIST.map((s) => ({
+      label: s.label,
+      value: s.value,
+      color: s.filterColor,
+    })),
   ];
+
+  readonly workflowStatusList = WORKFLOW_STATUS_LIST;
+  readonly activeStatusDropdownAppId = signal<string | null>(null);
+  readonly isUpdatingStatus = signal(false);
 
   // Period options
   readonly periodOptions: { label: string; value: DatePeriod }[] = [
@@ -246,6 +259,40 @@ export class CandidatesList implements OnInit, OnDestroy {
     this.isStatusDropdownOpen.set(false);
     this.isPeriodDropdownOpen.set(false);
     this.isSortDropdownOpen.set(false);
+    this.activeStatusDropdownAppId.set(null);
+  }
+
+  toggleCandidateStatusDropdown(appId: string, event: Event) {
+    event.stopPropagation();
+    if (this.activeStatusDropdownAppId() === appId) {
+      this.activeStatusDropdownAppId.set(null);
+    } else {
+      this.closeAllDropdowns();
+      this.activeStatusDropdownAppId.set(appId);
+    }
+  }
+
+  updateCandidateStatus(appId: string, newStatus: string, event: Event) {
+    event.stopPropagation();
+    this.activeStatusDropdownAppId.set(null);
+
+    const currentApp = this.applications().find((a) => a.id === appId);
+    if (!currentApp || currentApp.status === newStatus || this.isUpdatingStatus()) return;
+
+    this.isUpdatingStatus.set(true);
+
+    this.applicationService.updateApplicationStatus(appId, newStatus).subscribe({
+      next: () => {
+        this.applications.update((list) =>
+          list.map((app) => (app.id === appId ? { ...app, status: newStatus } : app)),
+        );
+        this.isUpdatingStatus.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to update status', err);
+        this.isUpdatingStatus.set(false);
+      },
+    });
   }
 
   toggleOfferDropdown(event: Event) {

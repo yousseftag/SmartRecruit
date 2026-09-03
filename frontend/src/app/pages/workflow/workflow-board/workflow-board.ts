@@ -25,6 +25,11 @@ import { ApplicationSummaryResponse, WorkflowStatus } from '../../../core/models
 import { OfferTitleResponse } from '../../../core/models/offer.model';
 import { SendEmailModal } from '../../../shared/components/send-email-modal/send-email-modal';
 import { CustomSelect, SelectOption } from '../../../shared/components/custom-select/custom-select';
+import {
+  WORKFLOW_STATUSES,
+  WORKFLOW_STATUS_LIST,
+  WorkflowStatusDefinition,
+} from '../../../core/constants/status.constants';
 
 export interface WorkflowColumn {
   key: WorkflowStatus;
@@ -70,72 +75,16 @@ export class WorkflowBoard implements OnInit {
   readonly LucideBriefcase = LucideBriefcase;
   readonly LucideRotateCw = LucideRotateCw;
 
-  // 7 Workflow Columns Configuration
-  readonly columns: WorkflowColumn[] = [
-    {
-      key: 'NEW',
-      label: 'À traiter',
-      description: 'Nouvelles candidatures',
-      badgeClass: 'bg-slate-100 text-slate-700',
-      borderClass: 'border-slate-200',
-      dotColor: 'bg-slate-400',
-      promptEmail: false,
-    },
-    {
-      key: 'SHORTLISTED',
-      label: 'Présélectionné',
-      description: 'Profils retenus pour examen',
-      badgeClass: 'bg-blue-50 text-blue-700 border-blue-200',
-      borderClass: 'border-blue-200',
-      dotColor: 'bg-blue-500',
-      promptEmail: false,
-    },
-    {
-      key: 'INTERVIEWING',
-      label: 'Convoqué',
-      description: 'Entretiens programmés ou en cours',
-      badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
-      borderClass: 'border-amber-200',
-      dotColor: 'bg-amber-500',
-      promptEmail: true,
-    },
-    {
-      key: 'FOLLOW_UP',
-      label: 'Relance RH',
-      description: 'En attente de réponse / relance',
-      badgeClass: 'bg-purple-50 text-purple-700 border-purple-200',
-      borderClass: 'border-purple-200',
-      dotColor: 'bg-purple-500',
-      promptEmail: true,
-    },
-    {
-      key: 'HIRED',
-      label: 'Recruté',
-      description: 'Offre acceptée et validée',
-      badgeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      borderClass: 'border-emerald-200',
-      dotColor: 'bg-emerald-500',
-      promptEmail: false,
-    },
-    {
-      key: 'REJECTED',
-      label: 'Refusé',
-      description: 'Candidature non retenue',
-      badgeClass: 'bg-rose-50 text-rose-700 border-rose-200',
-      borderClass: 'border-rose-200',
-      dotColor: 'bg-rose-500',
-      promptEmail: true,
-    },
-    {
-      key: 'ARCHIVED',
-      label: 'Archivé',
-      description: 'Dossiers clôturés',
-      badgeClass: 'bg-gray-100 text-gray-600 border-gray-200',
-      borderClass: 'border-gray-200',
-      dotColor: 'bg-gray-400',
-      promptEmail: false,
-    },
-  ];
+  // 7 Workflow Columns Configuration (Single Source of Truth)
+  readonly columns: WorkflowColumn[] = WORKFLOW_STATUS_LIST.map((s) => ({
+    key: s.value,
+    label: s.label,
+    description: s.description,
+    badgeClass: s.badgeClass,
+    borderClass: s.borderClass,
+    dotColor: s.dotClass,
+    promptEmail: s.promptEmail,
+  }));
 
   // State Signals
   applications = signal<ApplicationSummaryResponse[]>([]);

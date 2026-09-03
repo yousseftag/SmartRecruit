@@ -61,13 +61,13 @@
           <button
             type="button"
             (click)="selectOption(opt.value)"
-            [class.bg-blue-50]="selectedValue() === opt.value"
+            [class.bg-blue-50]="effectiveValue() === opt.value"
             class="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center justify-between gap-2 transition-colors group text-xs text-ink font-medium"
           >
             <div class="flex items-center gap-2 min-w-0">
               <span
-                [class.text-blue-600]="selectedValue() === opt.value"
-                [class.font-bold]="selectedValue() === opt.value"
+                [class.text-blue-600]="effectiveValue() === opt.value"
+                [class.font-bold]="effectiveValue() === opt.value"
                 class="truncate group-hover:text-blue-600"
               >
                 {{ opt.label }}
@@ -83,7 +83,7 @@
               }
             </div>
 
-            @if (selectedValue() === opt.value) {
+            @if (effectiveValue() === opt.value) {
               <svg [lucideIcon]="LucideCheck" class="w-3.5 h-3.5 text-blue-600 shrink-0"></svg>
             }
           </button>
