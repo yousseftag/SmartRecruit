@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import {
@@ -38,9 +38,10 @@ import { DashboardStats, PriorityOffer, Activity } from '../../core/models/dashb
   ],
   templateUrl: './dashboard.html',
 })
-export class Dashboard implements OnInit {
+export class Dashboard implements OnInit, OnDestroy {
   private dashboardService = inject(DashboardService);
   private cdr = inject(ChangeDetectorRef);
+  private themeObserver?: MutationObserver;
 
   kpis: DashboardStats | null = null;
   topOffers: PriorityOffer[] = [];
@@ -63,6 +64,7 @@ export class Dashboard implements OnInit {
           usePointStyle: true,
           boxWidth: 8,
           font: { family: "'Inter', sans-serif" },
+          color: '#64748b',
         },
       },
     },
@@ -71,10 +73,11 @@ export class Dashboard implements OnInit {
         beginAtZero: true,
         grid: { color: '#f1f5f9' },
         border: { dash: [4, 4] },
-        ticks: { precision: 0 },
+        ticks: { precision: 0, color: '#64748b' },
       },
       x: {
         grid: { display: false },
+        ticks: { color: '#64748b' },
       },
     },
   };
@@ -92,10 +95,49 @@ export class Dashboard implements OnInit {
   };
 
   ngOnInit() {
+    this.updateChartTheme();
+    this.initThemeObserver();
     this.loadStats();
     this.loadTopOffers();
     this.loadRecentActivities();
     this.loadChartData();
+  }
+
+  ngOnDestroy() {
+    this.themeObserver?.disconnect();
+  }
+
+  private initThemeObserver() {
+    if (typeof MutationObserver !== 'undefined') {
+      this.themeObserver = new MutationObserver(() => {
+        this.updateChartTheme();
+      });
+      this.themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['class'],
+      });
+    }
+  }
+
+  private updateChartTheme() {
+    const isDark = document.documentElement.classList.contains('dark');
+    const tickColor = isDark ? '#94a3b8' : '#64748b';
+    const gridColor = isDark ? '#334155' : '#f1f5f9';
+
+    if (this.barChartOptions?.scales) {
+      if (this.barChartOptions.scales['y']) {
+        this.barChartOptions.scales['y'].grid = { color: gridColor };
+        this.barChartOptions.scales['y'].ticks = { precision: 0, color: tickColor };
+      }
+      if (this.barChartOptions.scales['x']) {
+        this.barChartOptions.scales['x'].ticks = { color: tickColor };
+      }
+    }
+    if (this.barChartOptions?.plugins?.legend?.labels) {
+      this.barChartOptions.plugins.legend.labels.color = tickColor;
+    }
+    this.barChartOptions = { ...this.barChartOptions };
+    this.cdr.detectChanges();
   }
 
   private loadStats() {

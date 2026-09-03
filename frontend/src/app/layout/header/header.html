@@ -50,6 +50,8 @@
               <svg lucideKey></svg> Changer le mot de passe
             </a>
 
+            <div class="dropdown-divider"></div>
+
             <div (click)="toggleDarkMode($event)" class="dropdown-item toggle-item">
               <div class="toggle-label"><svg lucideMoon></svg> Mode nuit</div>
 
@@ -60,8 +62,6 @@
             </div>
 
             <div class="dropdown-divider"></div>
-
-            <a class="dropdown-item"> <svg lucideCircleHelp></svg> Centre d'aide </a>
 
             <div class="dropdown-footer">
               <a (click)="logout()" class="dropdown-btn"> <svg lucideLogOut></svg> Déconnexion </a>
