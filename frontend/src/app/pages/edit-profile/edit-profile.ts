@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UserService } from '../../core/services/user.service';
 import { AuthService } from '../../core/auth/auth.service';
-import { UserRole } from '../../core/models/user.model';
 import { EMPTY } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 
@@ -21,7 +20,6 @@ export class EditProfile implements OnInit {
   @Output() closeModal = new EventEmitter<boolean>();
 
   readonly profileForm: FormGroup;
-  readonly isLoading = signal(false);
   readonly isSaving = signal(false);
   readonly successMessage = signal('');
   readonly errorMessage = signal('');
@@ -38,45 +36,28 @@ export class EditProfile implements OnInit {
   }
 
   ngOnInit() {
-    this.loadProfile();
+    this.initProfile();
   }
 
-  loadProfile() {
-    this.isLoading.set(true);
-    this.errorMessage.set('');
-    this.userService
-      .getMyProfile()
-      .pipe(
-        catchError((err) => {
-          console.error('Failed to load user profile from /api/v1/users/me:', err);
-          this.errorMessage.set(err.error?.message || 'Erreur lors du chargement du profil.');
-          return EMPTY;
-        }),
-        finalize(() => {
-          this.isLoading.set(false);
-        }),
-      )
-      .subscribe((data) => {
-        this.username.set(data.username);
+  initProfile() {
+    const user = this.authService.currentUser();
+    if (user) {
+      this.username.set(user.preferredUsername || '');
 
-        switch (data.role) {
-          case UserRole.HR_ADMIN:
-            this.role.set('Admin RH');
-            break;
-          case UserRole.RECRUITER:
-            this.role.set('Recruteur');
-            break;
-          default:
-            this.role.set('Consultation');
-            break;
-        }
+      if (this.authService.isAdmin()) {
+        this.role.set('Admin RH');
+      } else if (this.authService.isRecruiter()) {
+        this.role.set('Recruteur');
+      } else {
+        this.role.set('Consultation');
+      }
 
-        this.profileForm.patchValue({
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-        });
+      this.profileForm.patchValue({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
       });
+    }
   }
 
   onSubmit() {

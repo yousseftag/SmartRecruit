@@ -3,14 +3,12 @@ import Keycloak from 'keycloak-js';
 import { Observable, from, of, Subject } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { UserProfile, UserRole } from '../models/user.model';
-import { UserService } from '../services/user.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private keycloak = inject(Keycloak);
-  private userService = inject(UserService);
 
   readonly isAuthenticated = signal<boolean>(false);
   readonly roles = signal<string[]>([]);
@@ -23,6 +21,7 @@ export class AuthService {
   readonly profileUpdated = new Subject<void>();
 
   constructor() {
+    this.keycloak.onAuthRefreshSuccess = () => this.syncAuthState();
     this.syncAuthState();
   }
 
@@ -37,19 +36,6 @@ export class AuthService {
         [];
       this.roles.set(realmRoles);
       this.currentUser.set(this.getUserProfile());
-
-      // Proactively sync/self-heal PostgreSQL user state with verified JWT claims on login
-      this.userService.getMyProfile().subscribe({
-        next: (profile) => {
-          if (profile && profile.role) {
-            const roleStr = profile.role as string;
-            if (!this.roles().includes(roleStr)) {
-              this.roles.update((r) => [...r, roleStr]);
-            }
-          }
-        },
-        error: (err) => console.debug('Background profile sync:', err?.message || err),
-      });
     } else {
       this.roles.set([]);
       this.currentUser.set(null);
