@@ -11,8 +11,8 @@ public record ApplicationSummaryResponse(
     CandidateResponse candidate,
     UUID offerId,
     String offerTitle,
-    Integer offerMinScore,
     ApplicationStatus status,
     ExtractionStatus extractionStatus,
     BigDecimal totalScore,
+    Boolean passedMinScore,
     OffsetDateTime appliedAt) {}

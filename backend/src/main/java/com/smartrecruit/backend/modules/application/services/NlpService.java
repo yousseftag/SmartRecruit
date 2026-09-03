@@ -10,6 +10,7 @@ import com.smartrecruit.backend.modules.application.entities.CvFile;
 import com.smartrecruit.backend.modules.application.repositories.ApplicationRepository;
 import com.smartrecruit.backend.modules.application.repositories.CandidateRepository;
 import com.smartrecruit.backend.modules.application.repositories.CvFileRepository;
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +47,19 @@ public class NlpService {
     try {
       TypeReference<Map<String, Object>> mapType = new TypeReference<>() {};
       // Update Application
-      application.setTotalScore(requestDto.getTotalScore());
+      BigDecimal totalScore = requestDto.getTotalScore();
+      application.setTotalScore(totalScore);
+      if (totalScore != null
+          && application.getOffer() != null
+          && application.getOffer().getMinScore() != null) {
+        boolean passed =
+            totalScore.compareTo(BigDecimal.valueOf(application.getOffer().getMinScore())) >= 0;
+        application.setPassedMinScore(passed);
+      } else if (totalScore != null) {
+        application.setPassedMinScore(true);
+      } else {
+        application.setPassedMinScore(null);
+      }
       application.setCategoryScores(
           objectMapper.convertValue(requestDto.getCategoryScores(), mapType));
       application.setExtractedMatching(

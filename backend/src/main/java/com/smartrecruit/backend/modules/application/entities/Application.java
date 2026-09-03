@@ -70,6 +70,9 @@ public class Application {
   @Column(name = "total_score", precision = 5, scale = 2)
   private BigDecimal totalScore;
 
+  @Column(name = "passed_min_score")
+  private Boolean passedMinScore;
+
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "category_scores", columnDefinition = "jsonb")
   private Map<String, Object> categoryScores;

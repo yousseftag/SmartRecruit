@@ -166,10 +166,17 @@ export class CandidateProfile implements OnInit, OnDestroy {
     return this.application()?.extractionStatus === 'FAILED';
   });
 
+  readonly isExtractionStalled = computed(() => {
+    return this.application()?.extractionStatus === 'STALLED';
+  });
+
   readonly totalScore = computed(() => this.application()?.totalScore ?? null);
   readonly minScore = computed(() => this.application()?.offerMinScore ?? null);
+  readonly passedMinScore = computed(() => this.application()?.passedMinScore ?? null);
 
   readonly isScoreAdmissible = computed(() => {
+    const passed = this.passedMinScore();
+    if (passed !== null && passed !== undefined) return passed;
     const score = this.totalScore();
     const min = this.minScore();
     if (score === null) return false;

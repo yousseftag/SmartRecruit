@@ -953,10 +953,22 @@
             <!-- When In-Progress -->
             @if (isExtracting()) {
               <span
-                class="text-xs font-bold px-3 py-1 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 flex items-center gap-1.5 animate-pulse"
+                class="text-xs font-bold px-3 py-1 rounded-full bg-blue-100 text-blue border border-blue/20 flex items-center gap-1.5"
               >
-                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                <span
+                  class="animate-spin h-2.5 w-2.5 border border-blue border-t-transparent rounded-full"
+                ></span>
                 <span>EN COURS D'ANALYSE</span>
+              </span>
+            }
+
+            <!-- When Stalled -->
+            @if (isExtractionStalled() && !isExtracting()) {
+              <span
+                class="text-xs font-bold px-3 py-1 rounded-full bg-amber-bg text-amber-d border border-amber/20 flex items-center gap-1.5"
+              >
+                <span class="w-1.5 h-1.5 rounded-full bg-amber"></span>
+                <span>ANALYSE BLOQUÉE (>5 MIN)</span>
               </span>
             }
 
@@ -971,7 +983,12 @@
             }
 
             <!-- When Not Calculated -->
-            @if (!hasExtractionSuccess() && !isExtracting() && !isExtractionFailed()) {
+            @if (
+              !hasExtractionSuccess() &&
+              !isExtracting() &&
+              !isExtractionFailed() &&
+              !isExtractionStalled()
+            ) {
               <span class="text-xs text-slate font-medium"> Score non calculé </span>
             }
           </div>

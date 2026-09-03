@@ -512,6 +512,7 @@ export class CandidateImport implements OnInit {
             break;
 
           case 'BACKEND_STALLED':
+          case 'TIMEOUT':
             this.stopPolling(applicationId);
             this.updateTaskStatus(
               applicationId,
@@ -530,17 +531,6 @@ export class CandidateImport implements OnInit {
               75,
               "L'analyse IA prend plus de temps que prévu. Veuillez patienter…",
             );
-            break;
-
-          case 'TIMEOUT':
-            this.stopPolling(applicationId);
-            this.updateTaskStatus(
-              applicationId,
-              'FAILED',
-              0,
-              "Délai d'attente d'extraction dépassé. Veuillez relancer l'analyse.",
-            );
-            this.checkAllDone();
             break;
 
           case 'ERROR':
@@ -566,7 +556,7 @@ export class CandidateImport implements OnInit {
   }
 
   relaunchStalled(task: UploadTask) {
-    if (!task.applicationId || this.isProcessing()) return;
+    if (!task.applicationId || task.status === 'PARSING' || task.status === 'UPLOADING') return;
     const appId = task.applicationId;
     this.updateTaskStatus(appId, 'PARSING', 75, undefined);
     this.applicationService.reExtractCv(appId).subscribe({
