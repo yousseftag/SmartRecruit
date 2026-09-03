@@ -24,6 +24,7 @@ spring:
     baseline-on-migrate: true
     out-of-order: true
     clean-disabled: true
+    ignore-migration-patterns: "*:missing"
   
   # JPA Configuration
   jpa:

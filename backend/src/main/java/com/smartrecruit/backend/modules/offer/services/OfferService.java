@@ -1,6 +1,7 @@
 package com.smartrecruit.backend.modules.offer.services;
 
 import com.smartrecruit.backend.exceptions.ResourceNotFoundException;
+import com.smartrecruit.backend.integration.messaging.OfferIngestionProducer;
 import com.smartrecruit.backend.modules.auth.entities.AppUser;
 import com.smartrecruit.backend.modules.auth.repositories.AppUserRepository;
 import com.smartrecruit.backend.modules.offer.dtos.CreateOfferRequest;
@@ -25,6 +26,7 @@ public class OfferService {
 
   private final OfferRepository offerRepository;
   private final AppUserRepository appUserRepository;
+  private final OfferIngestionProducer offerIngestionProducer;
 
   /** Retrieves all job offers ordered by creation date descending for internal HR view. */
   @Transactional(readOnly = true)
@@ -63,7 +65,9 @@ public class OfferService {
             .build();
 
     log.info("Creating new offer '{}' in DRAFT state", offer.getTitle());
-    return offerRepository.save(offer);
+    Offer saved = offerRepository.save(offer);
+    offerIngestionProducer.sendOfferForProcessing(saved);
+    return saved;
   }
 
   /** Updates an existing offer. Allowed only if the offer is in DRAFT status. */
@@ -85,8 +89,30 @@ public class OfferService {
     offer.setContractType(request.contractType());
     offer.setUpdatedBy(resolveUser(jwt));
 
+    // Reset AI extraction state and re-dispatch for AI processing
+    offer.setOfferAiStatus(OfferAiStatus.PENDING);
+    offer.setExtractedRequirements(null);
+
     log.info("Updated offer '{}' (id: {})", offer.getTitle(), id);
-    return offerRepository.save(offer);
+    Offer saved = offerRepository.save(offer);
+    offerIngestionProducer.sendOfferForProcessing(saved);
+    return saved;
+  }
+
+  /** Persists asynchronous AI extraction results and updates AI processing status. */
+  public void syncExtractedRequirements(
+      UUID offerId, OfferAiStatus aiStatus, Map<String, Object> extractedRequirements) {
+    Offer offer = getOfferById(offerId);
+    offer.setOfferAiStatus(aiStatus);
+    if (extractedRequirements != null) {
+      offer.setExtractedRequirements(extractedRequirements);
+    }
+    offerRepository.save(offer);
+    log.info(
+        "Persisted AI extraction sync for Offer {}: Status={}, Requirements={}",
+        offerId,
+        aiStatus,
+        extractedRequirements != null ? "present" : "null");
   }
 
   private AppUser resolveUser(Jwt jwt) {

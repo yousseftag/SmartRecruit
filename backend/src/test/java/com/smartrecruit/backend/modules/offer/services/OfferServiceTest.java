@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.smartrecruit.backend.exceptions.ResourceNotFoundException;
+import com.smartrecruit.backend.integration.messaging.OfferIngestionProducer;
 import com.smartrecruit.backend.modules.auth.entities.AppUser;
 import com.smartrecruit.backend.modules.auth.entities.UserRole;
 import com.smartrecruit.backend.modules.auth.repositories.AppUserRepository;
@@ -33,6 +34,7 @@ class OfferServiceTest {
 
   @Mock private OfferRepository offerRepository;
   @Mock private AppUserRepository appUserRepository;
+  @Mock private OfferIngestionProducer offerIngestionProducer;
   @Mock private Jwt jwt;
 
   @InjectMocks private OfferService offerService;
@@ -95,6 +97,7 @@ class OfferServiceTest {
     assertEquals(mockUser, created.getUpdatedBy());
     assertEquals(75, created.getMinScore());
     verify(offerRepository).save(any(Offer.class));
+    verify(offerIngestionProducer).sendOfferForProcessing(any(Offer.class));
   }
 
   @Test
@@ -110,6 +113,7 @@ class OfferServiceTest {
     assertNull(created.getCreatedBy());
     assertNull(created.getUpdatedBy());
     verify(offerRepository).save(any(Offer.class));
+    verify(offerIngestionProducer).sendOfferForProcessing(any(Offer.class));
   }
 
   // --- GET OFFERS TESTS ---
@@ -169,7 +173,9 @@ class OfferServiceTest {
     assertNotNull(updated);
     assertEquals("Senior Backend Engineer", updated.getTitle());
     assertEquals(mockUser, updated.getUpdatedBy());
+    assertEquals(OfferAiStatus.PENDING, updated.getOfferAiStatus());
     verify(offerRepository).save(existingOffer);
+    verify(offerIngestionProducer).sendOfferForProcessing(existingOffer);
   }
 
   @Test
@@ -194,5 +200,36 @@ class OfferServiceTest {
 
     assertThrows(
         IllegalStateException.class, () -> offerService.updateOffer(offerId, validRequest, jwt));
+  }
+
+  // --- SYNC EXTRACTED REQUIREMENTS TESTS ---
+
+  @Test
+  void testSyncExtractedRequirements_WhenSuccess_ShouldUpdateStatusAndRequirements() {
+    Offer offer = Offer.builder().id(offerId).offerAiStatus(OfferAiStatus.PENDING).build();
+    when(offerRepository.findById(offerId)).thenReturn(Optional.of(offer));
+    when(offerRepository.save(any(Offer.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    Map<String, Object> requirements = Map.of("missing_from_criteria", List.of("Docker"));
+    offerService.syncExtractedRequirements(offerId, OfferAiStatus.SUCCESS, requirements);
+
+    assertEquals(OfferAiStatus.SUCCESS, offer.getOfferAiStatus());
+    assertEquals(requirements, offer.getExtractedRequirements());
+    verify(offerRepository).save(offer);
+  }
+
+  @Test
+  void testSyncExtractedRequirements_WhenFailed_ShouldUpdateStatus() {
+    Offer offer = Offer.builder().id(offerId).offerAiStatus(OfferAiStatus.PENDING).build();
+    when(offerRepository.findById(offerId)).thenReturn(Optional.of(offer));
+    when(offerRepository.save(any(Offer.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    offerService.syncExtractedRequirements(offerId, OfferAiStatus.FAILED, null);
+
+    assertEquals(OfferAiStatus.FAILED, offer.getOfferAiStatus());
+    assertNull(offer.getExtractedRequirements());
+    verify(offerRepository).save(offer);
   }
 }
