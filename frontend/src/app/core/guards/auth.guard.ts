@@ -1,12 +1,15 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import Keycloak from 'keycloak-js';
+import { AuthService } from '../auth/auth.service';
 import { KeycloakInitService } from '../auth/keycloak-init.service';
+import { UserRole } from '../models/user.model';
 
 export const authGuard: CanActivateFn = async (route, state) => {
   const keycloak = inject(Keycloak);
   const router = inject(Router);
   const keycloakInit = inject(KeycloakInitService);
+  const authService = inject(AuthService);
 
   // Do not initialize Keycloak during application bootstrap. Doing so with
   // check-sso can leave public pages permanently blank while an iframe waits.
@@ -19,17 +22,15 @@ export const authGuard: CanActivateFn = async (route, state) => {
     return false;
   }
 
-  const requiredRoles = route.data?.['roles'] as string[];
+  authService.syncAuthState();
+
+  const requiredRoles = route.data?.['roles'] as (UserRole | string)[];
 
   if (!requiredRoles || requiredRoles.length === 0) {
     return true;
   }
 
-  const userRoles = keycloak.realmAccess?.roles || [];
-
-  const hasRequiredRole = requiredRoles.some((role) => userRoles.includes(role));
-
-  if (hasRequiredRole) {
+  if (authService.hasAnyRole(requiredRoles)) {
     return true;
   }
 

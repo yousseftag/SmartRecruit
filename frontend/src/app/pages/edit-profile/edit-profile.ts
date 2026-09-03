@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, ChangeDetectorRef, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, inject, signal, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UserService } from '../../core/services/user.service';
@@ -16,100 +16,80 @@ export class EditProfile implements OnInit {
   private fb = inject(FormBuilder);
   private userService = inject(UserService);
   private authService = inject(AuthService);
-  private cdr = inject(ChangeDetectorRef);
 
   @Output() closeModal = new EventEmitter<boolean>();
 
-  profileForm: FormGroup;
-  isLoading = false;
-  isSaving = false;
-  successMessage = '';
-  errorMessage = '';
+  readonly profileForm: FormGroup;
+  readonly isSaving = signal(false);
+  readonly successMessage = signal('');
+  readonly errorMessage = signal('');
 
-  username = '';
-  role = '';
+  readonly username = signal('');
+  readonly role = signal('');
 
   constructor() {
     this.profileForm = this.fb.group({
-      firstName: ['', Validators.required],
-      lastName: ['', Validators.required],
+      firstName: [''],
+      lastName: [''],
       email: ['', [Validators.required, Validators.email]],
     });
   }
 
   ngOnInit() {
-    this.loadProfile();
+    this.initProfile();
   }
 
-  loadProfile() {
-    this.isLoading = true;
-    this.userService
-      .getMyProfile()
-      .pipe(
-        catchError((err) => {
-          this.errorMessage = 'Erreur lors du chargement du profil.';
-          return EMPTY;
-        }),
-        finalize(() => {
-          this.isLoading = false;
-          this.cdr.detectChanges();
-        }),
-      )
-      .subscribe((data) => {
-        this.username = data.username;
+  initProfile() {
+    const user = this.authService.currentUser();
+    if (user) {
+      this.username.set(user.preferredUsername || '');
 
-        switch (data.role) {
-          case 'HR_ADMIN':
-            this.role = 'Admin RH';
-            break;
-          case 'RECRUITER':
-            this.role = 'Recruteur';
-            break;
-          default:
-            this.role = 'Consultation';
-            break;
-        }
+      if (this.authService.isAdmin()) {
+        this.role.set('Admin RH');
+      } else if (this.authService.isRecruiter()) {
+        this.role.set('Recruteur');
+      } else {
+        this.role.set('Consultation');
+      }
 
-        this.profileForm.patchValue({
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-        });
+      this.profileForm.patchValue({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
       });
+    }
   }
 
   onSubmit() {
-    this.errorMessage = '';
-    this.successMessage = '';
+    this.errorMessage.set('');
+    this.successMessage.set('');
 
     if (this.profileForm.invalid) {
-      this.errorMessage = 'Veuillez remplir tous les champs correctement.';
+      this.errorMessage.set('Veuillez remplir tous les champs correctement.');
       return;
     }
 
-    this.isSaving = true;
-    this.successMessage = '';
-    this.errorMessage = '';
+    this.isSaving.set(true);
 
     this.userService
       .updateMyProfile(this.profileForm.value)
       .pipe(
         catchError((err) => {
-          this.errorMessage =
+          this.errorMessage.set(
             err.status === 409
               ? 'Cet email est déjà utilisé par un autre compte.'
-              : 'Une erreur est survenue lors de la mise à jour.';
-
+              : 'Une erreur est survenue lors de la mise à jour.',
+          );
           return EMPTY;
         }),
         finalize(() => {
-          this.isSaving = false;
-          this.cdr.detectChanges();
+          this.isSaving.set(false);
         }),
       )
       .subscribe(() => {
         // Refresh token then close modal
         this.authService.forceTokenRefresh().subscribe(() => {
+          this.authService.syncAuthState();
           this.closeModal.emit(true);
         });
       });

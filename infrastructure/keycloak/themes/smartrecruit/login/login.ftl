@@ -26,7 +26,7 @@
     <form action="${url.loginAction}" method="post">
 
         <div class="field">
-            <label for="username" class="label">Nom d'utilisateur</label>
+            <label for="username" class="label">Nom d'utilisateur / email</label>
             <input id="username" name="username" type="text" class="input" value="${(login.username!'')}" autofocus required>
         </div>
 
@@ -44,7 +44,9 @@
             <a href="${url.loginResetCredentialsUrl}" class="forgot-link">Mot de passe oublié ?</a>
         </div>
 
-        <button type="submit" class="btn btn-primary btn-block">Connexion</button>
+        <div style="display: flex; justify-content: center; margin-top: 8px;">
+            <button type="submit" class="btn btn-primary">Se connecter</button>
+        </div>
     </form>
 
 </div>

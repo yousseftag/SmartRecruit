@@ -43,6 +43,18 @@ spring:
           issuer-uri: ${keycloak.url}
           jwk-set-uri: ${spring.security.oauth2.resourceserver.jwt.issuer-uri}/protocol/openid-connect/certs
 
+  # Mail Configuration (Mailpit for dev)
+  mail:
+    host: ${SPRING_MAIL_HOST:localhost}
+    port: ${SPRING_MAIL_PORT:1025}
+    from: ${SPRING_MAIL_FROM:noreply@smartrecruit.com}
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: 5672
@@ -63,10 +75,8 @@ keycloak:
   url: ${KEYCLOAK_URL:http://localhost:8081}/realms/${keycloak.realm}
   admin:
     server-url: ${KEYCLOAK_SERVER_URL:http://localhost:8081}
-    admin-realm: master
-    client-id: admin-cli
-    username: ${KEYCLOAK_ADMIN:admin}
-    password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
+    client-id: ${KEYCLOAK_BACKEND_CLIENT_ID:smartrecruit-backend}
+    client-secret: ${KEYCLOAK_BACKEND_SECRET:smartrecruit-backend-secret}
 
 # Custom MinIO properties
 minio:
@@ -84,8 +94,11 @@ springdoc:
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:8080}
+  security:
+    password:
+      length: ${APP_SECURITY_PASSWORD_LENGTH:12}
+      chars: ${APP_SECURITY_PASSWORD_CHARS:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789}
   cv-ingestion:
     stall-threshold-minutes: ${CV_STALL_THRESHOLD_MINUTES:5}
   ai-simulation:
     enabled: ${AI_SIMULATION_ENABLED:true}
-

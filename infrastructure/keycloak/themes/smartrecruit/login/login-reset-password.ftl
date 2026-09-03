@@ -34,9 +34,9 @@
             <input id="username" name="username" type="text" class="input" value="${(auth.attemptedUsername!'')}" autofocus required>
         </div>
 
-        <div style="display: flex; gap: 12px; margin-top: 20px;">
-            <a href="${url.loginUrl}" class="btn" style="flex: 1; text-align: center; background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; text-decoration: none; display: flex; align-items: center; justify-content: center;">Retour à la connexion</a>
-            <button type="submit" class="btn btn-primary" style="flex: 2;">Envoyer</button>
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 18px; margin-top: 24px;">
+            <button type="submit" class="btn btn-primary">Envoyer les instructions</button>
+            <a href="${url.loginUrl}" class="btn" style="background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; text-decoration: none;">Retour à la connexion</a>
         </div>
 
     </form>

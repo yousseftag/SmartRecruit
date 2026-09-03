@@ -5,6 +5,8 @@
 */
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-blue: #2563eb;
   --color-blue-d: #1d4ed8;
@@ -330,7 +332,7 @@
   }
   .side-user .rl {
     font-size: 12px;
-    color: var(--faint);
+    color: var(--slate);
   }
 
   /* ---- topbar ---- */
@@ -409,7 +411,7 @@
   }
   .topbar-user .rl {
     font-size: 11.5px;
-    color: var(--faint);
+    color: var(--slate);
   }
 
   /* breadcrumb topbar */
@@ -466,6 +468,9 @@
   .faint {
     color: var(--faint);
   }
+  .text-slate {
+    color: var(--slate);
+  }
   .page-head {
     display: flex;
     align-items: flex-start;
@@ -514,14 +519,48 @@
     background: var(--blue-d);
   }
   .btn-outline {
-    background: #fff;
+    background: var(--white);
     border: 1px solid var(--border);
-    color: #334155;
+    color: var(--ink);
+  }
+  .btn-outline:hover {
+    background: var(--bg);
   }
   .btn-outline-blue {
-    background: #fff;
-    border: 1px solid #cdd9ec;
+    background: var(--white);
+    border: 1px solid var(--blue);
     color: var(--blue);
+  }
+  .btn-outline-blue:hover {
+    background: var(--blue-50);
+  }
+  .btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--r-sm);
+    background: transparent;
+    border: none;
+    color: var(--slate);
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .btn-icon:hover {
+    background: var(--bg);
+    color: var(--ink);
+  }
+  .btn-icon:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .btn-icon.text-red {
+    color: var(--red);
+  }
+  .btn-icon.text-red:hover {
+    background: var(--red-bg);
+    color: var(--red-d);
   }
   .btn-danger {
     background: var(--red);
@@ -581,7 +620,7 @@
     color: var(--red-d);
   }
   .badge-gray {
-    background: #eef2f7;
+    background: var(--line);
     color: var(--muted);
   }
   .badge-blue {
@@ -616,7 +655,7 @@
     margin-left: auto;
     display: flex;
     gap: 4px;
-    background: #fff;
+    background: var(--white);
     border: 1px solid var(--line);
     border-radius: var(--r);
     padding: 5px;
@@ -646,6 +685,21 @@
     max-width: 520px;
     position: relative;
   }
+  .search-lg .search-icon-wrap {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    color: var(--faint);
+  }
+  .search-lg .search-icon-wrap svg {
+    width: 17px;
+    height: 17px;
+  }
   .search-lg i {
     width: 17px;
     height: 17px;
@@ -658,10 +712,33 @@
   .search-lg input {
     width: 100%;
     padding: 12px 14px 12px 40px;
-    border: 1px solid var(--line);
+    border: 1px solid var(--border);
     border-radius: var(--r);
-    background: #fff;
+    background: var(--white);
+    color: var(--ink);
     font-size: 13.5px;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  .search-lg input::placeholder {
+    color: var(--faint);
+  }
+  .search-lg input:focus {
+    border-color: var(--blue);
+  }
+  .role-select {
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    background: var(--white);
+    color: var(--ink);
+    font-size: 13.5px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+  }
+  .role-select:focus {
+    border-color: var(--blue);
   }
 
   /* ---- table ---- */
@@ -678,16 +755,17 @@
     font-size: 11.5px;
     font-weight: 600;
     letter-spacing: 0.4px;
-    color: var(--faint);
+    color: var(--slate);
     text-transform: uppercase;
-    border-bottom: 1px solid var(--line-2);
+    border-bottom: 1px solid var(--line);
   }
   .trow {
     padding: 16px 24px;
-    border-bottom: 1px solid #f5f7fa;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
   }
   .trow:hover {
-    background: #fbfcfe;
+    background: var(--bg);
   }
   .trow.clickable {
     cursor: pointer;
@@ -701,6 +779,7 @@
   .list-head .t {
     font-size: 15px;
     font-weight: 700;
+    color: var(--ink);
   }
   .list-head i {
     color: var(--faint);
@@ -709,6 +788,7 @@
   .cell-title {
     font-size: 14.5px;
     font-weight: 700;
+    color: var(--ink);
   }
   .cell-sub {
     font-size: 12px;
@@ -761,7 +841,7 @@
     justify-content: center;
     border: 1px solid var(--border);
     border-radius: 8px;
-    color: #cbd5e1;
+    color: var(--muted);
   }
   .pg-btn.on {
     background: var(--blue);
@@ -843,7 +923,7 @@
     display: block;
     font-size: 13px;
     font-weight: 600;
-    color: #334155;
+    color: var(--slate);
   }
   .input,
   .textarea,
@@ -853,8 +933,15 @@
     border: 1px solid var(--border);
     border-radius: var(--r);
     font-size: 14px;
-    color: #334155;
-    background: #fbfcfe;
+    color: var(--ink);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+  .input:focus,
+  .textarea:focus,
+  .select:focus {
+    border-color: var(--blue);
   }
   .textarea {
     min-height: 230px;
@@ -895,7 +982,7 @@
     gap: 14px;
     padding: 18px 34px;
     border-top: 1px solid var(--line);
-    background: #fff;
+    background: var(--white);
   }
 
   /* ---- chips ---- */
@@ -1140,8 +1227,8 @@
     overflow: hidden;
   }
   .feat-card {
-    background: #fff;
-    border: 1px solid var(--line);
+    background: var(--white);
+    border: 1px solid var(--border);
     border-radius: 14px;
     padding: 20px;
     display: flex;
@@ -1186,7 +1273,7 @@
     width: 24px;
     height: 24px;
     border-radius: 7px;
-    background: #eef2f7;
+    background: var(--line-2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1203,11 +1290,11 @@
     transition: background 0.12s;
   }
   .kan-list.drag-over {
-    background: #eaf2ff;
+    background: var(--blue-100);
   }
   .kan-card {
-    background: #fff;
-    border: 1px solid var(--line);
+    background: var(--white);
+    border: 1px solid var(--border);
     border-radius: 14px;
     padding: 16px;
     cursor: grab;
@@ -1250,9 +1337,11 @@
   }
   .modal {
     width: 100%;
-    background: #fff;
+    background: var(--white);
+    color: var(--ink);
+    border: 1px solid var(--border);
     border-radius: 18px;
-    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.28);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
     position: relative;
   }
   .modal-x {
@@ -1402,7 +1491,7 @@
   }
   .dropdown-user-email {
     font-size: 12.5px;
-    color: var(--faint);
+    color: var(--slate);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1582,10 +1671,93 @@
   .topbar,
   .card,
   .pro-card,
-  .footer {
+  .footer,
+  .modal,
+  .input,
+  .textarea,
+  .select,
+  .btn-outline,
+  .trow,
+  .footer-bar,
+  .tabs,
+  .role-select,
+  .page-size select {
     transition:
       background-color 0.3s ease,
       border-color 0.3s ease,
       color 0.3s ease;
+  }
+
+  /* ---- user management ---- */
+  .role-select {
+    padding: 11px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--r);
+    background: var(--white);
+    font-size: 13.5px;
+    color: var(--ink);
+    min-width: 160px;
+    cursor: pointer;
+  }
+  .loading-state,
+  .error-state,
+  .empty-state {
+    padding: 40px;
+    text-align: center;
+    font-size: 14.5px;
+    color: var(--muted);
+  }
+  .error-state {
+    color: var(--red-d);
+  }
+  .btn-icon {
+    background: none;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    color: var(--slate);
+    border-radius: 6px;
+    transition: background 0.1s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-icon:hover {
+    background: var(--line);
+    color: var(--ink);
+  }
+  .btn-icon.text-red:hover {
+    color: var(--red-d);
+  }
+  .pager-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-top: 1px solid var(--line-2);
+  }
+  .page-size {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--slate);
+  }
+  .page-size select {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--white);
+    color: var(--ink);
+  }
+  .pager-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .pg-info {
+    font-size: 13px;
+    color: var(--slate);
+    font-weight: 500;
   }
 }

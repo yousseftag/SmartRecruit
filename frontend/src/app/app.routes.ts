@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { UserRole } from './core/models/user.model';
 import { MainLayout } from './layout/main-layout/main-layout';
 
 export const routes: Routes = [
@@ -41,13 +42,13 @@ export const routes: Routes = [
         path: 'offers/new',
         loadComponent: () =>
           import('./pages/offers/offer-form/offer-form').then((c) => c.OfferForm),
-        data: { roles: ['HR_ADMIN', 'RECRUITER'] },
+        data: { roles: [UserRole.HR_ADMIN, UserRole.RECRUITER] },
       },
       {
         path: 'offers/:id/edit',
         loadComponent: () =>
           import('./pages/offers/offer-form/offer-form').then((c) => c.OfferForm),
-        data: { roles: ['HR_ADMIN', 'RECRUITER'] },
+        data: { roles: [UserRole.HR_ADMIN, UserRole.RECRUITER] },
       },
       {
         path: 'offers/:id',
@@ -69,7 +70,7 @@ export const routes: Routes = [
           import('./pages/candidates/candidate-import/candidate-import').then(
             (c) => c.CandidateImport,
           ),
-        data: { roles: ['HR_ADMIN', 'RECRUITER'] },
+        data: { roles: [UserRole.HR_ADMIN, UserRole.RECRUITER] },
       },
       {
         path: 'candidates/:id',
@@ -97,7 +98,7 @@ export const routes: Routes = [
           import('./pages/administration/user-management/user-management').then(
             (c) => c.UserManagement,
           ),
-        data: { roles: ['HR_ADMIN'] },
+        data: { roles: [UserRole.HR_ADMIN] },
       },
       {
         path: 'settings/general',
@@ -105,7 +106,7 @@ export const routes: Routes = [
           import('./pages/settings/general-settings/general-settings').then(
             (c) => c.GeneralSettings,
           ),
-        data: { roles: ['HR_ADMIN'] },
+        data: { roles: [UserRole.HR_ADMIN] },
       },
       {
         path: 'settings/templates',
@@ -113,7 +114,7 @@ export const routes: Routes = [
           import('./pages/settings/template-settings/template-settings').then(
             (c) => c.TemplateSettings,
           ),
-        data: { roles: ['HR_ADMIN'] },
+        data: { roles: [UserRole.HR_ADMIN] },
       },
     ],
   },

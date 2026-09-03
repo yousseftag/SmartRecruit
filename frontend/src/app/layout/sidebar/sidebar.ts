@@ -14,6 +14,7 @@ import {
 } from '@lucide/angular';
 import { NavItem } from './models/nav-item.model';
 import { AuthService } from '../../core/auth/auth.service';
+import { UserRole } from '../../core/models/user.model';
 
 @Component({
   selector: 'app-sidebar',
@@ -25,9 +26,9 @@ export class Sidebar {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  hasAccess(roles?: string[]): boolean {
+  hasAccess(roles?: (UserRole | string)[]): boolean {
     if (!roles || roles.length === 0) return true;
-    return roles.some((role) => this.authService.hasRole(role));
+    return this.authService.hasAnyRole(roles);
   }
 
   navItems: NavItem[] = [
@@ -37,7 +38,7 @@ export class Sidebar {
       label: 'Importer des CVs',
       route: '/hr/candidates/import',
       icon: LucideUpload,
-      roles: ['HR_ADMIN', 'RECRUITER'],
+      roles: [UserRole.HR_ADMIN, UserRole.RECRUITER],
     },
     { label: 'Candidats', route: '/hr/candidates', icon: LucideUsers },
     { label: 'Workflow', route: '/hr/workflow', icon: LucideGitMerge },
@@ -46,13 +47,13 @@ export class Sidebar {
       label: 'Administration',
       route: '/hr/administration',
       icon: LucideShieldCheck,
-      roles: ['HR_ADMIN'],
+      roles: [UserRole.HR_ADMIN],
     },
     {
       label: 'Paramètres',
       route: '/hr/settings/general',
       icon: LucideSettings,
-      roles: ['HR_ADMIN'],
+      roles: [UserRole.HR_ADMIN],
     },
   ];
 

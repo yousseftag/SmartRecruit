@@ -1,6 +1,7 @@
 package com.smartrecruit.backend.modules.auth.services;
 
 import com.smartrecruit.backend.integration.keycloak.KeycloakAdminService;
+import com.smartrecruit.backend.integration.keycloak.KeycloakIntegrationException;
 import com.smartrecruit.backend.modules.auth.entities.AppUser;
 import com.smartrecruit.backend.modules.auth.entities.UserRole;
 import com.smartrecruit.backend.modules.auth.repositories.AppUserRepository;
@@ -17,6 +18,11 @@ public class AdminSeeder {
 
   private static final Logger logger = LoggerFactory.getLogger(AdminSeeder.class);
 
+  private static final String DEFAULT_ADMIN_USERNAME = "admin";
+  private static final String DEFAULT_ADMIN_FIRSTNAME = "Admin";
+  private static final String DEFAULT_ADMIN_LASTNAME = "RH";
+  private static final String DEFAULT_ADMIN_EMAIL = "admin@smartrecruit.com";
+
   private final AppUserRepository userRepository;
   private final KeycloakAdminService keycloakAdminService;
 
@@ -28,34 +34,96 @@ public class AdminSeeder {
   @EventListener(ApplicationReadyEvent.class)
   public void seedAdminUser() {
     try {
-      if (userRepository.existsByRole(UserRole.HR_ADMIN)) {
-        logger.info("Admin user already exists in PostgreSQL. Seeding skipped.");
-        return;
-      }
-
-      logger.info("No Admin user found in PostgreSQL. Attempting to seed from Keycloak...");
-      Optional<UserRepresentation> adminOpt = keycloakAdminService.getUserByUsername("admin");
-
-      if (adminOpt.isPresent()) {
-        UserRepresentation adminKC = adminOpt.get();
-
-        AppUser adminUser =
-            AppUser.builder()
-                .keycloakSub(adminKC.getId())
-                .username(adminKC.getUsername())
-                .firstName(adminKC.getFirstName() != null ? adminKC.getFirstName() : "Admin")
-                .lastName(adminKC.getLastName() != null ? adminKC.getLastName() : "Admin")
-                .email(adminKC.getEmail() != null ? adminKC.getEmail() : "admin@example.com")
-                .role(UserRole.HR_ADMIN)
-                .build();
-
-        userRepository.save(adminUser);
-        logger.info("Admin user seeded in PostgreSQL with sub: {}", adminKC.getId());
-      } else {
-        logger.warn("Could not find 'admin' user in Keycloak. Seeding failed.");
-      }
+      AdminBootstrapData adminData = ensureKeycloakAdminUser();
+      assignAdminRoles(adminData.keycloakSub());
+      syncPostgresAdminUser(adminData);
     } catch (Exception e) {
-      logger.error("An error occurred while seeding admin user: {}", e.getMessage());
+      logger.error("An error occurred while seeding admin user: {}", e.getMessage(), e);
     }
   }
+
+  private AdminBootstrapData ensureKeycloakAdminUser() {
+    Optional<UserRepresentation> adminOpt =
+        keycloakAdminService.getUserByUsername(DEFAULT_ADMIN_USERNAME);
+
+    if (adminOpt.isPresent()) {
+      UserRepresentation adminKC = adminOpt.get();
+      String sub = adminKC.getId();
+      String firstName = defaultIfBlank(adminKC.getFirstName(), DEFAULT_ADMIN_FIRSTNAME);
+      String lastName = defaultIfBlank(adminKC.getLastName(), DEFAULT_ADMIN_LASTNAME);
+      String email = defaultIfBlank(adminKC.getEmail(), DEFAULT_ADMIN_EMAIL);
+      logger.info("Found existing 'admin' user in Keycloak with sub: {}", sub);
+      return new AdminBootstrapData(sub, firstName, lastName, email);
+    }
+
+    logger.info("'admin' user not found in Keycloak. Auto-creating default admin in Keycloak...");
+    String sub =
+        keycloakAdminService.createUser(
+            DEFAULT_ADMIN_USERNAME,
+            DEFAULT_ADMIN_FIRSTNAME,
+            DEFAULT_ADMIN_LASTNAME,
+            DEFAULT_ADMIN_EMAIL,
+            "admin",
+            false);
+    logger.info("Successfully created default 'admin' in Keycloak with sub: {}", sub);
+    return new AdminBootstrapData(
+        sub, DEFAULT_ADMIN_FIRSTNAME, DEFAULT_ADMIN_LASTNAME, DEFAULT_ADMIN_EMAIL);
+  }
+
+  private void assignAdminRoles(String keycloakSub) {
+    try {
+      keycloakAdminService.assignRealmRole(keycloakSub, UserRole.HR_ADMIN.name());
+      keycloakAdminService.assignClientRole(keycloakSub, "account", "view-profile");
+      keycloakAdminService.assignClientRole(keycloakSub, "account", "manage-account");
+    } catch (KeycloakIntegrationException e) {
+      logger.debug(
+          "Admin roles already assigned or Keycloak role assignment notice: {}", e.getMessage());
+    }
+  }
+
+  private void syncPostgresAdminUser(AdminBootstrapData adminData) {
+    Optional<AppUser> existingAdmin = userRepository.findByUsername(DEFAULT_ADMIN_USERNAME);
+    if (existingAdmin.isPresent()) {
+      AppUser user = existingAdmin.get();
+      boolean changed = false;
+      if (!adminData.keycloakSub().equals(user.getKeycloakSub())) {
+        user.setKeycloakSub(adminData.keycloakSub());
+        changed = true;
+      }
+      if (user.getRole() != UserRole.HR_ADMIN) {
+        user.setRole(UserRole.HR_ADMIN);
+        changed = true;
+      }
+      if (changed) {
+        userRepository.save(user);
+        logger.info(
+            "Updated 'admin' PostgreSQL record to sub: {} and role: HR_ADMIN",
+            adminData.keycloakSub());
+      } else {
+        logger.info(
+            "Admin user already synced in PostgreSQL with sub: {}", adminData.keycloakSub());
+      }
+    } else {
+      AppUser adminUser =
+          AppUser.builder()
+              .keycloakSub(adminData.keycloakSub())
+              .username(DEFAULT_ADMIN_USERNAME)
+              .firstName(adminData.firstName())
+              .lastName(adminData.lastName())
+              .email(adminData.email())
+              .role(UserRole.HR_ADMIN)
+              .build();
+
+      userRepository.save(adminUser);
+      logger.info(
+          "Admin user successfully seeded in PostgreSQL with sub: {}", adminData.keycloakSub());
+    }
+  }
+
+  private String defaultIfBlank(String value, String defaultValue) {
+    return (value != null && !value.isBlank()) ? value : defaultValue;
+  }
+
+  private record AdminBootstrapData(
+      String keycloakSub, String firstName, String lastName, String email) {}
 }

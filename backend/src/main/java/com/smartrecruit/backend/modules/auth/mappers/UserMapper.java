@@ -10,6 +10,10 @@ public class UserMapper {
   private UserMapper() {}
 
   public static UserResponse toResponse(AppUser user) {
+    return toResponse(user, null);
+  }
+
+  public static UserResponse toResponse(AppUser user, String warning) {
     if (user == null) {
       return null;
     }
@@ -20,7 +24,8 @@ public class UserMapper {
         user.getLastName(),
         user.getEmail(),
         user.getRole() != null ? user.getRole().name() : null,
-        user.getCreatedAt());
+        user.getCreatedAt(),
+        warning);
   }
 
   public static List<UserResponse> toResponseList(List<AppUser> users) {
