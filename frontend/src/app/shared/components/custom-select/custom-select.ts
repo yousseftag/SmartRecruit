@@ -60,9 +60,7 @@ export interface SelectOption {
               (click)="selectOption(option.value)"
               class="w-full px-3.5 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
               [ngClass]="
-                selectedValue() === option.value
-                  ? 'text-blue font-bold bg-blue-100/40'
-                  : 'text-ink'
+                selectedValue() === option.value ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
               "
             >
               <span>{{ option.label }}</span>
