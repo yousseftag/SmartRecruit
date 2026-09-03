@@ -16,6 +16,7 @@ import { LucideDynamicIcon, LucideChevronDown, LucideCheck, LucideSearch } from 
 export interface SelectOption<T = any> {
   value: T;
   label: string;
+  description?: string;
   badge?: string;
   badgeClass?: string;
 }
@@ -88,6 +89,7 @@ export class CustomSelect implements ControlValueAccessor {
   selectOption(value: any): void {
     this.internalValue.set(value);
     this.onChange(value);
+    this.onTouched();
     this.valueChange.emit(value);
     this.isOpen.set(false);
   }

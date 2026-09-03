@@ -16,6 +16,7 @@ import com.smartrecruit.backend.modules.auth.entities.AppUser;
 import com.smartrecruit.backend.modules.auth.entities.UserRole;
 import com.smartrecruit.backend.modules.auth.exceptions.UserAlreadyExistsException;
 import com.smartrecruit.backend.modules.auth.repositories.AppUserRepository;
+import com.smartrecruit.backend.security.SecurityUtils;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,6 +34,7 @@ class UserServiceTest {
   @Mock private AppUserRepository userRepository;
   @Mock private KeycloakAdminService keycloakAdminService;
   @Mock private EmailService emailService;
+  @Mock private SecurityUtils securityUtils;
 
   @InjectMocks private UserService userService;
 
@@ -70,8 +72,13 @@ class UserServiceTest {
 
     when(userRepository.existsByUsername(request.getUsername())).thenReturn(false);
     when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
-    when(keycloakAdminService.createUser(
-            eq("jane.doe"), eq("Jane"), eq("Doe"), eq("jane@example.com"), anyString()))
+    when(securityUtils.generateRandomPassword()).thenReturn("generated-temp-pwd");
+    when(keycloakAdminService.createTemporaryUser(
+            eq("jane.doe"),
+            eq("Jane"),
+            eq("Doe"),
+            eq("jane@example.com"),
+            eq("generated-temp-pwd")))
         .thenReturn("new-sub");
 
     AppUser savedUser =
@@ -95,7 +102,7 @@ class UserServiceTest {
 
     verify(keycloakAdminService, times(1)).assignRealmRole("new-sub", "RECRUITER");
     verify(emailService, times(1))
-        .sendWelcomeEmail(eq("jane@example.com"), eq("jane.doe"), anyString());
+        .sendWelcomeEmail(eq("jane@example.com"), eq("jane.doe"), eq("generated-temp-pwd"));
   }
 
   @Test
@@ -107,7 +114,8 @@ class UserServiceTest {
 
     when(userRepository.existsByUsername(anyString())).thenReturn(false);
     when(userRepository.existsByEmail(anyString())).thenReturn(false);
-    when(keycloakAdminService.createUser(
+    when(securityUtils.generateRandomPassword()).thenReturn("generated-temp-pwd");
+    when(keycloakAdminService.createTemporaryUser(
             anyString(), anyString(), anyString(), anyString(), anyString()))
         .thenReturn("new-sub");
     when(userRepository.save(any(AppUser.class))).thenReturn(mockUser);
@@ -120,7 +128,8 @@ class UserServiceTest {
 
     assertNotNull(response);
     assertNotNull(response.warning()); // Warning expected
-    assertEquals("L'utilisateur a été créé, mais l'envoi de l'email a échoué.", response.warning());
+    assertEquals(
+        "User created successfully, but sending welcome email failed.", response.warning());
 
     verify(userRepository, times(1)).save(any(AppUser.class)); // Verifies save was called
   }

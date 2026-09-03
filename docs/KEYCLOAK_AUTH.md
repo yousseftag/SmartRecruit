@@ -62,7 +62,7 @@ SmartRecruit uses a **hybrid identity and persistence architecture**: Keycloak o
 | 2 | **Stateless JWT Verification** | Spring Boot acts as an OAuth2 Resource Server, verifying JWT signatures against Keycloak's public JWKS endpoint. No session state is maintained server-side. |
 | 3 | **Local Relational Identity** | The `app_user` table maps to Keycloak via `keycloak_sub` (UUID) to preserve relational foreign keys throughout the domain model. |
 | 4 | **JIT Provisioning** | Users logging in for the first time are automatically provisioned in PostgreSQL from their JWT claims — no manual database seeding required. |
-| 5 | **Self-Healing Sync** | On every `GET /api/v1/users/me` call, PostgreSQL is silently updated if any JWT claim (email, firstName, lastName) differs from the local record. |
+| 5 | **Read-Only Profile Queries** | `GET /api/v1/users/me` is strictly read-only and idempotent. Identity updates are explicitly managed via JIT provisioning, admin CRUD, or profile updates (`PUT /api/v1/users/me`). |
 | 6 | **Non-Blocking Public Traffic** | Public career pages bypass Keycloak completely to prevent iframe freezes and deliver instant page loads. |
 
 ---
@@ -147,8 +147,8 @@ readonly isViewer   = computed(() => this.hasRole(UserRole.VIEWER));
 ```
 
 **On authentication (`syncAuthState`):**
-1. Sets `isAuthenticated`, `roles`, and `currentUser` signals from the live Keycloak token.
-2. Fires a **background** `GET /api/v1/users/me` call to trigger self-healing sync of the PostgreSQL user record against the verified JWT claims.
+1. Sets `isAuthenticated`, `roles`, and `currentUser` signals directly from the decoded Keycloak token.
+2. Automatically synchronizes on token renewal via `keycloak.onAuthRefreshSuccess`.
 
 ### 5.3 HTTP Bearer Interceptor
 
@@ -172,7 +172,13 @@ readonly isViewer   = computed(() => this.hasRole(UserRole.VIEWER));
 - **Permit All:** `/v3/api-docs/**`, `/swagger-ui/**`, `/api/v1/public/**`, `/api/v1/internal/**`
 - **Authenticated:** Everything else requires a valid Bearer JWT.
 
-### 6.2 SecurityUtils — Request Identity Resolution
+### 6.2 Dynamic Authority Resolution (JwtAuthConverter)
+
+[`JwtAuthConverter`](../backend/src/main/java/com/smartrecruit/backend/security/JwtAuthConverter.java) dynamically maps incoming JWT tokens to Spring Security `GrantedAuthority` sets:
+1. **Live PostgreSQL Lookup:** For users registered in `app_user`, the user's role is resolved directly from PostgreSQL (`ROLE_<role>`). This guarantees immediate enforcement: if an admin updates a user's role, the user's access level changes on their very next HTTP request without waiting for token expiration.
+2. **Token Claim Fallback:** If the user is not yet present in PostgreSQL (e.g. initial login before JIT provisioning), authorities are extracted from the JWT's `realm_access.roles`.
+
+### 6.3 SecurityUtils — Request Identity Resolution
 
 [`SecurityUtils`](../backend/src/main/java/com/smartrecruit/backend/security/SecurityUtils.java) provides helpers for resolving the authenticated user within any Spring component:
 
@@ -213,9 +219,9 @@ JWT arrives → No matching keycloak_sub in app_user?
                         role extracted from realm_access.roles
 ```
 
-### 7.3 Self-Healing Token Sync
-
-On every `GET /api/v1/users/me`, [`UserService.getMyProfile()`](../backend/src/main/java/com/smartrecruit/backend/modules/auth/services/UserService.java) compares the live JWT claims against the PostgreSQL record, silently updating PostgreSQL if there is any drift.
+### 7.3 Read-Only Profile Fetch & Explicit Synchronization
+ 
+`GET /api/v1/users/me` is strictly read-only and idempotent. The user record is read directly from PostgreSQL via `keycloak_sub`. User synchronization is isolated to initial JIT provisioning on first login, explicit user/admin updates (`PUT /api/v1/users/**`), or scheduled sync processes.
 
 ### 7.4 Profile Update — Dual-Write with Compensating Rollback
 

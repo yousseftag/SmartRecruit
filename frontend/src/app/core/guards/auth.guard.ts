@@ -34,13 +34,6 @@ export const authGuard: CanActivateFn = async (route, state) => {
     return true;
   }
 
-  console.warn(
-    `Access denied for route '${state.url}'. Required roles:`,
-    requiredRoles,
-    'Current user roles:',
-    authService.roles(),
-  );
-
   router.navigate(['/hr/dashboard']);
   return false;
 };

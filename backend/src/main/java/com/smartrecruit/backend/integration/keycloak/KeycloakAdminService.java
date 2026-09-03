@@ -79,7 +79,7 @@ public class KeycloakAdminService {
     }
   }
 
-  public String createUser(
+  public String createTemporaryUser(
       String username, String firstName, String lastName, String email, String password) {
     return createUser(username, firstName, lastName, email, password, true);
   }

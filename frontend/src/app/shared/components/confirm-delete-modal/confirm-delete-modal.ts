@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LucideX, LucideAlertTriangle } from '@lucide/angular';
-import { UserResponse } from '../../../../../core/models/user.model';
 
 @Component({
   selector: 'app-confirm-delete-modal',
@@ -18,21 +17,28 @@ import { UserResponse } from '../../../../../core/models/user.model';
           <svg lucideAlertTriangle></svg>
         </div>
 
-        <h2 class="h2" style="margin-bottom: 12px;">Supprimer l'utilisateur</h2>
+        <h2 class="h2" style="margin-bottom: 12px;">{{ title }}</h2>
         <p style="margin-bottom: 24px; line-height: 1.5;">
-          Êtes-vous sûr de vouloir supprimer définitivement l'utilisateur
-          <strong>{{ user.username }}</strong> ? Cette action est irréversible.
+          @if (message) {
+            {{ message }}
+          } @else {
+            Êtes-vous sûr de vouloir supprimer définitivement
+            <strong>{{ itemName || 'cet élément' }}</strong> ? {{ warningText }}
+          }
         </p>
 
         <div class="modal-actions" style="justify-content: center;">
-          <button type="button" class="btn btn-secondary" (click)="onClose()">Annuler</button>
+          <button type="button" class="btn btn-secondary" (click)="onClose()">
+            {{ cancelText }}
+          </button>
           <button
             type="button"
             class="btn btn-primary"
-            style="background: var(--red); border-color: var(--red);"
+            [style.background]="isDanger ? 'var(--red)' : ''"
+            [style.border-color]="isDanger ? 'var(--red)' : ''"
             (click)="onConfirm()"
           >
-            Oui, supprimer
+            {{ confirmText }}
           </button>
         </div>
       </div>
@@ -40,15 +46,22 @@ import { UserResponse } from '../../../../../core/models/user.model';
   `,
 })
 export class ConfirmDeleteModalComponent {
-  @Input({ required: true }) user!: UserResponse;
+  @Input() title: string = "Supprimer l'utilisateur";
+  @Input() itemName?: string;
+  @Input() message?: string;
+  @Input() warningText: string = 'Cette action est irréversible.';
+  @Input() confirmText: string = 'Oui, supprimer';
+  @Input() cancelText: string = 'Annuler';
+  @Input() isDanger: boolean = true;
+
   @Output() closeModal = new EventEmitter<void>();
-  @Output() confirm = new EventEmitter<string>(); // emits the user ID
+  @Output() confirm = new EventEmitter<void>();
 
   onClose() {
     this.closeModal.emit();
   }
 
   onConfirm() {
-    this.confirm.emit(this.user.id);
+    this.confirm.emit();
   }
 }

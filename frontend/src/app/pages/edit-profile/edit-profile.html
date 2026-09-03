@@ -1,16 +1,27 @@
 <div class="modal-backdrop">
-  <div class="card card-pad modal-content" (click)="$event.stopPropagation()">
-    <div class="page-head" style="margin-bottom: 20px">
+  <div
+    class="card card-pad modal-content"
+    style="
+      padding: 36px 40px;
+      max-width: 680px;
+      width: 92%;
+      min-height: 500px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    "
+    (click)="$event.stopPropagation()"
+  >
+    <div class="page-head" style="margin-bottom: 24px">
       <h1 class="h1" style="margin: 0">Modifier mon profil</h1>
     </div>
 
-    <!-- Skeleton loader or spinner when isLoading is true -->
-    @if (isLoading()) {
-      <div style="text-align: center; padding: 40px 0">
-        <span class="muted">Chargement de votre profil...</span>
-      </div>
-    } @else {
-      <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+    <form
+      [formGroup]="profileForm"
+      (ngSubmit)="onSubmit()"
+      style="display: flex; flex-direction: column; flex: 1; justify-content: space-between"
+    >
+      <div>
         <!-- Notifications -->
         @if (successMessage()) {
           <div class="alert-success">
@@ -62,17 +73,25 @@
             placeholder="votre.email@exemple.com"
           />
         </div>
+      </div>
 
-        <div
-          class="footer-bar"
-          style="padding: 0; border: none; display: flex; gap: 12px; justify-content: flex-end"
-        >
-          <button type="button" class="btn btn-outline" (click)="onCancel()">Annuler</button>
-          <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
-            {{ isSaving() ? 'Enregistrement...' : 'Enregistrer les modifications' }}
-          </button>
-        </div>
-      </form>
-    }
+      <div
+        class="footer-bar"
+        style="
+          padding: 0;
+          border: none;
+          display: flex;
+          gap: 12px;
+          justify-content: flex-end;
+          margin-top: auto;
+          padding-top: 16px;
+        "
+      >
+        <button type="button" class="btn btn-outline" (click)="onCancel()">Annuler</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
+          {{ isSaving() ? 'Enregistrement...' : 'Enregistrer les modifications' }}
+        </button>
+      </div>
+    </form>
   </div>
 </div>

@@ -3,8 +3,10 @@ package com.smartrecruit.backend.security;
 import com.smartrecruit.backend.modules.auth.entities.AppUser;
 import com.smartrecruit.backend.modules.auth.repositories.AppUserRepository;
 import com.smartrecruit.backend.modules.auth.services.UserService;
+import java.security.SecureRandom;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -12,11 +14,52 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class SecurityUtils {
+
+  private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
   private final AppUserRepository userRepository;
   private final UserService userService;
+  private final int passwordLength;
+  private final String passwordChars;
+
+  public SecurityUtils(
+      AppUserRepository userRepository,
+      @Lazy UserService userService,
+      @Value("${app.security.password.length:12}") int passwordLength,
+      @Value(
+              "${app.security.password.chars:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789}")
+          String passwordChars) {
+    this.userRepository = userRepository;
+    this.userService = userService;
+    this.passwordLength = passwordLength;
+    this.passwordChars = passwordChars;
+  }
+
+  /**
+   * Generates a cryptographically secure random password using configured length and character
+   * pool.
+   *
+   * @return A randomly generated secure password string.
+   */
+  public String generateRandomPassword() {
+    return generateRandomPassword(this.passwordLength, this.passwordChars);
+  }
+
+  /**
+   * Generates a cryptographically secure random password with the given length and character pool.
+   *
+   * @param length The password length.
+   * @param chars The character pool to draw from.
+   * @return A randomly generated secure password string.
+   */
+  public static String generateRandomPassword(int length, String chars) {
+    StringBuilder pwd = new StringBuilder(length);
+    for (int i = 0; i < length; i++) {
+      pwd.append(chars.charAt(SECURE_RANDOM.nextInt(chars.length())));
+    }
+    return pwd.toString();
+  }
 
   /**
    * Retrieves the Keycloak Subject (UUID) of the currently authenticated user.

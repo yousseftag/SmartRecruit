@@ -34,7 +34,7 @@ import {
 import { EditProfile } from '../../edit-profile/edit-profile';
 import { CreateUserModalComponent } from './components/create-user-modal/create-user-modal';
 import { EditUserModalComponent } from './components/edit-user-modal/edit-user-modal';
-import { ConfirmDeleteModalComponent } from './components/confirm-delete-modal/confirm-delete-modal';
+import { ConfirmDeleteModalComponent } from '../../../shared/components/confirm-delete-modal/confirm-delete-modal';
 @Component({
   selector: 'app-user-management',
   standalone: true,
