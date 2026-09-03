@@ -111,7 +111,7 @@ public class DashboardService {
                 Collectors.toMap(row -> (String) row[0], row -> ((Number) row[1]).longValue()));
 
     List<DailyApplicationStatsDto> fullWeek = new ArrayList<>();
-    LocalDate today = LocalDate.now();
+    LocalDate today = LocalDate.now(ZoneOffset.UTC);
     for (int i = 6; i >= 0; i--) {
       String dateStr = today.minusDays(i).toString();
       fullWeek.add(new DailyApplicationStatsDto(dateStr, countsByDate.getOrDefault(dateStr, 0L)));

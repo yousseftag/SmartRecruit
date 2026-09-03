@@ -20,7 +20,7 @@ interface CacheItem<T> {
 })
 export class DashboardService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrl}/api/dashboard`;
+  private apiUrl = `${environment.apiUrl}/api/v1/dashboard`;
 
   private readonly TTL = 5 * 60 * 1000; // 5 minutes
 

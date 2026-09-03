@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import {
   LucideBriefcase,
   LucideInbox,
@@ -22,6 +23,7 @@ import { DashboardStats, PriorityOffer, Activity } from '../../core/models/dashb
   standalone: true,
   imports: [
     CommonModule,
+    RouterLink,
     LucideBriefcase,
     LucideInbox,
     LucideSparkles,

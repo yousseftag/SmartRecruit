@@ -59,16 +59,21 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID> 
   @Query(
       value =
           """
-                    SELECT TO_CHAR(applied_at, 'YYYY-MM-DD') as date_str, COUNT(*) as count
-                    FROM application
-                    WHERE applied_at >= CURRENT_DATE - INTERVAL '6 days'
-                    GROUP BY TO_CHAR(applied_at, 'YYYY-MM-DD')
-                    ORDER BY date_str ASC
-                    """,
+          SELECT TO_CHAR(applied_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') as date_str, COUNT(*) as count
+          FROM application
+          WHERE (applied_at AT TIME ZONE 'UTC')::date >= (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')::date - INTERVAL '6 days'
+          GROUP BY TO_CHAR(applied_at AT TIME ZONE 'UTC', 'YYYY-MM-DD')
+          ORDER BY date_str ASC
+          """,
       nativeQuery = true)
   List<Object[]> countApplicationsByDay();
 
-  long countByOfferIdAndStatus(UUID offerId, ApplicationStatus status);
+  @Query("SELECT COUNT(a) FROM Application a WHERE a.offer.id = :offerId AND a.status = :status")
+  long countByOfferIdAndStatus(
+      @Param("offerId") UUID offerId, @Param("status") ApplicationStatus status);
 
-  long countByOfferIdAndStatusAndPassedMinScoreTrue(UUID offerId, ApplicationStatus status);
+  @Query(
+      "SELECT COUNT(a) FROM Application a WHERE a.offer.id = :offerId AND a.status = :status AND a.passedMinScore = true")
+  long countByOfferIdAndStatusAndPassedMinScoreTrue(
+      @Param("offerId") UUID offerId, @Param("status") ApplicationStatus status);
 }

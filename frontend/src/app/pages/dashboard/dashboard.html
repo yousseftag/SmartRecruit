@@ -245,7 +245,10 @@
   <div class="space-y-4 pt-2">
     <div class="flex items-center justify-between">
       <h2 class="text-lg font-semibold text-slate-800">Offres Prioritaires</h2>
-      <a href="/offers" class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+      <a
+        routerLink="/hr/offers"
+        class="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+      >
         Voir tout <svg lucideChevronRight class="w-4 h-4 ml-1"></svg>
       </a>
     </div>
@@ -292,11 +295,12 @@
 
                   <!-- Action button -->
                   <div class="ml-6">
-                    <button
-                      class="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 hover:text-blue-600 text-sm font-medium transition-colors shadow-sm"
+                    <a
+                      [routerLink]="['/hr/offers', offer.id]"
+                      class="px-4 py-2 bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 hover:text-blue-600 text-sm font-medium transition-colors shadow-sm inline-block"
                     >
                       Voir
-                    </button>
+                    </a>
                   </div>
                 </div>
               </li>

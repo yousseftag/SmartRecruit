@@ -3,14 +3,20 @@ package com.smartrecruit.backend.modules.dashboard.services;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
+import com.smartrecruit.backend.modules.application.enums.ApplicationStatus;
 import com.smartrecruit.backend.modules.application.repositories.ApplicationRepository;
 import com.smartrecruit.backend.modules.application.repositories.WorkflowStatusHistoryRepository;
 import com.smartrecruit.backend.modules.dashboard.dtos.ActivityDto;
 import com.smartrecruit.backend.modules.dashboard.dtos.DashboardStatsDto;
+import com.smartrecruit.backend.modules.dashboard.dtos.PriorityOfferDto;
+import com.smartrecruit.backend.modules.offer.entities.Offer;
+import com.smartrecruit.backend.modules.offer.repositories.OfferRepository;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -22,6 +28,7 @@ class DashboardServiceTest {
 
   @Mock private ApplicationRepository applicationRepository;
   @Mock private WorkflowStatusHistoryRepository workflowRepository;
+  @Mock private OfferRepository offerRepository;
 
   @InjectMocks private DashboardService dashboardService;
 
@@ -96,5 +103,36 @@ class DashboardServiceTest {
     assertEquals("STATUS_CHANGE", dto.type());
     assertEquals("System", dto.user());
     assertEquals(now.atZone(ZoneOffset.UTC).toLocalDateTime(), dto.occurredAt());
+  }
+
+  @Test
+  void getPriorityOffers_ShouldMapOffersAndCountsCorrectly() {
+    UUID offerId = UUID.randomUUID();
+    OffsetDateTime now = OffsetDateTime.now();
+    Offer offer =
+        Offer.builder()
+            .id(offerId)
+            .title("Senior Full-Stack Developer")
+            .status("ACTIVE")
+            .createdAt(now)
+            .build();
+
+    when(offerRepository.findTop5ActiveByNewApplicationCount())
+        .thenReturn(Collections.singletonList(offer));
+    when(applicationRepository.countByOfferIdAndStatus(offerId, ApplicationStatus.NEW))
+        .thenReturn(7L);
+    when(applicationRepository.countByOfferIdAndStatusAndPassedMinScoreTrue(
+            offerId, ApplicationStatus.NEW))
+        .thenReturn(4L);
+
+    List<PriorityOfferDto> results = dashboardService.getPriorityOffers();
+
+    assertEquals(1, results.size());
+    PriorityOfferDto dto = results.get(0);
+    assertEquals(offerId, dto.id());
+    assertEquals("Senior Full-Stack Developer", dto.title());
+    assertEquals(now, dto.createdAt());
+    assertEquals(7L, dto.newCount());
+    assertEquals(4L, dto.aiPassedCount());
   }
 }
