@@ -7,11 +7,13 @@ import com.smartrecruit.backend.modules.application.enums.ApplicationStatus;
 import com.smartrecruit.backend.modules.application.repositories.ApplicationRepository;
 import com.smartrecruit.backend.modules.application.repositories.WorkflowStatusHistoryRepository;
 import com.smartrecruit.backend.modules.dashboard.dtos.ActivityDto;
+import com.smartrecruit.backend.modules.dashboard.dtos.DailyApplicationStatsDto;
 import com.smartrecruit.backend.modules.dashboard.dtos.DashboardStatsDto;
 import com.smartrecruit.backend.modules.dashboard.dtos.PriorityOfferDto;
 import com.smartrecruit.backend.modules.offer.entities.Offer;
 import com.smartrecruit.backend.modules.offer.repositories.OfferRepository;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
@@ -62,6 +64,9 @@ class DashboardServiceTest {
 
     DashboardStatsDto stats = dashboardService.getStats();
 
+    assertEquals(5, stats.activeOffers());
+    assertEquals(10, stats.newApplications());
+    assertEquals(20, stats.activeCandidates());
     assertEquals(90.0, stats.cvExtractionRate()); // 9/10
     assertEquals(80.0, stats.aiValidationRate()); // 8/10
     assertEquals(40.0, stats.hiringSuccessRate()); // 2/(2+3)
@@ -134,5 +139,67 @@ class DashboardServiceTest {
     assertEquals(now, dto.createdAt());
     assertEquals(7L, dto.newCount());
     assertEquals(4L, dto.aiPassedCount());
+  }
+
+  @Test
+  void getApplicationsByDay_ShouldGenerateCompleteSevenDaySeries_AndMapDailyCounts() {
+    LocalDate today = LocalDate.now(ZoneOffset.UTC);
+    String day1 = today.minusDays(4).toString();
+    String day2 = today.minusDays(1).toString();
+    Object[] row1 = new Object[] {day1, 5L};
+    Object[] row2 = new Object[] {day2, 8L};
+
+    when(applicationRepository.countApplicationsByDay()).thenReturn(List.of(row1, row2));
+
+    List<DailyApplicationStatsDto> stats = dashboardService.getApplicationsByDay();
+
+    assertEquals(7, stats.size());
+    // Chronological order from today.minusDays(6) up to today
+    assertEquals(today.minusDays(6).toString(), stats.get(0).date());
+    assertEquals(0L, stats.get(0).count()); // missing day defaults to 0
+
+    assertEquals(day1, stats.get(2).date());
+    assertEquals(5L, stats.get(2).count()); // populated day
+
+    assertEquals(day2, stats.get(5).date());
+    assertEquals(8L, stats.get(5).count()); // populated day
+
+    assertEquals(today.toString(), stats.get(6).date());
+    assertEquals(0L, stats.get(6).count()); // today defaults to 0 when not in DB
+  }
+
+  @Test
+  void getRecentActivities_ShouldReturnMultipleActivities_WithAccurateUtcConversion() {
+    Instant now = Instant.now();
+    Instant tenMinutesAgo = now.minusSeconds(600);
+
+    Object[] row1 =
+        new Object[] {"STATUS_CHANGE", "Jane Recruiter", "Alice Smith", "NEW", "INTERVIEWING", now};
+    Object[] row2 =
+        new Object[] {
+          "APPLICATION_CREATED", "Candidate Portal", "Bob Johnson", null, "NEW", tenMinutesAgo
+        };
+
+    when(workflowRepository.fetchRecentActivities()).thenReturn(List.of(row1, row2));
+
+    List<ActivityDto> activities = dashboardService.getRecentActivities();
+
+    assertEquals(2, activities.size());
+
+    ActivityDto first = activities.get(0);
+    assertEquals("STATUS_CHANGE", first.type());
+    assertEquals("Jane Recruiter", first.user());
+    assertEquals("Alice Smith", first.targetName());
+    assertEquals("NEW", first.fromStatus());
+    assertEquals("INTERVIEWING", first.toStatus());
+    assertEquals(now.atZone(ZoneOffset.UTC).toLocalDateTime(), first.occurredAt());
+
+    ActivityDto second = activities.get(1);
+    assertEquals("APPLICATION_CREATED", second.type());
+    assertEquals("Candidate Portal", second.user());
+    assertEquals("Bob Johnson", second.targetName());
+    assertEquals(null, second.fromStatus());
+    assertEquals("NEW", second.toStatus());
+    assertEquals(tenMinutesAgo.atZone(ZoneOffset.UTC).toLocalDateTime(), second.occurredAt());
   }
 }
