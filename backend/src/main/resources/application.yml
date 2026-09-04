@@ -97,5 +97,7 @@ app:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:8080}
   cv-ingestion:
     stall-threshold-minutes: ${CV_STALL_THRESHOLD_MINUTES:5}
+  offer-ai:
+    stall-threshold-minutes: ${OFFER_STALL_THRESHOLD_MINUTES:2}
   ai-simulation:
     enabled: ${AI_SIMULATION_ENABLED:true}

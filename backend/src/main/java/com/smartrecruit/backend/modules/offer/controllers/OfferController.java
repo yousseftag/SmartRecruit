@@ -20,6 +20,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -114,5 +115,41 @@ public class OfferController {
       @AuthenticationPrincipal Jwt jwt) {
     Offer updated = offerService.updateOffer(id, request, jwt);
     return ResponseEntity.ok(OfferMapper.toInternalDto(updated));
+  }
+
+  /** Purpose: Publishes a DRAFT offer to ACTIVE status. */
+  @PatchMapping("/offers/{id}/publish")
+  @PreAuthorize("hasAnyRole('HR_ADMIN', 'RECRUITER')")
+  public ResponseEntity<OfferInternalResponse> publishOffer(
+      @PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+    Offer offer = offerService.publishOffer(id, jwt);
+    return ResponseEntity.ok(OfferMapper.toInternalDto(offer));
+  }
+
+  /** Purpose: Closes an ACTIVE offer. */
+  @PatchMapping("/offers/{id}/close")
+  @PreAuthorize("hasAnyRole('HR_ADMIN', 'RECRUITER')")
+  public ResponseEntity<OfferInternalResponse> closeOffer(
+      @PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+    Offer offer = offerService.closeOffer(id, jwt);
+    return ResponseEntity.ok(OfferMapper.toInternalDto(offer));
+  }
+
+  /** Purpose: Reopens a CLOSED offer back to ACTIVE. */
+  @PatchMapping("/offers/{id}/reopen")
+  @PreAuthorize("hasAnyRole('HR_ADMIN', 'RECRUITER')")
+  public ResponseEntity<OfferInternalResponse> reopenOffer(
+      @PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+    Offer offer = offerService.reopenOffer(id, jwt);
+    return ResponseEntity.ok(OfferMapper.toInternalDto(offer));
+  }
+
+  /** Purpose: Re-triggers AI analysis on a DRAFT offer. */
+  @PostMapping("/offers/{id}/reprocess")
+  @PreAuthorize("hasAnyRole('HR_ADMIN', 'RECRUITER')")
+  public ResponseEntity<OfferInternalResponse> reprocessOffer(
+      @PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+    Offer offer = offerService.reprocessOffer(id, jwt);
+    return ResponseEntity.ok(OfferMapper.toInternalDto(offer));
   }
 }

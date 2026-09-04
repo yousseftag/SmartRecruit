@@ -232,4 +232,173 @@ class OfferServiceTest {
     assertNull(offer.getExtractedRequirements());
     verify(offerRepository).save(offer);
   }
+
+  // --- PUBLISH OFFER TESTS ---
+
+  @Test
+  void testPublishOffer_WhenDraftAndAiSuccess_ShouldSetActive() {
+    Offer offer =
+        Offer.builder().id(offerId).status("DRAFT").offerAiStatus(OfferAiStatus.SUCCESS).build();
+    when(offerRepository.findById(offerId)).thenReturn(Optional.of(offer));
+    when(jwt.getSubject()).thenReturn(keycloakSub);
+    when(appUserRepository.findByKeycloakSub(keycloakSub)).thenReturn(Optional.of(mockUser));
+    when(offerRepository.save(any(Offer.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    Offer published = offerService.publishOffer(offerId, jwt);
+
+    assertEquals("ACTIVE", published.getStatus());
+    assertEquals(mockUser, published.getUpdatedBy());
+    verify(offerRepository).save(offer);
+  }
+
+  @Test
+  void testPublishOffer_WhenDraftAndAiPending_ShouldThrowIllegalStateException() {
+    Offer offer =
+        Offer.builder().id(offerId).status("DRAFT").offerAiStatus(OfferAiStatus.PENDING).build();
+    when(offerRepository.findById(offerId)).thenReturn(Optional.of(offer));
+
+    IllegalStateException ex =
+        assertThrows(IllegalStateException.class, () -> offerService.publishOffer(offerId, jwt));
+    assertEquals(
+        "L'offre est en cours d'analyse par l'IA. Veuillez patienter avant de la publier.",
+        ex.getMessage());
+  }
+
+  @Test
+  void testPublishOffer_WhenDraftAndAiFailed_ShouldThrowIllegalStateException() {
+    Offer offer =
+        Offer.builder().id(offerId).status("DRAFT").offerAiStatus(OfferAiStatus.FAILED).build();
+    when(offerRepository.findById(offerId)).thenReturn(Optional.of(offer));
+
+    IllegalStateException ex =
+        assertThrows(IllegalStateException.class, () -> offerService.publishOffer(offerId, jwt));
+    assertEquals(
+        "L'analyse IA de l'offre n'a pas réussi. Veuillez relancer l'analyse avant de publier.",
+        ex.getMessage());
+  }
+
+  @Test
+  void testPublishOffer_WhenAlreadyActive_ShouldThrowIllegalStateException() {
+    Offer offer =
+        Offer.builder().id(offerId).status("ACTIVE").offerAiStatus(OfferAiStatus.SUCCESS).build();
+    when(offerRepository.findById(offerId)).thenReturn(Optional.of(offer));
+
+    assertThrows(IllegalStateException.class, () -> offerService.publishOffer(offerId, jwt));
+  }
+
+  // --- CLOSE & REOPEN TESTS ---
+
+  @Test
+  void testCloseOffer_WhenActive_ShouldSetClosed() {
+    Offer offer = Offer.builder().id(offerId).status("ACTIVE").build();
+    when(offerRepository.findById(offerId)).thenReturn(Optional.of(offer));
+    when(jwt.getSubject()).thenReturn(keycloakSub);
+    when(appUserRepository.findByKeycloakSub(keycloakSub)).thenReturn(Optional.of(mockUser));
+    when(offerRepository.save(any(Offer.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    Offer closed = offerService.closeOffer(offerId, jwt);
+
+    assertEquals("CLOSED", closed.getStatus());
+    assertEquals(mockUser, closed.getUpdatedBy());
+    verify(offerRepository).save(offer);
+  }
+
+  @Test
+  void testCloseOffer_WhenDraft_ShouldThrowIllegalStateException() {
+    Offer offer = Offer.builder().id(offerId).status("DRAFT").build();
+    when(offerRepository.findById(offerId)).thenReturn(Optional.of(offer));
+
+    assertThrows(IllegalStateException.class, () -> offerService.closeOffer(offerId, jwt));
+  }
+
+  @Test
+  void testReopenOffer_WhenClosed_ShouldSetActive() {
+    Offer offer = Offer.builder().id(offerId).status("CLOSED").build();
+    when(offerRepository.findById(offerId)).thenReturn(Optional.of(offer));
+    when(jwt.getSubject()).thenReturn(keycloakSub);
+    when(appUserRepository.findByKeycloakSub(keycloakSub)).thenReturn(Optional.of(mockUser));
+    when(offerRepository.save(any(Offer.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    Offer reopened = offerService.reopenOffer(offerId, jwt);
+
+    assertEquals("ACTIVE", reopened.getStatus());
+    assertEquals(mockUser, reopened.getUpdatedBy());
+    verify(offerRepository).save(offer);
+  }
+
+  @Test
+  void testReopenOffer_WhenActive_ShouldThrowIllegalStateException() {
+    Offer offer = Offer.builder().id(offerId).status("ACTIVE").build();
+    when(offerRepository.findById(offerId)).thenReturn(Optional.of(offer));
+
+    assertThrows(IllegalStateException.class, () -> offerService.reopenOffer(offerId, jwt));
+  }
+
+  // --- REPROCESS OFFER TESTS ---
+
+  @Test
+  void testReprocessOffer_WhenDraftAndAiSuccess_ShouldResetToPendingAndSendToQueue() {
+    Offer offer =
+        Offer.builder()
+            .id(offerId)
+            .status("DRAFT")
+            .offerAiStatus(OfferAiStatus.SUCCESS)
+            .extractedRequirements(Map.of("key", "val"))
+            .build();
+    when(offerRepository.findById(offerId)).thenReturn(Optional.of(offer));
+    when(jwt.getSubject()).thenReturn(keycloakSub);
+    when(appUserRepository.findByKeycloakSub(keycloakSub)).thenReturn(Optional.of(mockUser));
+    when(offerRepository.save(any(Offer.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    Offer reprocessed = offerService.reprocessOffer(offerId, jwt);
+
+    assertEquals(OfferAiStatus.PENDING, reprocessed.getOfferAiStatus());
+    assertEquals(Map.of("key", "val"), reprocessed.getExtractedRequirements());
+    assertEquals(mockUser, reprocessed.getUpdatedBy());
+    verify(offerRepository).save(offer);
+    verify(offerIngestionProducer).sendOfferForProcessing(offer);
+  }
+
+  @Test
+  void testReprocessOffer_WhenDraftAndAiFailed_ShouldResetToPendingAndSendToQueue() {
+    Offer offer =
+        Offer.builder().id(offerId).status("DRAFT").offerAiStatus(OfferAiStatus.FAILED).build();
+    when(offerRepository.findById(offerId)).thenReturn(Optional.of(offer));
+    when(jwt.getSubject()).thenReturn(keycloakSub);
+    when(appUserRepository.findByKeycloakSub(keycloakSub)).thenReturn(Optional.of(mockUser));
+    when(offerRepository.save(any(Offer.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    Offer reprocessed = offerService.reprocessOffer(offerId, jwt);
+
+    assertEquals(OfferAiStatus.PENDING, reprocessed.getOfferAiStatus());
+    verify(offerRepository).save(offer);
+    verify(offerIngestionProducer).sendOfferForProcessing(offer);
+  }
+
+  @Test
+  void testReprocessOffer_WhenDraftAndAiPending_ShouldThrowIllegalStateException() {
+    Offer offer =
+        Offer.builder().id(offerId).status("DRAFT").offerAiStatus(OfferAiStatus.PENDING).build();
+    when(offerRepository.findById(offerId)).thenReturn(Optional.of(offer));
+
+    IllegalStateException ex =
+        assertThrows(IllegalStateException.class, () -> offerService.reprocessOffer(offerId, jwt));
+    assertEquals("L'analyse IA est déjà en cours.", ex.getMessage());
+  }
+
+  @Test
+  void testReprocessOffer_WhenActive_ShouldThrowIllegalStateException() {
+    Offer offer =
+        Offer.builder().id(offerId).status("ACTIVE").offerAiStatus(OfferAiStatus.SUCCESS).build();
+    when(offerRepository.findById(offerId)).thenReturn(Optional.of(offer));
+
+    IllegalStateException ex =
+        assertThrows(IllegalStateException.class, () -> offerService.reprocessOffer(offerId, jwt));
+    assertEquals("Seules les offres en brouillon peuvent être réanalysées.", ex.getMessage());
+  }
 }

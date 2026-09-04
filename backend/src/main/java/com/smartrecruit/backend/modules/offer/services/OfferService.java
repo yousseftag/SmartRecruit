@@ -89,9 +89,9 @@ public class OfferService {
     offer.setContractType(request.contractType());
     offer.setUpdatedBy(resolveUser(jwt));
 
-    // Reset AI extraction state and re-dispatch for AI processing
+    // Reset AI extraction state and re-dispatch for AI processing;
+    // previous extractedRequirements are preserved as a safe backup until new results arrive.
     offer.setOfferAiStatus(OfferAiStatus.PENDING);
-    offer.setExtractedRequirements(null);
 
     log.info("Updated offer '{}' (id: {})", offer.getTitle(), id);
     Offer saved = offerRepository.save(offer);
@@ -113,6 +113,84 @@ public class OfferService {
         offerId,
         aiStatus,
         extractedRequirements != null ? "present" : "null");
+  }
+
+  /** Publishes an offer to ACTIVE status. Only allowed from DRAFT with SUCCESS AI status. */
+  public Offer publishOffer(UUID id, Jwt jwt) {
+    Offer offer = getOfferById(id);
+
+    if (!"DRAFT".equals(offer.getStatus())) {
+      throw new IllegalStateException("Seule une offre en brouillon peut être publiée.");
+    }
+
+    if (offer.getOfferAiStatus() == OfferAiStatus.PENDING) {
+      throw new IllegalStateException(
+          "L'offre est en cours d'analyse par l'IA. Veuillez patienter avant de la publier.");
+    }
+
+    if (offer.getOfferAiStatus() != OfferAiStatus.SUCCESS) {
+      throw new IllegalStateException(
+          "L'analyse IA de l'offre n'a pas réussi. Veuillez relancer l'analyse avant de publier.");
+    }
+
+    offer.setStatus("ACTIVE");
+    offer.setUpdatedBy(resolveUser(jwt));
+    log.info("Published offer '{}' (id: {})", offer.getTitle(), id);
+    return offerRepository.save(offer);
+  }
+
+  /** Closes an ACTIVE offer. */
+  public Offer closeOffer(UUID id, Jwt jwt) {
+    Offer offer = getOfferById(id);
+
+    if (!"ACTIVE".equals(offer.getStatus())) {
+      throw new IllegalStateException("Seule une offre active peut être fermée.");
+    }
+
+    offer.setStatus("CLOSED");
+    offer.setUpdatedBy(resolveUser(jwt));
+    log.info("Closed offer '{}' (id: {})", offer.getTitle(), id);
+    return offerRepository.save(offer);
+  }
+
+  /** Reopens a CLOSED offer back to ACTIVE. */
+  public Offer reopenOffer(UUID id, Jwt jwt) {
+    Offer offer = getOfferById(id);
+
+    if (!"CLOSED".equals(offer.getStatus())) {
+      throw new IllegalStateException("Seule une offre fermée peut être réouverte.");
+    }
+
+    offer.setStatus("ACTIVE");
+    offer.setUpdatedBy(resolveUser(jwt));
+    log.info("Reopened offer '{}' (id: {})", offer.getTitle(), id);
+    return offerRepository.save(offer);
+  }
+
+  /**
+   * Re-triggers AI analysis on a DRAFT offer. Allowed when AI status is SUCCESS, FAILED, or
+   * STALLED.
+   */
+  public Offer reprocessOffer(UUID id, Jwt jwt) {
+    Offer offer = getOfferById(id);
+
+    if (!"DRAFT".equals(offer.getStatus())) {
+      throw new IllegalStateException("Seules les offres en brouillon peuvent être réanalysées.");
+    }
+
+    if (offer.getOfferAiStatus() == OfferAiStatus.PENDING) {
+      throw new IllegalStateException("L'analyse IA est déjà en cours.");
+    }
+
+    // Reset AI extraction state and re-dispatch for AI processing;
+    // previous extractedRequirements are preserved as a safe backup until new results arrive.
+    offer.setOfferAiStatus(OfferAiStatus.PENDING);
+    offer.setUpdatedBy(resolveUser(jwt));
+
+    log.info("Triggered AI reprocessing for offer '{}' (id: {})", offer.getTitle(), id);
+    Offer saved = offerRepository.save(offer);
+    offerIngestionProducer.sendOfferForProcessing(saved);
+    return saved;
   }
 
   private AppUser resolveUser(Jwt jwt) {

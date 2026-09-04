@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -278,6 +279,114 @@ class OfferControllerTest {
                 .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_VIEWER")))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
+        .andExpect(status().isForbidden());
+  }
+
+  // --- PATCH /offers/{id}/publish ---
+
+  @Test
+  void testPublishOffer_WithRecruiterRole_ShouldReturn200Ok() throws Exception {
+    Offer offer =
+        Offer.builder()
+            .id(offerId)
+            .title("Dev")
+            .status("ACTIVE")
+            .offerAiStatus(OfferAiStatus.SUCCESS)
+            .createdAt(OffsetDateTime.now())
+            .updatedAt(OffsetDateTime.now())
+            .build();
+    when(offerService.publishOffer(eq(offerId), any())).thenReturn(offer);
+
+    mockMvc
+        .perform(
+            patch("/api/v1/offers/{id}/publish", offerId)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_RECRUITER"))))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("ACTIVE"));
+  }
+
+  @Test
+  void testPublishOffer_WithViewerRole_ShouldReturn403Forbidden() throws Exception {
+    mockMvc
+        .perform(
+            patch("/api/v1/offers/{id}/publish", offerId)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_VIEWER"))))
+        .andExpect(status().isForbidden());
+  }
+
+  // --- PATCH /offers/{id}/close ---
+
+  @Test
+  void testCloseOffer_WithRecruiterRole_ShouldReturn200Ok() throws Exception {
+    Offer offer =
+        Offer.builder()
+            .id(offerId)
+            .title("Dev")
+            .status("CLOSED")
+            .createdAt(OffsetDateTime.now())
+            .updatedAt(OffsetDateTime.now())
+            .build();
+    when(offerService.closeOffer(eq(offerId), any())).thenReturn(offer);
+
+    mockMvc
+        .perform(
+            patch("/api/v1/offers/{id}/close", offerId)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_RECRUITER"))))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("CLOSED"));
+  }
+
+  // --- PATCH /offers/{id}/reopen ---
+
+  @Test
+  void testReopenOffer_WithRecruiterRole_ShouldReturn200Ok() throws Exception {
+    Offer offer =
+        Offer.builder()
+            .id(offerId)
+            .title("Dev")
+            .status("ACTIVE")
+            .createdAt(OffsetDateTime.now())
+            .updatedAt(OffsetDateTime.now())
+            .build();
+    when(offerService.reopenOffer(eq(offerId), any())).thenReturn(offer);
+
+    mockMvc
+        .perform(
+            patch("/api/v1/offers/{id}/reopen", offerId)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_HR_ADMIN"))))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.status").value("ACTIVE"));
+  }
+
+  // --- POST /offers/{id}/reprocess ---
+
+  @Test
+  void testReprocessOffer_WithRecruiterRole_ShouldReturn200Ok() throws Exception {
+    Offer offer =
+        Offer.builder()
+            .id(offerId)
+            .title("Dev")
+            .status("DRAFT")
+            .offerAiStatus(OfferAiStatus.PENDING)
+            .createdAt(OffsetDateTime.now())
+            .updatedAt(OffsetDateTime.now())
+            .build();
+    when(offerService.reprocessOffer(eq(offerId), any())).thenReturn(offer);
+
+    mockMvc
+        .perform(
+            post("/api/v1/offers/{id}/reprocess", offerId)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_RECRUITER"))))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.offerAiStatus").value("PENDING"));
+  }
+
+  @Test
+  void testReprocessOffer_WithViewerRole_ShouldReturn403Forbidden() throws Exception {
+    mockMvc
+        .perform(
+            post("/api/v1/offers/{id}/reprocess", offerId)
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_VIEWER"))))
         .andExpect(status().isForbidden());
   }
 }
