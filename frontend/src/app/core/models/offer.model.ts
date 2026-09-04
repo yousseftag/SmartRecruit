@@ -12,18 +12,37 @@ export const CONTRACT_TYPES: ContractTypeOption[] = [
   { value: 'Freelance', label: 'Freelance / Indépendant' },
 ];
 
-export interface OfferTitleResponse {
-  id: string;
-  title: string;
+export type OfferStatus = 'DRAFT' | 'ACTIVE' | 'CLOSED';
+export type OfferAiStatus = 'PENDING' | 'STALLED' | 'SUCCESS' | 'FAILED';
+
+export interface CategoryWeights {
+  skills: number;
+  experience: number;
+  coursework: number;
+  languages: number;
+  localization: number;
+  [key: string]: number | undefined;
 }
 
 export interface CategoryCriteria {
   skills?: string[] | null;
+  skill_weights?: Record<string, number> | null;
   experience?: number | null;
   coursework?: string[] | null;
   languages?: string[] | null;
   localization?: string | null;
   [key: string]: any;
+}
+
+export interface ExtractedRequirements {
+  missing_from_criteria?: string[] | null;
+  insights?: string | null;
+  [key: string]: any;
+}
+
+export interface OfferTitleResponse {
+  id: string;
+  title: string;
 }
 
 export interface OfferPublicResponse {
@@ -44,4 +63,32 @@ export interface OfferPublicSummaryResponse {
   localization?: string | null;
   experience?: number | null;
   createdAt: string;
+}
+
+export interface OfferInternalResponse {
+  id: string;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+  title: string;
+  descriptionMarkdown?: string | null;
+  status: OfferStatus;
+  offerAiStatus: OfferAiStatus;
+  categoryWeights: CategoryWeights;
+  categoryCriteria?: CategoryCriteria | null;
+  minScore?: number | null;
+  durationMonths?: number | null;
+  contractType?: ContractType | string | null;
+  extractedRequirements?: ExtractedRequirements | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateOfferRequest {
+  title: string;
+  descriptionMarkdown?: string | null;
+  categoryWeights: CategoryWeights;
+  categoryCriteria?: CategoryCriteria | null;
+  minScore?: number | null;
+  durationMonths?: number | null;
+  contractType?: ContractType | string | null;
 }
