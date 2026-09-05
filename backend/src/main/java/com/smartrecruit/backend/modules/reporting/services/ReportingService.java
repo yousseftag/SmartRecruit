@@ -1,8 +1,7 @@
 package com.smartrecruit.backend.modules.reporting.services;
 
-import com.smartrecruit.backend.modules.application.entities.Application;
-import com.smartrecruit.backend.modules.application.entities.Candidate;
-import com.smartrecruit.backend.modules.offer.entities.Offer;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.smartrecruit.backend.modules.application.enums.ApplicationStatus;
 import com.smartrecruit.backend.modules.reporting.dtos.CampaignStatsDto;
 import com.smartrecruit.backend.modules.reporting.dtos.CandidateReportRowDto;
 import com.smartrecruit.backend.modules.reporting.dtos.FunnelStageDto;
@@ -15,6 +14,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,46 +28,52 @@ public class ReportingService {
   private static final int DEFAULT_PREVIEW_LIMIT = 6;
 
   private final ReportingRepository reportingRepository;
+  private final ObjectMapper objectMapper = new ObjectMapper();
 
   public ReportingService(ReportingRepository reportingRepository) {
     this.reportingRepository = reportingRepository;
   }
 
   /**
-   * Generates the complete dashboard report payload including campaign KPIs,
-   * recruitment funnel conversion, AI score distribution, and top ranked candidates.
+   * Generates the complete dashboard report payload including campaign KPIs, recruitment funnel
+   * conversion, AI score distribution, and top ranked candidates.
    */
   public ReportingDashboardResponseDto getDashboardReport(UUID offerId, ReportingPeriod period) {
-    OffsetDateTime startDate = period != null ? period.toStartDate(OffsetDateTime.now(ZoneOffset.UTC)) : null;
+    OffsetDateTime startDate =
+        period != null ? period.toStartDate(OffsetDateTime.now(ZoneOffset.UTC)) : null;
 
     CampaignStatsDto kpis = fetchCampaignStats(offerId, startDate);
     List<FunnelStageDto> funnel = fetchFunnelStages(offerId, startDate, kpis.totalApplications());
     ScoreDistributionDto scoreDist = fetchScoreDistribution(offerId, startDate);
-    List<CandidateReportRowDto> topCandidates = getRankedCandidates(offerId, period, DEFAULT_PREVIEW_LIMIT);
+    List<CandidateReportRowDto> topCandidates =
+        getRankedCandidates(offerId, period, DEFAULT_PREVIEW_LIMIT);
 
     return new ReportingDashboardResponseDto(kpis, funnel, scoreDist, topCandidates);
   }
 
   /**
-   * Fetches the ranked candidates list for preview or export generation.
+   * Fetches the ranked candidates list for preview or export generation using direct column
+   * projections to avoid heavy entity hydration.
    *
    * @param offerId Optional offer filter.
    * @param period Analytical period.
    * @param limit Maximum rows to fetch, or <= 0 for unlimited.
    */
-  public List<CandidateReportRowDto> getRankedCandidates(UUID offerId, ReportingPeriod period, int limit) {
-    OffsetDateTime startDate = period != null ? period.toStartDate(OffsetDateTime.now(ZoneOffset.UTC)) : null;
+  public List<CandidateReportRowDto> getRankedCandidates(
+      UUID offerId, ReportingPeriod period, int limit) {
+    OffsetDateTime startDate =
+        period != null ? period.toStartDate(OffsetDateTime.now(ZoneOffset.UTC)) : null;
     Pageable pageable = limit > 0 ? PageRequest.of(0, limit) : Pageable.unpaged();
 
-    List<Application> applications = reportingRepository.findRankedApplications(offerId, startDate, pageable);
-    if (applications == null || applications.isEmpty()) {
+    List<Object[]> rows =
+        reportingRepository.fetchRankedCandidateRows(offerId, startDate, pageable);
+    if (rows == null || rows.isEmpty()) {
       return Collections.emptyList();
     }
 
-    List<CandidateReportRowDto> rankedList = new ArrayList<>(applications.size());
-    for (int i = 0; i < applications.size(); i++) {
-      Application app = applications.get(i);
-      rankedList.add(mapToCandidateReportRow(app, i + 1));
+    List<CandidateReportRowDto> rankedList = new ArrayList<>(rows.size());
+    for (int i = 0; i < rows.size(); i++) {
+      rankedList.add(mapToCandidateReportRow(rows.get(i), i + 1));
     }
     return rankedList;
   }
@@ -87,15 +93,18 @@ public class ReportingService {
     long hiredCount = ((Number) row[5]).longValue();
     long rejectedCount = ((Number) row[6]).longValue();
 
-    double screenedRate = totalApplications > 0
-        ? roundOneDecimal(((double) screenedApplications / totalApplications) * 100)
-        : 0.0;
-    double qualificationRate = totalApplications > 0
-        ? roundOneDecimal(((double) qualifiedCount / totalApplications) * 100)
-        : 0.0;
-    double conversionRate = totalApplications > 0
-        ? roundOneDecimal(((double) hiredCount / totalApplications) * 100)
-        : 0.0;
+    double screenedRate =
+        totalApplications > 0
+            ? roundOneDecimal(((double) screenedApplications / totalApplications) * 100)
+            : 0.0;
+    double qualificationRate =
+        totalApplications > 0
+            ? roundOneDecimal(((double) qualifiedCount / totalApplications) * 100)
+            : 0.0;
+    double conversionRate =
+        totalApplications > 0
+            ? roundOneDecimal(((double) hiredCount / totalApplications) * 100)
+            : 0.0;
 
     return new CampaignStatsDto(
         totalApplications,
@@ -110,7 +119,8 @@ public class ReportingService {
         rejectedCount);
   }
 
-  private List<FunnelStageDto> fetchFunnelStages(UUID offerId, OffsetDateTime startDate, long totalApplications) {
+  private List<FunnelStageDto> fetchFunnelStages(
+      UUID offerId, OffsetDateTime startDate, long totalApplications) {
     List<Object[]> rows = reportingRepository.fetchFunnelCounts(offerId, startDate);
     if (rows == null || rows.isEmpty() || totalApplications == 0) {
       return List.of(
@@ -130,9 +140,12 @@ public class ReportingService {
 
     return List.of(
         new FunnelStageDto("Reçues", totalReceived, 100.0),
-        new FunnelStageDto("Admissibles IA", qualifiedAi, calculatePercentage(qualifiedAi, totalReceived)),
-        new FunnelStageDto("Présélectionnés", shortlisted, calculatePercentage(shortlisted, totalReceived)),
-        new FunnelStageDto("Entretiens", interviewing, calculatePercentage(interviewing, totalReceived)),
+        new FunnelStageDto(
+            "Admissibles IA", qualifiedAi, calculatePercentage(qualifiedAi, totalReceived)),
+        new FunnelStageDto(
+            "Présélectionnés", shortlisted, calculatePercentage(shortlisted, totalReceived)),
+        new FunnelStageDto(
+            "Entretiens", interviewing, calculatePercentage(interviewing, totalReceived)),
         new FunnelStageDto("Recrutés", hired, calculatePercentage(hired, totalReceived)));
   }
 
@@ -151,38 +164,64 @@ public class ReportingService {
     return new ScoreDistributionDto(excellent, qualified, moderate, insufficient);
   }
 
-  private CandidateReportRowDto mapToCandidateReportRow(Application app, int rank) {
-    Candidate candidate = app.getCandidate();
-    Offer offer = app.getOffer();
-
-    String fullName = "";
-    String email = "";
-    String phone = "";
-
-    if (candidate != null) {
-      String first = candidate.getFirstName() != null ? candidate.getFirstName().trim() : "";
-      String last = candidate.getLastName() != null ? candidate.getLastName().trim() : "";
-      fullName = (first + " " + last).trim();
-      email = candidate.getEmail().trim();
-      phone = candidate.getPhone();
+  private CandidateReportRowDto mapToCandidateReportRow(Object[] row, int rank) {
+    UUID candidateId = null;
+    if (row[0] instanceof UUID uuid) {
+      candidateId = uuid;
+    } else if (row[0] != null) {
+      candidateId = UUID.fromString(row[0].toString());
     }
 
-    String offerTitle = offer != null ? offer.getTitle() : null;
-    Double totalScore = app.getTotalScore() != null ? app.getTotalScore().doubleValue() : null;
-    boolean isAdmissible = Boolean.TRUE.equals(app.getPassedMinScore());
+    String firstName = row[1] != null ? row[1].toString().trim() : "";
+    String lastName = row[2] != null ? row[2].toString().trim() : "";
+    String fullName = (firstName + " " + lastName).trim();
+    String email = row[3] != null ? row[3].toString().trim() : "";
+    String phone = row[4] != null ? row[4].toString().trim() : "";
+    String offerTitle = row[5] != null ? row[5].toString() : null;
+    Double totalScore = row[6] != null ? ((Number) row[6]).doubleValue() : null;
+    boolean isAdmissible = Boolean.TRUE.equals(row[7]);
+
+    ApplicationStatus status = ApplicationStatus.NEW;
+    if (row[8] != null) {
+      try {
+        status = ApplicationStatus.valueOf(row[8].toString());
+      } catch (IllegalArgumentException ignored) {
+      }
+    }
+
+    OffsetDateTime appliedAt = null;
+    if (row[9] instanceof OffsetDateTime odt) {
+      appliedAt = odt;
+    } else if (row[9] instanceof java.sql.Timestamp ts) {
+      appliedAt = ts.toInstant().atOffset(ZoneOffset.UTC);
+    }
+
+    Map<String, Object> categoryScores = parseCategoryScores(row[10]);
 
     return new CandidateReportRowDto(
         rank,
-        candidate != null ? candidate.getId() : null,
+        candidateId,
         fullName,
         email,
         phone,
         offerTitle,
         totalScore,
         isAdmissible,
-        app.getStatus(),
-        app.getAppliedAt(),
-        app.getCategoryScores());
+        status,
+        appliedAt,
+        categoryScores);
+  }
+
+  @SuppressWarnings("unchecked")
+  private Map<String, Object> parseCategoryScores(Object rawJson) {
+    if (rawJson == null) {
+      return Collections.emptyMap();
+    }
+    try {
+      return objectMapper.readValue(rawJson.toString(), Map.class);
+    } catch (Exception e) {
+      return Collections.emptyMap();
+    }
   }
 
   private double calculatePercentage(long count, long total) {

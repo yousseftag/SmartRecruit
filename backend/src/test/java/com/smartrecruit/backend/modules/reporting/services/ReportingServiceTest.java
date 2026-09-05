@@ -5,20 +5,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
-import com.smartrecruit.backend.modules.application.entities.Application;
-import com.smartrecruit.backend.modules.application.entities.Candidate;
-import com.smartrecruit.backend.modules.offer.entities.Offer;
 import com.smartrecruit.backend.modules.application.enums.ApplicationStatus;
 import com.smartrecruit.backend.modules.reporting.dtos.CandidateReportRowDto;
 import com.smartrecruit.backend.modules.reporting.dtos.ReportingDashboardResponseDto;
 import com.smartrecruit.backend.modules.reporting.enums.ReportingPeriod;
 import com.smartrecruit.backend.modules.reporting.repositories.ReportingRepository;
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,20 +25,22 @@ import org.springframework.data.domain.Pageable;
 @ExtendWith(MockitoExtension.class)
 class ReportingServiceTest {
 
-  @Mock
-  private ReportingRepository reportingRepository;
+  @Mock private ReportingRepository reportingRepository;
 
-  @InjectMocks
-  private ReportingService reportingService;
+  @InjectMocks private ReportingService reportingService;
 
   @Test
   void getDashboardReport_WhenNoDataExists_ShouldReturnZeroStatsSafely() {
-    when(reportingRepository.fetchCampaignAggregates(any(), any())).thenReturn(Collections.emptyList());
+    when(reportingRepository.fetchCampaignAggregates(any(), any()))
+        .thenReturn(Collections.emptyList());
     when(reportingRepository.fetchFunnelCounts(any(), any())).thenReturn(Collections.emptyList());
-    when(reportingRepository.fetchScoreDistribution(any(), any())).thenReturn(Collections.emptyList());
-    when(reportingRepository.findRankedApplications(any(), any(), any())).thenReturn(Collections.emptyList());
+    when(reportingRepository.fetchScoreDistribution(any(), any()))
+        .thenReturn(Collections.emptyList());
+    when(reportingRepository.fetchRankedCandidateRows(any(), any(), any()))
+        .thenReturn(Collections.emptyList());
 
-    ReportingDashboardResponseDto report = reportingService.getDashboardReport(null, ReportingPeriod.ALL);
+    ReportingDashboardResponseDto report =
+        reportingService.getDashboardReport(null, ReportingPeriod.ALL);
 
     assertNotNull(report);
     assertEquals(0, report.kpis().totalApplications());
@@ -74,10 +71,11 @@ class ReportingServiceTest {
     when(reportingRepository.fetchScoreDistribution(eq(offerId), any()))
         .thenReturn(List.<Object[]>of(distRow));
 
-    when(reportingRepository.findRankedApplications(eq(offerId), any(), any()))
+    when(reportingRepository.fetchRankedCandidateRows(eq(offerId), any(), any()))
         .thenReturn(Collections.emptyList());
 
-    ReportingDashboardResponseDto report = reportingService.getDashboardReport(offerId, ReportingPeriod.LAST_30_DAYS);
+    ReportingDashboardResponseDto report =
+        reportingService.getDashboardReport(offerId, ReportingPeriod.LAST_30_DAYS);
 
     assertNotNull(report);
     assertEquals(50, report.kpis().totalApplications());
@@ -115,34 +113,31 @@ class ReportingServiceTest {
   @Test
   void getRankedCandidates_ShouldMapCandidatesWithRankAndAdmissibility() {
     UUID candidateId = UUID.randomUUID();
-    Candidate candidate = Candidate.builder()
-        .id(candidateId)
-        .firstName("Karim")
-        .lastName("Benjelloun")
-        .email("k.benjelloun@email.com")
-        .phone("+212611223344")
-        .build();
+    OffsetDateTime appliedAt = OffsetDateTime.now(ZoneOffset.UTC);
+    String categoryScoresJson = "{\"technical\": 95, \"experience\": 90}";
 
-    Offer offer = Offer.builder()
-        .id(UUID.randomUUID())
-        .title("Senior Java Developer")
-        .build();
+    // Row mapping: id, firstName, lastName, email, phone, offerTitle, totalScore, passedMinScore,
+    // status, appliedAt, categoryScoresJson
+    Object[] candidateRow =
+        new Object[] {
+          candidateId,
+          "Karim",
+          "Benjelloun",
+          "k.benjelloun@email.com",
+          "+212611223344",
+          "Senior Java Developer",
+          92.50,
+          true,
+          "INTERVIEWING",
+          appliedAt,
+          categoryScoresJson
+        };
 
-    Application app = Application.builder()
-        .id(UUID.randomUUID())
-        .candidate(candidate)
-        .offer(offer)
-        .totalScore(new BigDecimal("92.50"))
-        .passedMinScore(true)
-        .status(ApplicationStatus.INTERVIEWING)
-        .appliedAt(OffsetDateTime.now(ZoneOffset.UTC))
-        .categoryScores(Map.of("technical", 95, "experience", 90))
-        .build();
+    when(reportingRepository.fetchRankedCandidateRows(any(), any(), any(Pageable.class)))
+        .thenReturn(List.<Object[]>of(candidateRow));
 
-    when(reportingRepository.findRankedApplications(any(), any(), any(Pageable.class)))
-        .thenReturn(List.of(app));
-
-    List<CandidateReportRowDto> results = reportingService.getRankedCandidates(null, ReportingPeriod.ALL, 10);
+    List<CandidateReportRowDto> results =
+        reportingService.getRankedCandidates(null, ReportingPeriod.ALL, 10);
 
     assertEquals(1, results.size());
     CandidateReportRowDto row = results.get(0);
@@ -156,5 +151,6 @@ class ReportingServiceTest {
     assertTrue(row.isAdmissible());
     assertEquals(ApplicationStatus.INTERVIEWING, row.status());
     assertNotNull(row.categoryScores());
+    assertEquals(95, row.categoryScores().get("technical"));
   }
 }

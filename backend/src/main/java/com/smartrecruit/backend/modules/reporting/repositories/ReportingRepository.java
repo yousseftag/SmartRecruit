@@ -80,17 +80,33 @@ public interface ReportingRepository extends JpaRepository<Application, UUID> {
       @Param("offerId") UUID offerId, @Param("startDate") OffsetDateTime startDate);
 
   /**
-   * Fetches applications ordered by AI score descending, with candidate and offer eagerly fetched
-   * in a single join query to eliminate N+1 queries.
+   * Fetches only the 11 columns required for candidate ranking and exports via a native projection,
+   * completely bypassing heavy entity hydration and unused JSONB columns.
    */
   @Query(
-      "SELECT a FROM Application a "
-          + "JOIN FETCH a.candidate c "
-          + "JOIN FETCH a.offer o "
-          + "WHERE (:offerId IS NULL OR o.id = :offerId) "
-          + "AND (CAST(:startDate AS java.time.OffsetDateTime) IS NULL OR a.appliedAt >= :startDate) "
-          + "ORDER BY a.totalScore DESC NULLS LAST, a.appliedAt ASC")
-  List<Application> findRankedApplications(
+      value =
+          """
+          SELECT
+            c.id as candidate_id,
+            c.first_name,
+            c.last_name,
+            c.email,
+            c.phone,
+            o.title as offer_title,
+            a.total_score,
+            a.passed_min_score,
+            a.status,
+            a.applied_at,
+            a.category_scores::text as category_scores_json
+          FROM application a
+          JOIN candidate c ON a.candidate_id = c.id
+          JOIN offer o ON a.offer_id = o.id
+          WHERE (:offerId IS NULL OR a.offer_id = :offerId)
+            AND (CAST(:startDate AS TIMESTAMPTZ) IS NULL OR a.applied_at >= :startDate)
+          ORDER BY a.total_score DESC NULLS LAST, a.applied_at ASC
+          """,
+      nativeQuery = true)
+  List<Object[]> fetchRankedCandidateRows(
       @Param("offerId") UUID offerId,
       @Param("startDate") OffsetDateTime startDate,
       Pageable pageable);
