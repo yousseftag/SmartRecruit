@@ -14,9 +14,6 @@ export class ReportingService {
   /**
    * Retrieves campaign analytics dashboard metrics including KPIs, recruitment funnel,
    * score distribution tiers, and top-ranked candidates preview.
-   *
-   * @param offerId Optional offer UUID filter (omitted or 'all' for consolidated).
-   * @param period Analytical period window ('all', '30d', '90d', '1y').
    */
   getDashboardStats(offerId?: string, period?: string): Observable<ReportingDashboardResponse> {
     const params = this.buildQueryParams(offerId, period);
@@ -25,10 +22,6 @@ export class ReportingService {
 
   /**
    * Retrieves the ranked candidate dataset for the specified campaign and period filter.
-   *
-   * @param offerId Optional offer UUID filter.
-   * @param period Analytical period window.
-   * @param limit Maximum rows to retrieve (0 or undefined for default/unpaged).
    */
   getRankedCandidates(
     offerId?: string,
@@ -44,10 +37,6 @@ export class ReportingService {
 
   /**
    * Streams a formatted Excel (.xlsx) workbook for download.
-   *
-   * @param offerId Optional offer UUID filter.
-   * @param period Analytical period window.
-   * @param limit Maximum candidates to include (0 for all).
    */
   downloadExcel(offerId?: string, period?: string, limit?: number): Observable<Blob> {
     let params = this.buildQueryParams(offerId, period);
@@ -62,9 +51,6 @@ export class ReportingService {
 
   /**
    * Streams a formatted executive synthesis PDF report for download.
-   *
-   * @param offerId Optional offer UUID filter.
-   * @param period Analytical period window.
    */
   downloadPdf(offerId?: string, period?: string): Observable<Blob> {
     const params = this.buildQueryParams(offerId, period);
@@ -77,9 +63,6 @@ export class ReportingService {
   /**
    * Browser file download trigger using a temporary in-memory Object URL.
    * Automatically revokes the Object URL after triggering download to prevent memory leaks.
-   *
-   * @param blob Binary file data.
-   * @param fileName Target filename for browser save dialog.
    */
   triggerFileDownload(blob: Blob, fileName: string): void {
     const url = window.URL.createObjectURL(blob);

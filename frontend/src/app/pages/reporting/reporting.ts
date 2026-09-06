@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, ChangeDetectorRef, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import {
   LucideDownload,
   LucideFileText,
@@ -14,6 +13,9 @@ import {
   LucideCircleCheck,
   LucideClock,
   LucideChevronRight,
+  LucideInbox,
+  LucideAlertTriangle,
+  LucideRefreshCw,
 } from '@lucide/angular';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
@@ -41,7 +43,6 @@ export interface CandidatePreview {
   imports: [
     CommonModule,
     RouterLink,
-    FormsModule,
     BaseChartDirective,
     LucideDownload,
     LucideFileText,
@@ -54,6 +55,9 @@ export interface CandidatePreview {
     LucideCircleCheck,
     LucideClock,
     LucideChevronRight,
+    LucideInbox,
+    LucideAlertTriangle,
+    LucideRefreshCw,
   ],
   templateUrl: './reporting.html',
 })
@@ -389,29 +393,66 @@ export class Reporting implements OnInit, OnDestroy {
     return found ? found.label : "Tout l'historique";
   }
 
-  // Interactive Export Triggers (To be fully connected in Commit 3)
+  // Real Binary Export Handlers
   triggerExportExcel() {
     if (this.isExportingExcel() || this.isExportingPdf()) return;
     this.isExportingExcel.set(true);
 
-    setTimeout(() => {
-      this.isExportingExcel.set(false);
-      this.showToast(
-        `Classement Excel exporté avec succès pour "${this.getSelectedOfferTitle()}" !`,
-      );
-    }, 1200);
+    const offerId = this.selectedOfferId() !== 'all' ? this.selectedOfferId() : undefined;
+    const period = this.selectedPeriod();
+    const offerTitle = this.getSelectedOfferTitle();
+
+    this.reportingService.downloadExcel(offerId, period).subscribe({
+      next: (blob) => {
+        const slug = this.generateSlug(offerTitle);
+        const fileName = `reporting-candidats-${slug}.xlsx`;
+        this.reportingService.triggerFileDownload(blob, fileName);
+        this.isExportingExcel.set(false);
+        this.showToast(`Classement Excel exporté avec succès pour "${offerTitle}" !`);
+      },
+      error: (err) => {
+        console.error('Excel export failed', err);
+        this.isExportingExcel.set(false);
+        this.showToast("Échec de l'exportation Excel. Veuillez réessayer.");
+      },
+    });
   }
 
   triggerExportPdf() {
     if (this.isExportingExcel() || this.isExportingPdf()) return;
     this.isExportingPdf.set(true);
 
-    setTimeout(() => {
-      this.isExportingPdf.set(false);
-      this.showToast(
-        `Rapport de synthèse PDF généré avec succès pour "${this.getSelectedOfferTitle()}" !`,
-      );
-    }, 1400);
+    const offerId = this.selectedOfferId() !== 'all' ? this.selectedOfferId() : undefined;
+    const period = this.selectedPeriod();
+    const offerTitle = this.getSelectedOfferTitle();
+
+    this.reportingService.downloadPdf(offerId, period).subscribe({
+      next: (blob) => {
+        const slug = this.generateSlug(offerTitle);
+        const fileName = `rapport-synthese-${slug}.pdf`;
+        this.reportingService.triggerFileDownload(blob, fileName);
+        this.isExportingPdf.set(false);
+        this.showToast(`Rapport de synthèse PDF généré avec succès pour "${offerTitle}" !`);
+      },
+      error: (err) => {
+        console.error('PDF export failed', err);
+        this.isExportingPdf.set(false);
+        this.showToast('Échec de la génération du rapport PDF. Veuillez réessayer.');
+      },
+    });
+  }
+
+  private generateSlug(text: string): string {
+    if (!text || text.trim().length === 0) {
+      return 'consolide';
+    }
+    return text
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
   }
 
   private showToast(msg: string) {

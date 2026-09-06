@@ -9,6 +9,7 @@ import com.smartrecruit.backend.modules.reporting.dtos.ReportingDashboardRespons
 import com.smartrecruit.backend.modules.reporting.dtos.ScoreDistributionDto;
 import com.smartrecruit.backend.modules.reporting.enums.ReportingPeriod;
 import com.smartrecruit.backend.modules.reporting.repositories.ReportingRepository;
+import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -192,7 +193,7 @@ public class ReportingService {
     OffsetDateTime appliedAt = null;
     if (row[9] instanceof OffsetDateTime odt) {
       appliedAt = odt;
-    } else if (row[9] instanceof java.sql.Timestamp ts) {
+    } else if (row[9] instanceof Timestamp ts) {
       appliedAt = ts.toInstant().atOffset(ZoneOffset.UTC);
     }
 
