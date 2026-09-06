@@ -72,4 +72,4 @@ For the Dashboard to calculate its metrics correctly, the database schema was up
 
 ## 4. Tests and Validation
 - **Backend Tests**: `SpringBootTest` classes cover nominal scenarios and Edge Cases (Division by zero if no applications exist, empty database handling, native query mappings with the `COALESCE` SQL clause).
-- **Dummy Data**: A Flyway migration file (`V4__dashboard_dummy_data.sql`) was created to simulate a coherent history and allow immediate visual testing on the UI.
+- **Dummy Data**: A Flyway migration file (`V8__dashboard_dummy_data.sql`) was created to simulate a coherent history and allow immediate visual testing on the UI.

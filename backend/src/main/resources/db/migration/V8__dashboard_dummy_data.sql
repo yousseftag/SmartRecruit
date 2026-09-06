@@ -1,4 +1,4 @@
--- V4__dashboard_dummy_data.sql
+-- V8__dashboard_dummy_data.sql
 -- Bulk insert of dummy data for Dashboard testing using generate_series and deterministic UUIDs
 
 -- 1. Insert 10 Users
@@ -122,3 +122,14 @@ SELECT
 FROM application
 WHERE status IN ('HIRED', 'INTERVIEWING', 'REJECTED')
 ON CONFLICT DO NOTHING;
+
+-- If Offer AI status column is present, mark active and closed dummy offers as SUCCESS
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name='offer' AND column_name='offer_ai_status'
+    ) THEN
+        UPDATE offer SET offer_ai_status = 'SUCCESS' WHERE status IN ('ACTIVE', 'CLOSED');
+    END IF;
+END $$;
