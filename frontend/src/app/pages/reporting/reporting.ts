@@ -17,21 +17,11 @@ import {
 } from '@lucide/angular';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
+import { ReportingService } from '../../core/services/reporting.service';
+import { OfferService } from '../../core/services/offer.service';
+import { CampaignStats, CandidateReportRow } from '../../core/models/reporting.model';
 
-interface CampaignKpiData {
-  totalApplications: number;
-  screenedApplications: number;
-  screenedRate: number;
-  averageScore: number;
-  maxScore: number;
-  qualifiedCount: number;
-  qualificationRate: number;
-  hiredCount: number;
-  conversionRate: number;
-  rejectedCount: number;
-}
-
-interface CandidatePreview {
+export interface CandidatePreview {
   id: string;
   rank: number;
   name: string;
@@ -40,7 +30,7 @@ interface CandidatePreview {
   offerTitle: string;
   score: number;
   isAdmissible: boolean;
-  status: 'NEW' | 'SHORTLISTED' | 'INTERVIEWING' | 'HIRED' | 'REJECTED';
+  status: string;
   statusLabel: string;
   appliedDate: string;
 }
@@ -69,6 +59,8 @@ interface CandidatePreview {
 })
 export class Reporting implements OnInit, OnDestroy {
   private cdr = inject(ChangeDetectorRef);
+  private reportingService = inject(ReportingService);
+  private offerService = inject(OfferService);
   private themeObserver?: MutationObserver;
 
   // Filter State
@@ -77,18 +69,19 @@ export class Reporting implements OnInit, OnDestroy {
   isOfferDropdownOpen = signal<boolean>(false);
   isPeriodDropdownOpen = signal<boolean>(false);
 
+  // Loading & Error State
+  isLoading = signal<boolean>(true);
+  errorMessage = signal<string | null>(null);
+
   // Export & Feedback State
   isExportingExcel = signal<boolean>(false);
   isExportingPdf = signal<boolean>(false);
   toastMessage = signal<string | null>(null);
-  toastTimeout: any = null;
+  toastTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  // Available Offers for Filter
-  readonly offers = [
+  // Available Offers for Filter (populated dynamically from OfferService)
+  offers: Array<{ id: string; title: string }> = [
     { id: 'all', title: 'Toutes les offres (Consolidé)' },
-    { id: '1', title: 'Développeur Fullstack Java / Angular' },
-    { id: '2', title: 'Data Engineer & MLOps' },
-    { id: '3', title: 'Tech Lead DevOps Cloud' },
   ];
 
   // Available Periods for Filter
@@ -100,17 +93,17 @@ export class Reporting implements OnInit, OnDestroy {
   ];
 
   // Current Active Metrics
-  currentKpis: CampaignKpiData = {
-    totalApplications: 48,
-    screenedApplications: 45,
-    screenedRate: 93.8,
-    averageScore: 74.2,
-    maxScore: 94.0,
-    qualifiedCount: 18,
-    qualificationRate: 37.5,
-    hiredCount: 3,
-    conversionRate: 6.3,
-    rejectedCount: 12,
+  currentKpis: CampaignStats = {
+    totalApplications: 0,
+    screenedApplications: 0,
+    screenedRate: 0,
+    averageScore: 0,
+    maxScore: 0,
+    qualifiedCount: 0,
+    qualificationRate: 0,
+    hiredCount: 0,
+    conversionRate: 0,
+    rejectedCount: 0,
   };
 
   // Funnel Chart (Horizontal Bar)
@@ -126,8 +119,9 @@ export class Reporting implements OnInit, OnDestroy {
         callbacks: {
           label: (ctx) => {
             const val = ctx.parsed?.x ?? 0;
-            const total = this.currentKpis?.totalApplications || 48;
-            return ` ${val} candidats (${((val / total) * 100).toFixed(1)}%)`;
+            const total = this.currentKpis?.totalApplications || 0;
+            const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
+            return ` ${val} candidats (${pct}%)`;
           },
         },
       },
@@ -149,7 +143,7 @@ export class Reporting implements OnInit, OnDestroy {
     labels: ['Reçues', 'Admissibles IA', 'Présélectionnés', 'Entretiens', 'Recrutés'],
     datasets: [
       {
-        data: [48, 18, 10, 6, 3],
+        data: [0, 0, 0, 0, 0],
         backgroundColor: ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#10b981'],
         borderRadius: 6,
       },
@@ -186,7 +180,7 @@ export class Reporting implements OnInit, OnDestroy {
     ],
     datasets: [
       {
-        data: [6, 12, 17, 10],
+        data: [0, 0, 0, 0],
         backgroundColor: ['#059669', '#2563eb', '#d97706', '#ef4444'],
         borderWidth: 2,
         borderColor: '#ffffff',
@@ -198,7 +192,8 @@ export class Reporting implements OnInit, OnDestroy {
   candidateRankings: CandidatePreview[] = [];
 
   ngOnInit() {
-    this.applyMockData(this.selectedOfferId(), this.selectedPeriod());
+    this.loadOffers();
+    this.loadDashboardData();
     this.updateChartTheme();
     this.initThemeObserver();
   }
@@ -207,6 +202,121 @@ export class Reporting implements OnInit, OnDestroy {
     this.themeObserver?.disconnect();
     if (this.toastTimeout) {
       clearTimeout(this.toastTimeout);
+    }
+  }
+
+  private loadOffers() {
+    this.offerService.getOfferTitles().subscribe({
+      next: (titles) => {
+        this.offers = [
+          { id: 'all', title: 'Toutes les offres (Consolidé)' },
+          ...titles.map((t) => ({ id: t.id, title: t.title })),
+        ];
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Failed to load active offer titles', err);
+      },
+    });
+  }
+
+  loadDashboardData() {
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
+    const offerId = this.selectedOfferId() !== 'all' ? this.selectedOfferId() : undefined;
+    const period = this.selectedPeriod();
+
+    this.reportingService.getDashboardStats(offerId, period).subscribe({
+      next: (data) => {
+        if (data.kpis) {
+          this.currentKpis = data.kpis;
+        }
+
+        // Refresh Funnel Chart
+        if (data.funnel && data.funnel.length > 0) {
+          this.funnelChartData.labels = data.funnel.map((f) => f.stage);
+          this.funnelChartData.datasets[0].data = data.funnel.map((f) => f.count);
+        } else {
+          this.funnelChartData.datasets[0].data = [0, 0, 0, 0, 0];
+        }
+        this.funnelChartData = { ...this.funnelChartData };
+
+        // Refresh Score Distribution Chart
+        if (data.scoreDistribution) {
+          this.scoreChartData.datasets[0].data = [
+            data.scoreDistribution.excellentCount,
+            data.scoreDistribution.qualifiedCount,
+            data.scoreDistribution.moderateCount,
+            data.scoreDistribution.insufficientCount,
+          ];
+        } else {
+          this.scoreChartData.datasets[0].data = [0, 0, 0, 0];
+        }
+        this.scoreChartData = { ...this.scoreChartData };
+
+        // Map candidate rankings
+        this.candidateRankings = (data.topCandidates || []).map((c) => this.mapToPreview(c));
+
+        this.isLoading.set(false);
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Failed to load reporting dashboard data', err);
+        this.errorMessage.set('Erreur lors du chargement des statistiques de reporting.');
+        this.isLoading.set(false);
+        this.cdr.detectChanges();
+      },
+    });
+  }
+
+  private mapToPreview(row: CandidateReportRow): CandidatePreview {
+    return {
+      id: row.candidateId,
+      rank: row.rank,
+      name: row.fullName || '-',
+      email: row.email || '-',
+      phone: row.phone || '-',
+      offerTitle: row.offerTitle || '-',
+      score: row.totalScore != null ? Math.round(row.totalScore * 10) / 10 : 0,
+      isAdmissible: row.isAdmissible,
+      status: row.status,
+      statusLabel: this.formatStatusLabel(row.status),
+      appliedDate: this.formatAppliedDate(row.appliedAt),
+    };
+  }
+
+  private formatStatusLabel(status: string): string {
+    switch (status) {
+      case 'NEW':
+        return 'Nouveau';
+      case 'SHORTLISTED':
+        return 'Présélectionné';
+      case 'INTERVIEWING':
+        return 'En Entretien';
+      case 'FOLLOW_UP':
+        return 'Relance';
+      case 'HIRED':
+        return 'Recruté';
+      case 'REJECTED':
+        return 'Rejeté';
+      case 'ARCHIVED':
+        return 'Archivé';
+      default:
+        return status || '-';
+    }
+  }
+
+  private formatAppliedDate(isoDateString?: string): string {
+    if (!isoDateString) return '-';
+    try {
+      const d = new Date(isoDateString);
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      return `${day}/${month}/${year}`;
+    } catch {
+      return isoDateString;
     }
   }
 
@@ -228,7 +338,7 @@ export class Reporting implements OnInit, OnDestroy {
     const gridColor = isDark ? '#334155' : '#f1f5f9';
     const doughnutBorder = isDark ? '#1e293b' : '#ffffff';
 
-    // Funnel
+    // Funnel Chart
     if (this.funnelChartOptions?.scales) {
       if (this.funnelChartOptions.scales['x']) {
         this.funnelChartOptions.scales['x'].grid = { color: gridColor };
@@ -243,7 +353,7 @@ export class Reporting implements OnInit, OnDestroy {
     }
     this.funnelChartOptions = { ...this.funnelChartOptions };
 
-    // Doughnut
+    // Doughnut Chart
     if (this.scoreChartOptions?.plugins?.legend?.labels) {
       this.scoreChartOptions.plugins.legend.labels.color = tickColor;
     }
@@ -260,13 +370,13 @@ export class Reporting implements OnInit, OnDestroy {
   selectOffer(offerId: string) {
     this.selectedOfferId.set(offerId);
     this.isOfferDropdownOpen.set(false);
-    this.applyMockData(offerId, this.selectedPeriod());
+    this.loadDashboardData();
   }
 
   selectPeriod(periodId: string) {
     this.selectedPeriod.set(periodId);
     this.isPeriodDropdownOpen.set(false);
-    this.applyMockData(this.selectedOfferId(), periodId);
+    this.loadDashboardData();
   }
 
   getSelectedOfferTitle(): string {
@@ -279,226 +389,7 @@ export class Reporting implements OnInit, OnDestroy {
     return found ? found.label : "Tout l'historique";
   }
 
-  // Dynamic Mock Data Swapping based on Filter
-  private applyMockData(offerId: string, _periodId: string) {
-    if (offerId === '1') {
-      // Développeur Fullstack
-      this.currentKpis = {
-        totalApplications: 24,
-        screenedApplications: 24,
-        screenedRate: 100,
-        averageScore: 76.5,
-        maxScore: 94.0,
-        qualifiedCount: 10,
-        qualificationRate: 41.7,
-        hiredCount: 2,
-        conversionRate: 8.3,
-        rejectedCount: 6,
-      };
-      this.funnelChartData.datasets[0].data = [24, 10, 6, 4, 2];
-      this.scoreChartData.datasets[0].data = [4, 6, 9, 5];
-      this.candidateRankings = this.getAllMockCandidates().filter((c) =>
-        c.offerTitle.includes('Fullstack'),
-      );
-    } else if (offerId === '2') {
-      // Data Engineer
-      this.currentKpis = {
-        totalApplications: 14,
-        screenedApplications: 13,
-        screenedRate: 92.9,
-        averageScore: 72.1,
-        maxScore: 89.0,
-        qualifiedCount: 5,
-        qualificationRate: 35.7,
-        hiredCount: 1,
-        conversionRate: 7.1,
-        rejectedCount: 4,
-      };
-      this.funnelChartData.datasets[0].data = [14, 5, 3, 2, 1];
-      this.scoreChartData.datasets[0].data = [1, 4, 6, 3];
-      this.candidateRankings = this.getAllMockCandidates().filter((c) =>
-        c.offerTitle.includes('Data'),
-      );
-    } else if (offerId === '3') {
-      // Tech Lead DevOps
-      this.currentKpis = {
-        totalApplications: 10,
-        screenedApplications: 8,
-        screenedRate: 80.0,
-        averageScore: 71.0,
-        maxScore: 86.0,
-        qualifiedCount: 3,
-        qualificationRate: 30.0,
-        hiredCount: 0,
-        conversionRate: 0.0,
-        rejectedCount: 2,
-      };
-      this.funnelChartData.datasets[0].data = [10, 3, 1, 0, 0];
-      this.scoreChartData.datasets[0].data = [1, 2, 5, 2];
-      this.candidateRankings = this.getAllMockCandidates().filter((c) =>
-        c.offerTitle.includes('DevOps'),
-      );
-    } else {
-      // Consolidated
-      this.currentKpis = {
-        totalApplications: 48,
-        screenedApplications: 45,
-        screenedRate: 93.8,
-        averageScore: 74.2,
-        maxScore: 94.0,
-        qualifiedCount: 18,
-        qualificationRate: 37.5,
-        hiredCount: 3,
-        conversionRate: 6.3,
-        rejectedCount: 12,
-      };
-      this.funnelChartData.datasets[0].data = [48, 18, 10, 6, 3];
-      this.scoreChartData.datasets[0].data = [6, 12, 17, 10];
-      this.candidateRankings = this.getAllMockCandidates();
-    }
-
-    // Refresh charts
-    this.funnelChartData = { ...this.funnelChartData };
-    this.scoreChartData = { ...this.scoreChartData };
-    this.cdr.detectChanges();
-  }
-
-  private getAllMockCandidates(): CandidatePreview[] {
-    return [
-      {
-        id: 'c1',
-        rank: 1,
-        name: 'Sarah Mansouri',
-        email: 'sarah.mansouri@email.com',
-        phone: '+212 6 12 34 56 78',
-        offerTitle: 'Développeur Fullstack Java / Angular',
-        score: 94,
-        isAdmissible: true,
-        status: 'INTERVIEWING',
-        statusLabel: 'En Entretien',
-        appliedDate: '28/08/2026',
-      },
-      {
-        id: 'c2',
-        rank: 2,
-        name: 'Karim Benjelloun',
-        email: 'k.benjelloun@email.com',
-        phone: '+212 6 98 76 54 32',
-        offerTitle: 'Développeur Fullstack Java / Angular',
-        score: 89,
-        isAdmissible: true,
-        status: 'HIRED',
-        statusLabel: 'Recruté',
-        appliedDate: '26/08/2026',
-      },
-      {
-        id: 'c3',
-        rank: 3,
-        name: 'Youssef El Amrani',
-        email: 'y.amrani@email.com',
-        phone: '+212 6 55 44 33 22',
-        offerTitle: 'Data Engineer & MLOps',
-        score: 86,
-        isAdmissible: true,
-        status: 'SHORTLISTED',
-        statusLabel: 'Présélectionné',
-        appliedDate: '29/08/2026',
-      },
-      {
-        id: 'c4',
-        rank: 4,
-        name: 'Imane Tazi',
-        email: 'imane.tazi@email.com',
-        phone: '+212 6 11 22 33 44',
-        offerTitle: 'Tech Lead DevOps Cloud',
-        score: 82,
-        isAdmissible: true,
-        status: 'INTERVIEWING',
-        statusLabel: 'En Entretien',
-        appliedDate: '25/08/2026',
-      },
-      {
-        id: 'c5',
-        rank: 5,
-        name: 'Amine Chraibi',
-        email: 'amine.c@email.com',
-        phone: '+212 6 77 88 99 00',
-        offerTitle: 'Développeur Fullstack Java / Angular',
-        score: 78,
-        isAdmissible: true,
-        status: 'SHORTLISTED',
-        statusLabel: 'Présélectionné',
-        appliedDate: '30/08/2026',
-      },
-      {
-        id: 'c6',
-        rank: 6,
-        name: 'Mehdi Bennani',
-        email: 'mehdi.b@email.com',
-        phone: '+212 6 33 22 11 00',
-        offerTitle: 'Data Engineer & MLOps',
-        score: 64,
-        isAdmissible: false,
-        status: 'REJECTED',
-        statusLabel: 'Rejeté',
-        appliedDate: '27/08/2026',
-      },
-      {
-        id: 'c7',
-        rank: 7,
-        name: 'Nour Houda Berrada',
-        email: 'nour.b@email.com',
-        phone: '+212 6 44 55 66 77',
-        offerTitle: 'Développeur Fullstack Java / Angular',
-        score: 61,
-        isAdmissible: false,
-        status: 'REJECTED',
-        statusLabel: 'Rejeté',
-        appliedDate: '24/08/2026',
-      },
-      {
-        id: 'c8',
-        rank: 8,
-        name: 'Hamza Alami',
-        email: 'hamza.a@email.com',
-        phone: '+212 6 22 33 44 55',
-        offerTitle: 'Tech Lead DevOps Cloud',
-        score: 58,
-        isAdmissible: false,
-        status: 'REJECTED',
-        statusLabel: 'Rejeté',
-        appliedDate: '23/08/2026',
-      },
-      {
-        id: 'c9',
-        rank: 9,
-        name: 'Salma Cherkaoui',
-        email: 'salma.c@email.com',
-        phone: '+212 6 88 99 00 11',
-        offerTitle: 'Data Engineer & MLOps',
-        score: 52,
-        isAdmissible: false,
-        status: 'REJECTED',
-        statusLabel: 'Rejeté',
-        appliedDate: '22/08/2026',
-      },
-      {
-        id: 'c10',
-        rank: 10,
-        name: 'Yassine Bouzid',
-        email: 'yassine.b@email.com',
-        phone: '+212 6 66 77 88 99',
-        offerTitle: 'Développeur Fullstack Java / Angular',
-        score: 47,
-        isAdmissible: false,
-        status: 'REJECTED',
-        statusLabel: 'Rejeté',
-        appliedDate: '21/08/2026',
-      },
-    ];
-  }
-
-  // Interactive Export Triggers (Simulated workflow)
+  // Interactive Export Triggers (To be fully connected in Commit 3)
   triggerExportExcel() {
     if (this.isExportingExcel() || this.isExportingPdf()) return;
     this.isExportingExcel.set(true);
