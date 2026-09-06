@@ -114,7 +114,7 @@ export const routes: Routes = [
           import('./pages/settings/template-settings/template-settings').then(
             (c) => c.TemplateSettings,
           ),
-        data: { roles: [UserRole.HR_ADMIN] },
+        data: { roles: [UserRole.HR_ADMIN, UserRole.RECRUITER] },
       },
     ],
   },

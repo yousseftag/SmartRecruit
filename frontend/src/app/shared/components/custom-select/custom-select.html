@@ -1,0 +1,98 @@
+<div class="relative w-full">
+  <!-- Trigger Button -->
+  <button
+    type="button"
+    (click)="toggleDropdown()"
+    [disabled]="disabled()"
+    class="w-full bg-white border border-line hover:border-slate-300 text-ink text-xs font-semibold rounded-lg px-3 py-2 flex items-center justify-between gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all disabled:bg-slate-100 disabled:cursor-not-allowed shadow-2xs"
+  >
+    <div class="flex items-center gap-2 min-w-0">
+      @if (icon()) {
+        <svg [lucideIcon]="icon()" [ngClass]="iconClass()" class="w-3.5 h-3.5 shrink-0"></svg>
+      }
+      @if (selectedOption(); as opt) {
+        <span class="truncate text-ink font-bold">{{ opt.label }}</span>
+        @if (opt.badge) {
+          <span
+            [ngClass]="opt.badgeClass || 'bg-slate-100 text-slate-700'"
+            class="text-[10px] font-semibold px-1.5 py-0.2 rounded border shrink-0"
+          >
+            {{ opt.badge }}
+          </span>
+        }
+      } @else {
+        <span class="text-slate-600 font-medium truncate">{{ placeholder() }}</span>
+      }
+    </div>
+
+    <svg
+      [lucideIcon]="LucideChevronDown"
+      [class.rotate-180]="isOpen()"
+      class="w-3.5 h-3.5 text-slate-400 transition-transform shrink-0"
+    ></svg>
+  </button>
+
+  <!-- Popover Dropdown -->
+  @if (isOpen()) {
+    <div
+      class="absolute left-0 right-0 mt-1.5 bg-white border border-line rounded-xl shadow-xl z-50 max-h-72 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 min-w-[200px]"
+    >
+      <!-- Optional Search inside -->
+      @if (searchable() && options().length > 4) {
+        <div class="p-2 border-b border-line bg-slate-50 shrink-0">
+          <div class="relative">
+            <input
+              type="text"
+              [ngModel]="searchQuery()"
+              (ngModelChange)="searchQuery.set($event)"
+              placeholder="Filtrer..."
+              class="w-full pl-7 pr-2 py-1 text-xs bg-white border border-line rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+            />
+            <svg
+              [lucideIcon]="LucideSearch"
+              class="w-3 h-3 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2"
+            ></svg>
+          </div>
+        </div>
+      }
+
+      <div class="overflow-y-auto py-1">
+        @for (opt of filteredOptions(); track opt.value) {
+          <button
+            type="button"
+            (click)="selectOption(opt.value)"
+            [class.bg-blue-50]="effectiveValue() === opt.value"
+            class="w-full px-3 py-2 text-left hover:bg-slate-50 flex items-center justify-between gap-2 transition-colors group text-xs text-ink font-medium"
+          >
+            <div class="flex items-center gap-2 min-w-0">
+              <span
+                [class.text-blue-600]="effectiveValue() === opt.value"
+                [class.font-bold]="effectiveValue() === opt.value"
+                class="truncate group-hover:text-blue-600"
+              >
+                {{ opt.label }}
+              </span>
+
+              @if (opt.badge) {
+                <span
+                  [ngClass]="opt.badgeClass || 'bg-slate-100 text-slate-700'"
+                  class="text-[10px] font-semibold px-1.5 py-0.2 rounded border shrink-0"
+                >
+                  {{ opt.badge }}
+                </span>
+              }
+            </div>
+
+            @if (effectiveValue() === opt.value) {
+              <svg [lucideIcon]="LucideCheck" class="w-3.5 h-3.5 text-blue-600 shrink-0"></svg>
+            }
+          </button>
+        }
+
+        @if (filteredOptions().length === 0) {
+          <div class="p-3 text-center text-[11px] text-slate-400">Aucun résultat trouvé</div>
+        }
+      </div>
+    </div>
+  }
+</div>

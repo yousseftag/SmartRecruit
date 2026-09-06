@@ -578,9 +578,75 @@
                   }
                 </td>
 
-                <!-- Workflow Status -->
+                <!-- Workflow Status (Click to change for HR/Recruiters, static badge for viewers) -->
                 <td class="px-6 py-4 text-center">
-                  <app-status-badge [status]="app.status" size="sm"></app-status-badge>
+                  @if (canManageStatus()) {
+                    <div class="relative inline-block" (click)="$event.stopPropagation()">
+                      <button
+                        type="button"
+                        (click)="toggleCandidateStatusDropdown(app.id, $event)"
+                        class="cursor-pointer group/badge inline-flex items-center gap-1 rounded-full hover:opacity-90 transition-opacity"
+                        title="Cliquer pour changer le statut"
+                      >
+                        <app-status-badge [status]="app.status" size="sm"></app-status-badge>
+                        <svg
+                          class="w-3 h-3 text-slate opacity-40 group-hover/badge:opacity-100 transition-opacity"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M19 9l-7 7-7-7"
+                          ></path>
+                        </svg>
+                      </button>
+
+                      @if (activeStatusDropdownAppId() === app.id) {
+                        <div
+                          class="absolute left-1/2 -translate-x-1/2 top-full mt-1.5 w-44 bg-white border border-line rounded-xl shadow-xl z-40 py-1.5 animate-in fade-in slide-in-from-top-1 duration-150 text-left"
+                          (click)="$event.stopPropagation()"
+                        >
+                          @for (st of workflowStatusList; track st.value) {
+                            <button
+                              type="button"
+                              (click)="updateCandidateStatus(app.id, st.value, $event)"
+                              class="w-full px-3 py-1.5 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
+                              [ngClass]="
+                                app.status === st.value
+                                  ? 'font-bold text-blue bg-blue-50/50'
+                                  : 'text-ink'
+                              "
+                            >
+                              <div class="flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full" [ngClass]="st.dotClass"></span>
+                                <span>{{ st.label }}</span>
+                              </div>
+                              @if (app.status === st.value) {
+                                <svg
+                                  class="w-3 h-3 text-blue"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M5 13l4 4L19 7"
+                                  ></path>
+                                </svg>
+                              }
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  } @else {
+                    <app-status-badge [status]="app.status" size="sm"></app-status-badge>
+                  }
                 </td>
 
                 <!-- Applied Date -->

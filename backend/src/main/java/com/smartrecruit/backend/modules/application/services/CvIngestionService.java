@@ -87,6 +87,8 @@ public class CvIngestionService {
           request.file().getBytes(),
           originalFilename,
           request.file().getContentType());
+    } catch (DuplicateResourceException | ResourceNotFoundException | IllegalArgumentException e) {
+      throw e;
     } catch (Exception e) {
       log.error("Failed to process uploaded file", e);
       throw new RuntimeException("Failed to read file", e);

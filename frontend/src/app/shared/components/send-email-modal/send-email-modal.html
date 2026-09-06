@@ -1,0 +1,270 @@
+@if (isOpen()) {
+  <div
+    class="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 z-50 animate-in fade-in"
+  >
+    <div
+      class="bg-white rounded-2xl border border-line shadow-2xl max-w-6xl w-full h-[88vh] flex flex-col overflow-hidden animate-in zoom-in-95"
+    >
+      <!-- Modal Top Header & Context Bar -->
+      <div
+        class="px-6 py-3.5 bg-slate-50 border-b border-line flex items-center justify-between gap-4 shrink-0"
+      >
+        <div class="flex flex-wrap items-center gap-3 min-w-0">
+          <div class="flex items-center gap-2">
+            <div class="p-2 bg-blue-100 text-blue-700 rounded-lg shrink-0">
+              <svg [lucideIcon]="LucideMail" class="w-4 h-4"></svg>
+            </div>
+            <h2 class="text-sm font-bold text-ink">Envoyer un email au candidat</h2>
+          </div>
+
+          <!-- Recipient Candidate Pill -->
+          <div
+            class="flex items-center gap-1.5 bg-white border border-line px-2.5 py-1 rounded-lg text-xs"
+          >
+            <svg [lucideIcon]="LucideUser" class="w-3.5 h-3.5 text-blue-600 shrink-0"></svg>
+            <span class="font-bold text-ink truncate max-w-[150px] sm:max-w-[200px]">{{
+              candidateName()
+            }}</span>
+            @if (candidateEmail()) {
+              <span
+                class="text-slate-500 font-mono text-[11px] truncate max-w-[150px] sm:max-w-[220px]"
+              >
+                &lt;{{ candidateEmail() }}&gt;
+              </span>
+            } @else {
+              <span
+                class="text-rose-600 font-bold text-[10px] bg-rose-50 px-1.5 py-0.2 rounded border border-rose-200"
+              >
+                Sans email
+              </span>
+            }
+          </div>
+
+          <!-- Target Offer Pill -->
+          <div
+            class="hidden sm:flex items-center gap-1.5 bg-white border border-line px-2.5 py-1 rounded-lg text-xs text-slate-700"
+          >
+            <svg [lucideIcon]="LucideBriefcase" class="w-3.5 h-3.5 text-slate-400 shrink-0"></svg>
+            <span class="font-medium truncate max-w-[200px]">{{ offerTitle() }}</span>
+          </div>
+        </div>
+
+        <!-- Close Button -->
+        <button
+          type="button"
+          (click)="onDismiss()"
+          class="text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 p-1.5 rounded-lg transition-colors shrink-0"
+        >
+          <svg [lucideIcon]="LucideX" class="w-4 h-4"></svg>
+        </button>
+      </div>
+
+      <!-- Main 2-Column Split: Editor (Left) & Live Preview (Right) -->
+      <div class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 p-6 overflow-y-auto items-start">
+        <!-- ================= LEFT COLUMN: COMPACT EDITOR ================= -->
+        <div class="flex flex-col space-y-4 min-w-0">
+          <!-- Ghost Candidate Warning -->
+          @if (hasGhostEmail()) {
+            <div
+              class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex items-start gap-2"
+            >
+              <svg
+                [lucideIcon]="LucideAlertCircle"
+                class="w-4 h-4 text-amber-600 shrink-0 mt-0.5"
+              ></svg>
+              <div>
+                <span class="font-bold">Adresse email manquante :</span>
+                Ce candidat n'a pas d'adresse email valide enregistrée. L'envoi direct est
+                indisponible.
+              </div>
+            </div>
+          }
+
+          <!-- Template Selector -->
+          <div>
+            <label class="block text-xs font-bold text-ink mb-1"> Modèle d'email </label>
+            <app-template-select
+              [templates]="templates()"
+              [selectedTemplateId]="selectedTemplate()?.id || null"
+              [disabled]="isLoadingTemplates() || isSending()"
+              placeholder="Choisir un modèle..."
+              (templateChange)="onTemplateChange($event)"
+            ></app-template-select>
+          </div>
+
+          <!-- Subject Input -->
+          <div>
+            <label class="block text-xs font-bold text-ink mb-1">
+              Sujet de l'email <span class="text-red-500">*</span>
+            </label>
+            <input
+              #subjectInput
+              type="text"
+              [ngModel]="formSubject()"
+              (ngModelChange)="formSubject.set($event)"
+              [disabled]="isSending()"
+              placeholder="Objet de l'email..."
+              class="w-full px-3 py-2 text-xs border border-line rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium"
+            />
+          </div>
+
+          <!-- Body HTML Editor with Format Toolbar & Quick Chips -->
+          <div class="flex flex-col flex-1">
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="text-xs font-bold text-ink">
+                Contenu du message (HTML) <span class="text-red-500">*</span>
+              </label>
+              <!-- Format Buttons -->
+              <div class="flex items-center gap-1">
+                <button
+                  type="button"
+                  (click)="insertHtmlTag('<strong>', '</strong>')"
+                  title="Gras (entoure la sélection)"
+                  class="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px]"
+                >
+                  <svg [lucideIcon]="LucideBold" class="w-3 h-3"></svg>
+                </button>
+                <button
+                  type="button"
+                  (click)="insertHtmlTag('<em>', '</em>')"
+                  title="Italique (entoure la sélection)"
+                  class="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px]"
+                >
+                  <svg [lucideIcon]="LucideItalic" class="w-3 h-3"></svg>
+                </button>
+                <button
+                  type="button"
+                  (click)="insertHtmlTag('<p>', '</p>')"
+                  title="Paragraphe (entoure la sélection)"
+                  class="px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-mono"
+                >
+                  &lt;p&gt;
+                </button>
+                <button
+                  type="button"
+                  (click)="insertHtmlTag('<ul><li>', '</li></ul>')"
+                  title="Liste"
+                  class="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px]"
+                >
+                  <svg [lucideIcon]="LucideList" class="w-3 h-3"></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Quick Variable Chips (Cursor Insert) -->
+            <div class="flex flex-wrap items-center gap-1.5 mb-2">
+              <span class="text-[10px] text-slate-400 font-medium">Insérer au curseur :</span>
+              @for (v of quickVariables; track v.tag) {
+                <button
+                  type="button"
+                  (click)="insertTag(v.tag, 'body')"
+                  class="text-[10px] bg-slate-100 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 text-slate-600 px-2 py-0.5 rounded-md border border-slate-200 font-mono transition-colors"
+                >
+                  +{{ '{' }}{{ '{' }}{{ v.tag }}{{ '}' }}{{ '}' }}
+                </button>
+              }
+            </div>
+
+            <textarea
+              #bodyTextarea
+              rows="12"
+              [ngModel]="formBodyHtml()"
+              (ngModelChange)="formBodyHtml.set($event)"
+              [disabled]="isSending()"
+              placeholder="Rédigez votre email..."
+              class="w-full px-3 py-2 text-xs font-mono border border-line rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent leading-relaxed"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- ================= RIGHT COLUMN: LIVE SIMULATION PREVIEW ================= -->
+        <div
+          class="bg-white rounded-xl border border-line shadow-xs overflow-hidden flex flex-col h-full"
+        >
+          <div class="px-4 py-3 bg-slate-50 border-b border-line flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <svg [lucideIcon]="LucideEye" class="w-4 h-4 text-slate-600"></svg>
+              <span class="text-xs font-bold text-ink">Aperçu en direct (Rendu réel)</span>
+            </div>
+            <span
+              class="text-[10px] text-slate-500 bg-white px-2 py-0.5 rounded border border-line font-medium flex items-center gap-1"
+            >
+              <svg [lucideIcon]="LucideSparkles" class="w-2.5 h-2.5 text-blue-600"></svg>
+              Variables résolues
+            </span>
+          </div>
+
+          <!-- Simulated Envelope Header -->
+          <div class="p-4 bg-white border-b border-slate-100 space-y-1.5 text-xs">
+            <div class="flex items-center gap-2 text-slate-500">
+              <span class="font-semibold text-slate-700 w-16">À :</span>
+              <span class="text-ink font-medium truncate">
+                {{ candidateName() }} &lt;{{ candidateEmail() || 'candidat@example.com' }}&gt;
+              </span>
+            </div>
+            <div class="flex items-center gap-2 text-slate-500">
+              <span class="font-semibold text-slate-700 w-16">De :</span>
+              <span class="text-ink font-medium truncate">
+                {{ recruiterName() }} &lt;recrutement&#64;norsys.fr&gt;
+              </span>
+            </div>
+            <div class="flex items-start gap-2 pt-1 border-t border-slate-100">
+              <span class="font-semibold text-slate-700 w-16">Objet :</span>
+              <span class="font-bold text-ink">{{ previewSubject() }}</span>
+            </div>
+          </div>
+
+          <!-- Rendered HTML Message Body -->
+          <div
+            class="p-5 bg-slate-50/50 flex-1 min-h-[300px] text-xs text-slate-800 leading-relaxed font-sans prose prose-xs max-w-none overflow-y-auto"
+          >
+            <div [innerHTML]="previewBodyHtml()"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Bottom Actions Bar -->
+      <div
+        class="px-6 py-3.5 bg-slate-50 border-t border-line flex items-center justify-between gap-3 shrink-0"
+      >
+        <!-- Error Banner (if any) -->
+        <div class="min-w-0 flex-1">
+          @if (errorMessage()) {
+            <span class="text-xs text-red-600 font-semibold flex items-center gap-1.5 truncate">
+              <svg [lucideIcon]="LucideAlertCircle" class="w-4 h-4 shrink-0"></svg>
+              {{ errorMessage() }}
+            </span>
+          }
+        </div>
+
+        <div class="flex items-center gap-2.5">
+          <button
+            type="button"
+            (click)="onDismiss()"
+            [disabled]="isSending()"
+            class="btn bg-white border border-line hover:bg-slate-100 text-slate-700 text-xs font-semibold px-4 py-2 rounded-lg transition-colors"
+          >
+            Ignorer / Passer
+          </button>
+
+          <button
+            type="button"
+            (click)="sendEmail()"
+            [disabled]="isSending() || hasGhostEmail()"
+            class="btn bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold px-5 py-2 rounded-lg flex items-center gap-2 transition-colors shadow-xs"
+          >
+            @if (isSending()) {
+              <div
+                class="animate-spin rounded-full h-3.5 w-3.5 border-t-2 border-b-2 border-white"
+              ></div>
+              Envoi en cours...
+            } @else {
+              <svg [lucideIcon]="LucideSend" class="w-3.5 h-3.5"></svg>
+              Envoyer l'email
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

@@ -14,22 +14,35 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { ApplicationService } from '../../../core/services/application.service';
-import { ApplicationResponse, ExtractedData, ExtractedMatching } from '../../../core/models';
+import {
+  ApplicationResponse,
+  ExtractedData,
+  ExtractedMatching,
+  UserRole,
+} from '../../../core/models';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ScoreGauge } from '../../../shared/components/score-gauge/score-gauge';
 import { ExperienceFormatPipe } from '../../../shared/pipes/experience-format.pipe';
-
-export interface StatusOption {
-  value: string;
-  label: string;
-  badgeClass: string;
-  dotClass: string;
-}
+import { SendEmailModal } from '../../../shared/components/send-email-modal/send-email-modal';
+import { LucideDynamicIcon, LucideMail } from '@lucide/angular';
+import {
+  WORKFLOW_STATUSES,
+  WORKFLOW_STATUS_LIST,
+  WorkflowStatusDefinition,
+} from '../../../core/constants/status.constants';
+import { WorkflowStatus } from '../../../core/models/application.model';
 
 @Component({
   selector: 'app-candidate-profile',
   standalone: true,
-  imports: [CommonModule, RouterModule, ScoreGauge, ExperienceFormatPipe],
+  imports: [
+    CommonModule,
+    RouterModule,
+    ScoreGauge,
+    ExperienceFormatPipe,
+    SendEmailModal,
+    LucideDynamicIcon,
+  ],
   templateUrl: './candidate-profile.html',
 })
 export class CandidateProfile implements OnInit, OnDestroy {
@@ -40,14 +53,12 @@ export class CandidateProfile implements OnInit, OnDestroy {
   private sanitizer = inject(DomSanitizer);
   private destroyRef = inject(DestroyRef);
 
+  readonly LucideMail = LucideMail;
+
   private activePoller: Subscription | null = null;
 
-  readonly canManageStatus = computed(
-    () =>
-      this.authService.hasRole('HR_ADMIN') ||
-      this.authService.hasRole('RECRUITER') ||
-      this.authService.hasRole('ADMIN') ||
-      this.authService.isAdmin(),
+  readonly canManageStatus = computed(() =>
+    this.authService.hasAnyRole([UserRole.HR_ADMIN, UserRole.RECRUITER]),
   );
 
   readonly application = signal<ApplicationResponse | null>(null);
@@ -56,6 +67,7 @@ export class CandidateProfile implements OnInit, OnDestroy {
 
   readonly isUpdatingStatus = signal(false);
   readonly isStatusDropdownOpen = signal(false);
+  readonly isEmailModalOpen = signal(false);
 
   readonly isReExtracting = signal(false);
 
@@ -69,51 +81,7 @@ export class CandidateProfile implements OnInit, OnDestroy {
   readonly toastType = signal<'success' | 'error'>('success');
 
   // --- Official 7 Workflow Status Options Matching Backend Enum ---
-  readonly statusOptions: StatusOption[] = [
-    {
-      value: 'NEW',
-      label: 'Nouveau',
-      badgeClass: 'bg-blue-100 text-blue border border-blue/20',
-      dotClass: 'bg-blue',
-    },
-    {
-      value: 'SHORTLISTED',
-      label: 'Présélectionné',
-      badgeClass: 'bg-indigo-100 text-indigo-800 border border-indigo-200',
-      dotClass: 'bg-indigo-500',
-    },
-    {
-      value: 'INTERVIEWING',
-      label: 'En entretien',
-      badgeClass:
-        'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border border-amber-300 dark:border-amber-700/50',
-      dotClass: 'bg-amber-600 dark:bg-amber-400',
-    },
-    {
-      value: 'FOLLOW_UP',
-      label: 'Relancé',
-      badgeClass: 'bg-purple-100 text-purple-800 border border-purple-200',
-      dotClass: 'bg-purple-500',
-    },
-    {
-      value: 'HIRED',
-      label: 'Embauché',
-      badgeClass: 'bg-green-100 text-green-800 border border-green/20',
-      dotClass: 'bg-green',
-    },
-    {
-      value: 'REJECTED',
-      label: 'Refusé',
-      badgeClass: 'bg-red-100 text-red border border-red/20',
-      dotClass: 'bg-red',
-    },
-    {
-      value: 'ARCHIVED',
-      label: 'Archivé',
-      badgeClass: 'bg-slate-100 text-slate-700 border border-slate-200',
-      dotClass: 'bg-slate-400',
-    },
-  ];
+  readonly statusOptions: WorkflowStatusDefinition[] = WORKFLOW_STATUS_LIST;
 
   // --- Computed Extracted Properties ---
   readonly cvData = computed<ExtractedData | null>(
@@ -184,16 +152,12 @@ export class CandidateProfile implements OnInit, OnDestroy {
     return score >= min;
   });
 
-  readonly currentStatusOption = computed(() => {
-    const current = this.application()?.status;
-    return (
-      this.statusOptions.find((o) => o.value === current) || {
-        value: current || 'NEW',
-        label: current || 'Nouveau',
-        badgeClass: 'bg-slate-100 text-slate-700 border border-slate-200',
-        dotClass: 'bg-slate-400',
-      }
-    );
+  readonly currentStatusOption = computed<WorkflowStatusDefinition>(() => {
+    const current = this.application()?.status as WorkflowStatus | undefined;
+    if (current && current in WORKFLOW_STATUSES) {
+      return WORKFLOW_STATUSES[current];
+    }
+    return WORKFLOW_STATUSES.NEW;
   });
 
   readonly categoryScoresList = computed(() => {
@@ -428,10 +392,25 @@ export class CandidateProfile implements OnInit, OnDestroy {
     document.body.removeChild(a);
   }
 
+  openEmailModal(): void {
+    this.isEmailModalOpen.set(true);
+  }
+
+  closeEmailModal(): void {
+    this.isEmailModalOpen.set(false);
+  }
+
+  onEmailSent(): void {
+    this.showToast('Email envoyé au candidat avec succès !', 'success');
+  }
+
   @HostListener('document:keydown.escape')
   onEscapePress() {
     if (this.isPreviewModalOpen()) {
       this.closeCvModal();
+    }
+    if (this.isEmailModalOpen()) {
+      this.closeEmailModal();
     }
   }
 

@@ -1,1 +1,326 @@
-<p>template-settings works!</p>
+<div class="w-full px-4 sm:px-8 py-6 space-y-6">
+  <!-- Page Header & Template Selector Bar -->
+  <div
+    class="bg-white rounded-xl border border-line p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4"
+  >
+    <div>
+      <h1 class="text-lg font-bold text-ink flex items-center gap-2">
+        <svg [lucideIcon]="LucideMail" class="w-5 h-5 text-blue-600"></svg>
+        Modèles d'emails
+      </h1>
+      <p class="text-xs text-slate mt-0.5">
+        Sélectionnez et modifiez vos modèles d'emails de convocation, relance et refus.
+      </p>
+    </div>
+
+    <!-- Template Selector & Action Buttons -->
+    <div class="flex flex-wrap items-center gap-2.5">
+      <div class="w-72 sm:w-80">
+        <app-template-select
+          [templates]="templates()"
+          [selectedTemplateId]="selectedTemplate()?.id || null"
+          [disabled]="isLoading() || isCreatingNew()"
+          placeholder="Sélectionner un modèle..."
+          (templateChange)="onDropdownChange($event)"
+        ></app-template-select>
+      </div>
+
+      <button
+        (click)="startCreateNew()"
+        [class.bg-blue-700]="isCreatingNew()"
+        class="btn bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3.5 py-2 rounded-lg flex items-center gap-1.5 transition-colors shadow-2xs"
+      >
+        <svg [lucideIcon]="LucidePlus" class="w-4 h-4"></svg>
+        Nouveau
+      </button>
+
+      @if (!isCreatingNew() && selectedTemplate()?.templateKey === 'OTHER') {
+        <button
+          (click)="openDeleteModal()"
+          title="Supprimer ce modèle personnalisé"
+          class="btn bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-1.5 transition-colors border border-red-200"
+        >
+          <svg [lucideIcon]="LucideTrash2" class="w-4 h-4"></svg>
+          Supprimer
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="flex flex-col items-center justify-center py-20 gap-3">
+      <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+      <span class="text-xs text-slate font-medium">Chargement des modèles d'emails...</span>
+    </div>
+  }
+
+  <!-- Main 2-Column Split: Editor & Live Preview (Full Width Grid) -->
+  @if (!isLoading()) {
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <!-- ================= LEFT: COMPACT EDITOR ================= -->
+      <div class="bg-white rounded-xl border border-line p-5 shadow-xs space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-line">
+          <h2 class="text-xs font-bold text-ink uppercase tracking-wider">
+            @if (isCreatingNew()) {
+              Nouveau modèle personnalisé
+            } @else {
+              Éditeur de modèle
+            }
+          </h2>
+          @if (!isCreatingNew() && selectedTemplate()?.templateKey !== 'OTHER') {
+            <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded font-semibold">
+              Modèle système protégé
+            </span>
+          }
+        </div>
+
+        <!-- Template Name -->
+        <div>
+          <label class="block text-xs font-bold text-ink mb-1">
+            Nom du modèle <span class="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            [ngModel]="formName()"
+            (ngModelChange)="formName.set($event)"
+            placeholder="ex: Convocation premier entretien"
+            class="w-full px-3 py-2 text-xs border border-line rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium"
+          />
+        </div>
+
+        <!-- Email Subject -->
+        <div>
+          <label class="block text-xs font-bold text-ink mb-1">
+            Sujet de l'email <span class="text-red-500">*</span>
+          </label>
+          <input
+            #subjectInput
+            type="text"
+            [ngModel]="formSubject()"
+            (ngModelChange)="formSubject.set($event)"
+            [placeholder]="'ex: Convocation entretien — {{titre_offre}}'"
+            class="w-full px-3 py-2 text-xs border border-line rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium"
+          />
+        </div>
+
+        <!-- Body HTML with Cursor-aware Toolbar & Quick Variable Chips -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-bold text-ink">
+              Corps du message (HTML) <span class="text-red-500">*</span>
+            </label>
+            <!-- Format buttons -->
+            <div class="flex items-center gap-1">
+              <button
+                type="button"
+                (click)="insertHtmlTag('<strong>', '</strong>')"
+                title="Gras (entoure la sélection)"
+                class="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px]"
+              >
+                <svg [lucideIcon]="LucideBold" class="w-3 h-3"></svg>
+              </button>
+              <button
+                type="button"
+                (click)="insertHtmlTag('<em>', '</em>')"
+                title="Italique (entoure la sélection)"
+                class="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px]"
+              >
+                <svg [lucideIcon]="LucideItalic" class="w-3 h-3"></svg>
+              </button>
+              <button
+                type="button"
+                (click)="insertHtmlTag('<p>', '</p>')"
+                title="Paragraphe (entoure la sélection)"
+                class="px-1.5 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-mono"
+              >
+                &lt;p&gt;
+              </button>
+              <button
+                type="button"
+                (click)="insertHtmlTag('<ul><li>', '</li></ul>')"
+                title="Liste"
+                class="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px]"
+              >
+                <svg [lucideIcon]="LucideList" class="w-3 h-3"></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Variable Chips (Inserts at cursor) -->
+          <div class="flex flex-wrap items-center gap-1.5 mb-2">
+            <span class="text-[10px] text-slate-400 font-medium">Insérer au curseur :</span>
+            @for (v of quickVariables; track v.tag) {
+              <button
+                type="button"
+                (click)="insertTag(v.tag, 'body')"
+                class="text-[10px] bg-slate-100 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 text-slate-600 px-2 py-0.5 rounded-md border border-slate-200 font-mono transition-colors"
+              >
+                +{{ '{' }}{{ '{' }}{{ v.tag }}{{ '}' }}{{ '}' }}
+              </button>
+            }
+          </div>
+
+          <textarea
+            #bodyTextarea
+            rows="12"
+            [ngModel]="formBodyHtml()"
+            (ngModelChange)="formBodyHtml.set($event)"
+            placeholder="Rédigez le contenu de votre modèle..."
+            class="w-full px-3 py-2 text-xs font-mono border border-line rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent leading-relaxed"
+          ></textarea>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-line">
+          <button
+            type="button"
+            (click)="cancelEditing()"
+            class="btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            (click)="saveTemplate()"
+            [disabled]="isSaving()"
+            class="btn bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5 transition-colors shadow-xs"
+          >
+            @if (isSaving()) {
+              <div
+                class="animate-spin rounded-full h-3.5 w-3.5 border-t-2 border-b-2 border-white"
+              ></div>
+              Enregistrement...
+            } @else {
+              <svg [lucideIcon]="LucideSave" class="w-3.5 h-3.5"></svg>
+              {{ isCreatingNew() ? 'Créer le modèle' : 'Enregistrer' }}
+            }
+          </button>
+        </div>
+      </div>
+
+      <!-- ================= RIGHT: LIVE PREVIEW ================= -->
+      <div class="bg-white rounded-xl border border-line shadow-xs overflow-hidden">
+        <div class="px-4 py-3 bg-slate-50 border-b border-line flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <svg [lucideIcon]="LucideEye" class="w-4 h-4 text-slate-600"></svg>
+            <span class="text-xs font-bold text-ink">Aperçu en direct (Simulation)</span>
+          </div>
+          <span
+            class="text-[10px] text-slate-500 bg-white px-2 py-0.5 rounded border border-line font-medium"
+          >
+            Variables résolues
+          </span>
+        </div>
+
+        <!-- Simulated Email Envelope -->
+        <div class="p-4 bg-white border-b border-slate-100 space-y-1.5 text-xs">
+          <div class="flex items-center gap-2 text-slate-500">
+            <span class="font-semibold text-slate-700 w-16">À :</span>
+            <span class="text-ink font-medium"
+              >Jean Dupont &lt;jean.dupont&#64;example.com&gt;</span
+            >
+          </div>
+          <div class="flex items-center gap-2 text-slate-500">
+            <span class="font-semibold text-slate-700 w-16">De :</span>
+            <span class="text-ink font-medium"
+              >{{ sampleContext().nom_recruteur }} &lt;recrutement&#64;norsys.fr&gt;</span
+            >
+          </div>
+          <div class="flex items-start gap-2 pt-1 border-t border-slate-100">
+            <span class="font-semibold text-slate-700 w-16">Objet :</span>
+            <span class="font-bold text-ink">{{ previewSubject() }}</span>
+          </div>
+        </div>
+
+        <!-- Rendered Email Body -->
+        <div
+          class="p-5 bg-slate-50/50 min-h-[300px] text-xs text-slate-800 leading-relaxed font-sans prose prose-xs max-w-none"
+        >
+          <div [innerHTML]="previewBodyHtml()"></div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteConfirm()) {
+  <div
+    class="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in"
+  >
+    <div class="bg-white rounded-2xl border border-line shadow-2xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center gap-3 text-red-600">
+        <div class="p-2.5 bg-red-50 rounded-xl">
+          <svg [lucideIcon]="LucideTrash2" class="w-6 h-6"></svg>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-ink">Supprimer le modèle</h3>
+          <p class="text-xs text-slate">Cette action est irréversible.</p>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-700 leading-relaxed">
+        Êtes-vous sûr de vouloir supprimer définitivement le modèle
+        <strong class="text-ink">"{{ selectedTemplate()?.name }}"</strong> ?
+      </p>
+
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button
+          type="button"
+          (click)="closeDeleteModal()"
+          [disabled]="isDeleting()"
+          class="btn bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-lg transition-colors"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          (click)="executeDelete()"
+          [disabled]="isDeleting()"
+          class="btn bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white text-xs font-semibold px-4 py-2 rounded-lg flex items-center gap-1.5 transition-colors shadow-xs"
+        >
+          @if (isDeleting()) {
+            <div
+              class="animate-spin rounded-full h-3.5 w-3.5 border-t-2 border-b-2 border-white"
+            ></div>
+            Suppression...
+          } @else {
+            <svg [lucideIcon]="LucideTrash2" class="w-3.5 h-3.5"></svg>
+            Supprimer
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Toast Feedback Notification -->
+@if (toastMessage()) {
+  <div
+    class="fixed bottom-6 right-6 px-4 py-3 rounded-xl shadow-xl font-semibold text-xs text-white transition-all duration-300 z-50 flex items-center gap-2.5 animate-in fade-in slide-in-from-bottom-2"
+    [ngClass]="toastType() === 'success' ? 'bg-slate-900' : 'bg-red-600'"
+  >
+    @if (toastType() === 'success') {
+      <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M5 13l4 4L19 7"
+        ></path>
+      </svg>
+    }
+    @if (toastType() === 'error') {
+      <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M6 18L18 6M6 6l12 12"
+        ></path>
+      </svg>
+    }
+    <span>{{ toastMessage() }}</span>
+  </div>
+}

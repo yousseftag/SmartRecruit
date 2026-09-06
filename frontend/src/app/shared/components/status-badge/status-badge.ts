@@ -1,5 +1,7 @@
 import { Component, input, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { WORKFLOW_STATUSES } from '../../../core/constants/status.constants';
+import { WorkflowStatus } from '../../../core/models/application.model';
 
 @Component({
   selector: 'app-status-badge',
@@ -13,85 +15,46 @@ export class StatusBadge {
 
   readonly statusConfig = computed(() => {
     const raw = (this.status() || '').toUpperCase();
-    switch (raw) {
-      // Workflow Statuses
-      case 'NEW':
-        return {
-          label: 'En attente',
-          classes: 'bg-blue-100 text-blue border-blue/20',
-          dotClass: 'bg-blue',
-          pulsing: false,
-        };
-      case 'SHORTLISTED':
-        return {
-          label: 'Convoqué',
-          classes: 'bg-green-bg text-green border-green/20',
-          dotClass: 'bg-green',
-          pulsing: false,
-        };
-      case 'INTERVIEWING':
-        return {
-          label: 'Entretien',
-          classes: 'bg-amber-bg text-amber-d border border-amber/20 font-semibold',
-          dotClass: 'bg-amber',
-          pulsing: false,
-        };
-      case 'FOLLOW_UP':
-        return {
-          label: 'Suivi RH',
-          classes: 'bg-violet-50 text-violet-700 border border-violet-200',
-          dotClass: 'bg-violet',
-          pulsing: false,
-        };
-      case 'HIRED':
-        return {
-          label: 'Recruté',
-          classes: 'bg-green-bg text-green border border-green/30 font-bold',
-          dotClass: 'bg-green',
-          pulsing: false,
-        };
-      case 'REJECTED':
-        return {
-          label: 'Refusé',
-          classes: 'bg-red-bg text-red border border-red/20',
-          dotClass: 'bg-red',
-          pulsing: false,
-        };
-      case 'ARCHIVED':
-        return {
-          label: 'Archivé',
-          classes: 'bg-bg text-muted border border-line',
-          dotClass: 'bg-faint',
-          pulsing: false,
-        };
 
-      // AI Extraction Statuses
+    // 1. Workflow Statuses (Single Source of Truth)
+    if (raw in WORKFLOW_STATUSES) {
+      const def = WORKFLOW_STATUSES[raw as WorkflowStatus];
+      return {
+        label: def.label,
+        classes: def.badgeClass,
+        dotClass: def.dotClass,
+        pulsing: false,
+      };
+    }
+
+    // 2. AI Extraction Statuses
+    switch (raw) {
       case 'PENDING':
         return {
           label: 'Analyse IA en cours...',
-          classes: 'bg-blue-100 text-blue border border-blue/20 animate-pulse',
-          dotClass: 'bg-blue animate-ping',
+          classes: 'bg-blue-50 text-blue-700 border border-blue-200/80 animate-pulse',
+          dotClass: 'bg-blue-500 animate-ping',
           pulsing: true,
         };
       case 'STALLED':
         return {
           label: 'Analyse bloquée',
-          classes: 'bg-amber-bg text-amber-d border border-amber/20 font-semibold',
-          dotClass: 'bg-amber',
+          classes: 'bg-amber-50 text-amber-800 border border-amber-300/80 font-semibold',
+          dotClass: 'bg-amber-500',
           pulsing: false,
         };
       case 'SUCCESS':
         return {
           label: 'Analyse terminée',
-          classes: 'bg-green-bg text-green border border-green/20',
-          dotClass: 'bg-green',
+          classes: 'bg-emerald-50 text-emerald-800 border border-emerald-300/80',
+          dotClass: 'bg-emerald-600',
           pulsing: false,
         };
       case 'FAILED':
         return {
           label: 'Échec analyse IA',
-          classes: 'bg-red-bg text-red border border-red/20 font-semibold',
-          dotClass: 'bg-red',
+          classes: 'bg-rose-50 text-rose-700 border border-rose-200/80 font-semibold',
+          dotClass: 'bg-rose-500',
           pulsing: false,
         };
 
