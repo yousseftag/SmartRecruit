@@ -34,6 +34,7 @@ export interface ScoreDistribution {
 /** Candidate row representation within the ranked leaderboard and export table. */
 export interface CandidateReportRow {
   rank: number;
+  applicationId: string;
   candidateId: string;
   fullName: string;
   email: string;

@@ -112,14 +112,17 @@ class ReportingServiceTest {
 
   @Test
   void getRankedCandidates_ShouldMapCandidatesWithRankAndAdmissibility() {
+    UUID applicationId = UUID.randomUUID();
     UUID candidateId = UUID.randomUUID();
     OffsetDateTime appliedAt = OffsetDateTime.now(ZoneOffset.UTC);
     String categoryScoresJson = "{\"technical\": 95, \"experience\": 90}";
 
-    // Row mapping: id, firstName, lastName, email, phone, offerTitle, totalScore, passedMinScore,
+    // Row mapping: applicationId, candidateId, firstName, lastName, email, phone, offerTitle,
+    // totalScore, passedMinScore,
     // status, appliedAt, categoryScoresJson
     Object[] candidateRow =
         new Object[] {
+          applicationId,
           candidateId,
           "Karim",
           "Benjelloun",
@@ -142,6 +145,7 @@ class ReportingServiceTest {
     assertEquals(1, results.size());
     CandidateReportRowDto row = results.get(0);
     assertEquals(1, row.rank());
+    assertEquals(applicationId, row.applicationId());
     assertEquals(candidateId, row.candidateId());
     assertEquals("Karim Benjelloun", row.fullName());
     assertEquals("k.benjelloun@email.com", row.email());

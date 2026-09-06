@@ -48,6 +48,7 @@ class PdfExportServiceTest {
         new CandidateReportRowDto(
             1,
             UUID.randomUUID(),
+            UUID.randomUUID(),
             "Karim Benjelloun",
             "k.benjelloun@email.com",
             "+212611223344",
@@ -61,6 +62,7 @@ class PdfExportServiceTest {
     CandidateReportRowDto candidate2 =
         new CandidateReportRowDto(
             2,
+            UUID.randomUUID(),
             UUID.randomUUID(),
             "Fatima Zahra",
             "f.zahra@email.com",
@@ -152,6 +154,7 @@ class PdfExportServiceTest {
       tenCandidates.add(
           new CandidateReportRowDto(
               i,
+              UUID.randomUUID(),
               UUID.randomUUID(),
               "Candidat " + i,
               "candidat" + i + "@email.com",

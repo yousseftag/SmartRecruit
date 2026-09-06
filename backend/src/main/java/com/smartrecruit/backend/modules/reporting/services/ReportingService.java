@@ -166,41 +166,49 @@ public class ReportingService {
   }
 
   private CandidateReportRowDto mapToCandidateReportRow(Object[] row, int rank) {
-    UUID candidateId = null;
+    UUID applicationId = null;
     if (row[0] instanceof UUID uuid) {
-      candidateId = uuid;
+      applicationId = uuid;
     } else if (row[0] != null) {
-      candidateId = UUID.fromString(row[0].toString());
+      applicationId = UUID.fromString(row[0].toString());
     }
 
-    String firstName = row[1] != null ? row[1].toString().trim() : "";
-    String lastName = row[2] != null ? row[2].toString().trim() : "";
+    UUID candidateId = null;
+    if (row[1] instanceof UUID uuid) {
+      candidateId = uuid;
+    } else if (row[1] != null) {
+      candidateId = UUID.fromString(row[1].toString());
+    }
+
+    String firstName = row[2] != null ? row[2].toString().trim() : "";
+    String lastName = row[3] != null ? row[3].toString().trim() : "";
     String fullName = (firstName + " " + lastName).trim();
-    String email = row[3] != null ? row[3].toString().trim() : "";
-    String phone = row[4] != null ? row[4].toString().trim() : "";
-    String offerTitle = row[5] != null ? row[5].toString() : null;
-    Double totalScore = row[6] != null ? ((Number) row[6]).doubleValue() : null;
-    boolean isAdmissible = Boolean.TRUE.equals(row[7]);
+    String email = row[4] != null ? row[4].toString().trim() : "";
+    String phone = row[5] != null ? row[5].toString().trim() : "";
+    String offerTitle = row[6] != null ? row[6].toString() : null;
+    Double totalScore = row[7] != null ? ((Number) row[7]).doubleValue() : null;
+    boolean isAdmissible = Boolean.TRUE.equals(row[8]);
 
     ApplicationStatus status = ApplicationStatus.NEW;
-    if (row[8] != null) {
+    if (row[9] != null) {
       try {
-        status = ApplicationStatus.valueOf(row[8].toString());
+        status = ApplicationStatus.valueOf(row[9].toString());
       } catch (IllegalArgumentException ignored) {
       }
     }
 
     OffsetDateTime appliedAt = null;
-    if (row[9] instanceof OffsetDateTime odt) {
+    if (row[10] instanceof OffsetDateTime odt) {
       appliedAt = odt;
-    } else if (row[9] instanceof Timestamp ts) {
+    } else if (row[10] instanceof Timestamp ts) {
       appliedAt = ts.toInstant().atOffset(ZoneOffset.UTC);
     }
 
-    Map<String, Object> categoryScores = parseCategoryScores(row[10]);
+    Map<String, Object> categoryScores = parseCategoryScores(row[11]);
 
     return new CandidateReportRowDto(
         rank,
+        applicationId,
         candidateId,
         fullName,
         email,

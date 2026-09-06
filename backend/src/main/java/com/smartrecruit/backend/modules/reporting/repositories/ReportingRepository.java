@@ -80,13 +80,14 @@ public interface ReportingRepository extends JpaRepository<Application, UUID> {
       @Param("offerId") UUID offerId, @Param("startDate") OffsetDateTime startDate);
 
   /**
-   * Fetches only the 11 columns required for candidate ranking and exports via a native projection,
+   * Fetches only the 12 columns required for candidate ranking and exports via a native projection,
    * completely bypassing heavy entity hydration and unused JSONB columns.
    */
   @Query(
       value =
           """
           SELECT
+            a.id as application_id,
             c.id as candidate_id,
             c.first_name,
             c.last_name,

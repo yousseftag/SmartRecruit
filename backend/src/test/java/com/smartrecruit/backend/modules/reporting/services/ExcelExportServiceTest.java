@@ -76,6 +76,7 @@ class ExcelExportServiceTest {
         new CandidateReportRowDto(
             1,
             UUID.randomUUID(),
+            UUID.randomUUID(),
             "Karim Benjelloun",
             "k.benjelloun@email.com",
             "+212611223344",
@@ -89,6 +90,7 @@ class ExcelExportServiceTest {
     CandidateReportRowDto candidate2 =
         new CandidateReportRowDto(
             2,
+            UUID.randomUUID(),
             UUID.randomUUID(),
             "Fatima Zahra",
             "f.zahra@email.com",
@@ -158,7 +160,18 @@ class ExcelExportServiceTest {
       throws IOException {
     CandidateReportRowDto minimalCandidate =
         new CandidateReportRowDto(
-            1, UUID.randomUUID(), null, null, null, null, null, false, null, null, null);
+            1,
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            null,
+            null,
+            null,
+            null,
+            null,
+            false,
+            null,
+            null,
+            null);
 
     byte[] excelBytes = excelExportService.exportRankedCandidates(List.of(minimalCandidate), null);
 

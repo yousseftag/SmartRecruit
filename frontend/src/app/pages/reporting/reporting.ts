@@ -25,6 +25,7 @@ import { CampaignStats, CandidateReportRow } from '../../core/models/reporting.m
 
 export interface CandidatePreview {
   id: string;
+  candidateId: string;
   rank: number;
   name: string;
   email: string;
@@ -276,7 +277,8 @@ export class Reporting implements OnInit, OnDestroy {
 
   private mapToPreview(row: CandidateReportRow): CandidatePreview {
     return {
-      id: row.candidateId,
+      id: row.applicationId,
+      candidateId: row.candidateId,
       rank: row.rank,
       name: row.fullName || '-',
       email: row.email || '-',

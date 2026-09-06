@@ -8,6 +8,7 @@ import java.util.UUID;
 /** Structured candidate details for ranking display and Excel/PDF export generation. */
 public record CandidateReportRowDto(
     int rank,
+    UUID applicationId,
     UUID candidateId,
     String fullName,
     String email,

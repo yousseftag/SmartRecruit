@@ -76,6 +76,7 @@ class ReportingControllerTest {
         new CandidateReportRowDto(
             1,
             UUID.randomUUID(),
+            UUID.randomUUID(),
             "Youssef Alami",
             "youssef@example.com",
             "+212611223344",
