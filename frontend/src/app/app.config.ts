@@ -5,14 +5,14 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import { provideKeycloak } from 'keycloak-angular';
 import { environment } from '../environments/environment';
 import { keycloakBearerInterceptor } from './core/auth/keycloak-bearer.interceptor';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-
     provideHttpClient(withFetch(), withInterceptors([keycloakBearerInterceptor])),
-
+    provideCharts(withDefaultRegisterables()),
     provideKeycloak({
       config: {
         url: environment.keycloak.url,

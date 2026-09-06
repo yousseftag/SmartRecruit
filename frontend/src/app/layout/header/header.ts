@@ -8,7 +8,6 @@ import {
   LucideLogOut,
   LucideKey,
   LucideCircleCheck,
-  LucideCircleHelp,
 } from '@lucide/angular';
 import { AuthService } from '../../core/auth/auth.service';
 import { EditProfile } from '../../pages/edit-profile/edit-profile';
@@ -24,7 +23,6 @@ import { EditProfile } from '../../pages/edit-profile/edit-profile';
     LucideLogOut,
     LucideKey,
     LucideCircleCheck,
-    LucideCircleHelp,
   ],
   templateUrl: './header.html',
 })
