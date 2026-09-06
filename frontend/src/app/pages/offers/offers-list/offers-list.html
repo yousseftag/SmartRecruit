@@ -1,4 +1,4 @@
-<div class="max-w-7xl mx-auto px-6 py-8">
+<div class="max-w-[1600px] 2xl:max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
   <!-- Page Header -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
     <div>
@@ -27,7 +27,7 @@
       <!-- Top Row: Search & Total Count -->
       <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         <!-- Search Input -->
-        <div class="relative flex-1 max-w-lg">
+        <div class="relative flex-1 max-w-xl">
           <svg
             class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-faint pointer-events-none"
             lucideSearch
@@ -52,380 +52,45 @@
       </div>
 
       <!-- Bottom Row: 4 Filters (Lifecycle Status, AI Status, Contract, Sort) -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
         <!-- 1. Lifecycle Status Dropdown -->
-        <div class="relative w-full">
-          <button
-            type="button"
-            (click)="toggleStatusDropdown($event)"
-            class="w-full px-3 py-2 bg-bg border border-line rounded-lg text-xs font-semibold text-ink flex items-center justify-between gap-2 hover:border-slate/40 focus:border-blue transition-all"
-          >
-            <div class="flex items-center gap-2 truncate">
-              <svg lucideFilter class="w-3.5 h-3.5 text-slate flex-shrink-0" size="14"></svg>
-              <span class="truncate">
-                Statut : {{ selectedStatus() === 'ALL' ? 'Tous les statuts' : selectedStatus() }}
-              </span>
-            </div>
-            <svg
-              lucideChevronDown
-              class="w-3.5 h-3.5 text-slate flex-shrink-0 transition-transform duration-200"
-              [class.rotate-180]="isStatusDropdownOpen()"
-              size="14"
-            ></svg>
-          </button>
-
-          @if (isStatusDropdownOpen()) {
-            <div
-              class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-line rounded-xl shadow-lg z-30 py-1 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150"
-            >
-              <button
-                type="button"
-                (click)="selectStatus('ALL')"
-                class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="
-                  selectedStatus() === 'ALL' ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
-                "
-              >
-                <span>Tous les statuts</span>
-                @if (selectedStatus() === 'ALL') {
-                  <svg lucideCheck class="w-3.5 h-3.5 text-blue flex-shrink-0" size="14"></svg>
-                }
-              </button>
-              <button
-                type="button"
-                (click)="selectStatus('DRAFT')"
-                class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="
-                  selectedStatus() === 'DRAFT' ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
-                "
-              >
-                <span>Brouillons (DRAFT)</span>
-                @if (selectedStatus() === 'DRAFT') {
-                  <svg lucideCheck class="w-3.5 h-3.5 text-blue flex-shrink-0" size="14"></svg>
-                }
-              </button>
-              <button
-                type="button"
-                (click)="selectStatus('ACTIVE')"
-                class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="
-                  selectedStatus() === 'ACTIVE' ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
-                "
-              >
-                <span>Actives (ACTIVE)</span>
-                @if (selectedStatus() === 'ACTIVE') {
-                  <svg lucideCheck class="w-3.5 h-3.5 text-blue flex-shrink-0" size="14"></svg>
-                }
-              </button>
-              <button
-                type="button"
-                (click)="selectStatus('CLOSED')"
-                class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="
-                  selectedStatus() === 'CLOSED' ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
-                "
-              >
-                <span>Clôturées (CLOSED)</span>
-                @if (selectedStatus() === 'CLOSED') {
-                  <svg lucideCheck class="w-3.5 h-3.5 text-blue flex-shrink-0" size="14"></svg>
-                }
-              </button>
-            </div>
-          }
+        <div>
+          <app-custom-dropdown
+            [options]="statusOptions"
+            [value]="selectedStatus()"
+            prefix="Statut : "
+            (selectionChange)="selectStatus($event)"
+          ></app-custom-dropdown>
         </div>
 
         <!-- 2. AI Status Dropdown -->
-        <div class="relative w-full">
-          <button
-            type="button"
-            (click)="toggleAiStatusDropdown($event)"
-            class="w-full px-3 py-2 bg-bg border border-line rounded-lg text-xs font-semibold text-ink flex items-center justify-between gap-2 hover:border-slate/40 focus:border-blue transition-all"
-          >
-            <div class="flex items-center gap-2 truncate">
-              <span class="w-2 h-2 rounded-full bg-blue"></span>
-              <span class="truncate">
-                IA : {{ selectedAiStatus() === 'ALL' ? 'Toutes analyses' : selectedAiStatus() }}
-              </span>
-            </div>
-            <svg
-              lucideChevronDown
-              class="w-3.5 h-3.5 text-slate flex-shrink-0 transition-transform duration-200"
-              [class.rotate-180]="isAiStatusDropdownOpen()"
-              size="14"
-            ></svg>
-          </button>
-
-          @if (isAiStatusDropdownOpen()) {
-            <div
-              class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-line rounded-xl shadow-lg z-30 py-1 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150"
-            >
-              <button
-                type="button"
-                (click)="selectAiStatus('ALL')"
-                class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="
-                  selectedAiStatus() === 'ALL' ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
-                "
-              >
-                <span>Toutes les analyses IA</span>
-                @if (selectedAiStatus() === 'ALL') {
-                  <svg lucideCheck class="w-3.5 h-3.5 text-blue flex-shrink-0" size="14"></svg>
-                }
-              </button>
-              <button
-                type="button"
-                (click)="selectAiStatus('SUCCESS')"
-                class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="
-                  selectedAiStatus() === 'SUCCESS'
-                    ? 'text-blue font-bold bg-blue-100/40'
-                    : 'text-ink'
-                "
-              >
-                <span>Terminée (SUCCESS)</span>
-                @if (selectedAiStatus() === 'SUCCESS') {
-                  <svg lucideCheck class="w-3.5 h-3.5 text-blue flex-shrink-0" size="14"></svg>
-                }
-              </button>
-              <button
-                type="button"
-                (click)="selectAiStatus('PENDING')"
-                class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="
-                  selectedAiStatus() === 'PENDING'
-                    ? 'text-blue font-bold bg-blue-100/40'
-                    : 'text-ink'
-                "
-              >
-                <span>En cours (PENDING)</span>
-                @if (selectedAiStatus() === 'PENDING') {
-                  <svg lucideCheck class="w-3.5 h-3.5 text-blue flex-shrink-0" size="14"></svg>
-                }
-              </button>
-              <button
-                type="button"
-                (click)="selectAiStatus('STALLED')"
-                class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="
-                  selectedAiStatus() === 'STALLED'
-                    ? 'text-blue font-bold bg-blue-100/40'
-                    : 'text-ink'
-                "
-              >
-                <span>Bloquée (STALLED)</span>
-                @if (selectedAiStatus() === 'STALLED') {
-                  <svg lucideCheck class="w-3.5 h-3.5 text-blue flex-shrink-0" size="14"></svg>
-                }
-              </button>
-              <button
-                type="button"
-                (click)="selectAiStatus('FAILED')"
-                class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="
-                  selectedAiStatus() === 'FAILED'
-                    ? 'text-blue font-bold bg-blue-100/40'
-                    : 'text-ink'
-                "
-              >
-                <span>Échec (FAILED)</span>
-                @if (selectedAiStatus() === 'FAILED') {
-                  <svg lucideCheck class="w-3.5 h-3.5 text-blue flex-shrink-0" size="14"></svg>
-                }
-              </button>
-            </div>
-          }
+        <div>
+          <app-custom-dropdown
+            [options]="aiStatusOptions"
+            [value]="selectedAiStatus()"
+            prefix="IA : "
+            (selectionChange)="selectAiStatus($event)"
+          ></app-custom-dropdown>
         </div>
 
         <!-- 3. Contract Type Dropdown -->
-        <div class="relative w-full">
-          <button
-            type="button"
-            (click)="toggleContractDropdown($event)"
-            class="w-full px-3 py-2 bg-bg border border-line rounded-lg text-xs font-semibold text-ink flex items-center justify-between gap-2 hover:border-slate/40 focus:border-blue transition-all"
-          >
-            <div class="flex items-center gap-2 truncate">
-              <svg lucideBriefcase class="w-3.5 h-3.5 text-slate flex-shrink-0" size="14"></svg>
-              <span class="truncate">
-                Contrat :
-                {{ selectedContractType() === 'ALL' ? 'Tous les types' : selectedContractType() }}
-              </span>
-            </div>
-            <svg
-              lucideChevronDown
-              class="w-3.5 h-3.5 text-slate flex-shrink-0 transition-transform duration-200"
-              [class.rotate-180]="isContractDropdownOpen()"
-              size="14"
-            ></svg>
-          </button>
-
-          @if (isContractDropdownOpen()) {
-            <div
-              class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-line rounded-xl shadow-lg z-30 py-1 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150"
-            >
-              <button
-                type="button"
-                (click)="selectContractType('ALL')"
-                class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="
-                  selectedContractType() === 'ALL'
-                    ? 'text-blue font-bold bg-blue-100/40'
-                    : 'text-ink'
-                "
-              >
-                <span>Tous les contrats</span>
-                @if (selectedContractType() === 'ALL') {
-                  <svg lucideCheck class="w-3.5 h-3.5 text-blue flex-shrink-0" size="14"></svg>
-                }
-              </button>
-              <button
-                type="button"
-                (click)="selectContractType('CDI')"
-                class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="
-                  selectedContractType() === 'CDI'
-                    ? 'text-blue font-bold bg-blue-100/40'
-                    : 'text-ink'
-                "
-              >
-                <span>CDI</span>
-                @if (selectedContractType() === 'CDI') {
-                  <svg lucideCheck class="w-3.5 h-3.5 text-blue flex-shrink-0" size="14"></svg>
-                }
-              </button>
-              <button
-                type="button"
-                (click)="selectContractType('CDD')"
-                class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="
-                  selectedContractType() === 'CDD'
-                    ? 'text-blue font-bold bg-blue-100/40'
-                    : 'text-ink'
-                "
-              >
-                <span>CDD</span>
-                @if (selectedContractType() === 'CDD') {
-                  <svg lucideCheck class="w-3.5 h-3.5 text-blue flex-shrink-0" size="14"></svg>
-                }
-              </button>
-              <button
-                type="button"
-                (click)="selectContractType('Stage')"
-                class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="
-                  selectedContractType() === 'Stage'
-                    ? 'text-blue font-bold bg-blue-100/40'
-                    : 'text-ink'
-                "
-              >
-                <span>Stage</span>
-                @if (selectedContractType() === 'Stage') {
-                  <svg lucideCheck class="w-3.5 h-3.5 text-blue flex-shrink-0" size="14"></svg>
-                }
-              </button>
-              <button
-                type="button"
-                (click)="selectContractType('Freelance')"
-                class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="
-                  selectedContractType() === 'Freelance'
-                    ? 'text-blue font-bold bg-blue-100/40'
-                    : 'text-ink'
-                "
-              >
-                <span>Freelance</span>
-                @if (selectedContractType() === 'Freelance') {
-                  <svg lucideCheck class="w-3.5 h-3.5 text-blue flex-shrink-0" size="14"></svg>
-                }
-              </button>
-            </div>
-          }
+        <div>
+          <app-custom-dropdown
+            [options]="contractOptions"
+            [value]="selectedContractType()"
+            prefix="Contrat : "
+            (selectionChange)="selectContractType($event)"
+          ></app-custom-dropdown>
         </div>
 
         <!-- 4. Sort Dropdown -->
-        <div class="relative w-full">
-          <button
-            type="button"
-            (click)="toggleSortDropdown($event)"
-            class="w-full px-3 py-2 bg-bg border border-line rounded-lg text-xs font-semibold text-ink flex items-center justify-between gap-2 hover:border-slate/40 focus:border-blue transition-all"
-          >
-            <span class="truncate">
-              Tri :
-              {{
-                sortBy() === 'NEWEST'
-                  ? 'Plus récentes'
-                  : sortBy() === 'OLDEST'
-                    ? 'Plus anciennes'
-                    : sortBy() === 'TITLE_ASC'
-                      ? 'Titre A-Z'
-                      : 'Score min décroissant'
-              }}
-            </span>
-            <svg
-              lucideChevronDown
-              class="w-3.5 h-3.5 text-slate flex-shrink-0 transition-transform duration-200"
-              [class.rotate-180]="isSortDropdownOpen()"
-              size="14"
-            ></svg>
-          </button>
-
-          @if (isSortDropdownOpen()) {
-            <div
-              class="absolute left-0 right-0 top-full mt-1.5 bg-white border border-line rounded-xl shadow-lg z-30 py-1 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-150"
-            >
-              <button
-                type="button"
-                (click)="selectSort('NEWEST')"
-                class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="
-                  sortBy() === 'NEWEST' ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
-                "
-              >
-                <span>Plus récentes</span>
-                @if (sortBy() === 'NEWEST') {
-                  <svg lucideCheck class="w-3.5 h-3.5 text-blue flex-shrink-0" size="14"></svg>
-                }
-              </button>
-              <button
-                type="button"
-                (click)="selectSort('OLDEST')"
-                class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="
-                  sortBy() === 'OLDEST' ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
-                "
-              >
-                <span>Plus anciennes</span>
-                @if (sortBy() === 'OLDEST') {
-                  <svg lucideCheck class="w-3.5 h-3.5 text-blue flex-shrink-0" size="14"></svg>
-                }
-              </button>
-              <button
-                type="button"
-                (click)="selectSort('TITLE_ASC')"
-                class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="
-                  sortBy() === 'TITLE_ASC' ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
-                "
-              >
-                <span>Titre A-Z</span>
-                @if (sortBy() === 'TITLE_ASC') {
-                  <svg lucideCheck class="w-3.5 h-3.5 text-blue flex-shrink-0" size="14"></svg>
-                }
-              </button>
-              <button
-                type="button"
-                (click)="selectSort('SCORE_DESC')"
-                class="w-full px-3 py-2 text-left text-xs flex items-center justify-between hover:bg-bg transition-colors"
-                [ngClass]="
-                  sortBy() === 'SCORE_DESC' ? 'text-blue font-bold bg-blue-100/40' : 'text-ink'
-                "
-              >
-                <span>Score min décroissant</span>
-                @if (sortBy() === 'SCORE_DESC') {
-                  <svg lucideCheck class="w-3.5 h-3.5 text-blue flex-shrink-0" size="14"></svg>
-                }
-              </button>
-            </div>
-          }
+        <div>
+          <app-custom-dropdown
+            [options]="sortOptions"
+            [value]="sortBy()"
+            prefix="Tri : "
+            (selectionChange)="selectSort($event)"
+          ></app-custom-dropdown>
         </div>
       </div>
     </div>
@@ -457,7 +122,7 @@
             class="bg-bg text-slate font-bold uppercase tracking-wider border-b border-line text-[11px]"
           >
             <tr>
-              <th class="px-6 py-3.5">Intitulé de l'offre</th>
+              <th class="px-6 py-3.5 min-w-[340px]">Intitulé de l'offre</th>
               <th class="px-6 py-3.5">Type & Lieu</th>
               <th class="px-6 py-3.5 text-center">Cycle de Vie</th>
               <th class="px-6 py-3.5 text-center">Statut IA</th>
@@ -473,21 +138,35 @@
                 class="hover:bg-bg/60 transition-colors cursor-pointer group"
               >
                 <!-- Title & Skills Preview -->
-                <td class="px-6 py-4">
+                <td class="px-6 py-4.5 min-w-[340px]">
                   <div class="font-bold text-ink group-hover:text-blue transition-colors text-xs">
                     {{ offer.title }}
                   </div>
                   @if (
                     offer.categoryCriteria?.skills && offer.categoryCriteria?.skills!.length > 0
                   ) {
-                    <div class="text-[11px] text-muted truncate max-w-xs mt-0.5">
-                      {{ offer.categoryCriteria?.skills!.join(' • ') }}
+                    <div class="flex flex-wrap items-center gap-1 mt-1">
+                      @for (skill of offer.categoryCriteria?.skills!.slice(0, 3); track skill) {
+                        <span
+                          class="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 text-[10px] font-medium border border-slate-200/60"
+                        >
+                          {{ skill }}
+                        </span>
+                      }
+                      @if (offer.categoryCriteria?.skills!.length > 3) {
+                        <span
+                          class="px-1.5 py-0.5 rounded bg-blue-50 text-blue font-semibold text-[10px] border border-blue-200/60 cursor-help"
+                          [title]="offer.categoryCriteria?.skills!.slice(3).join(', ')"
+                        >
+                          +{{ offer.categoryCriteria?.skills!.length - 3 }}
+                        </span>
+                      }
                     </div>
                   }
                 </td>
 
                 <!-- Contract & Location -->
-                <td class="px-6 py-4">
+                <td class="px-6 py-4.5">
                   <div class="flex items-center gap-1.5 font-medium text-ink">
                     <span
                       class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-semibold"
@@ -504,29 +183,29 @@
                 </td>
 
                 <!-- Lifecycle Status Badge (Shared Component) -->
-                <td class="px-6 py-4 text-center">
+                <td class="px-6 py-4.5 text-center">
                   <app-status-badge [status]="offer.status"></app-status-badge>
                 </td>
 
                 <!-- AI Status Badge (Shared Component) -->
-                <td class="px-6 py-4 text-center">
+                <td class="px-6 py-4.5 text-center">
                   <app-status-badge [status]="offer.offerAiStatus"></app-status-badge>
                 </td>
 
                 <!-- Minimum Score Threshold -->
-                <td class="px-6 py-4 text-center font-semibold text-ink">
+                <td class="px-6 py-4.5 text-center font-semibold text-ink">
                   <span class="px-2 py-1 bg-slate-50 border border-line rounded-md text-[11px]">
                     ≥ {{ offer.minScore ?? 70 }}%
                   </span>
                 </td>
 
                 <!-- Created At Date -->
-                <td class="px-6 py-4 text-slate">
+                <td class="px-6 py-4.5 text-slate">
                   {{ offer.createdAt | date: 'dd/MM/yyyy' }}
                 </td>
 
                 <!-- Action Menu Column -->
-                <td class="pr-6 py-4 text-right" (click)="$event.stopPropagation()">
+                <td class="pr-6 py-4.5 text-right" (click)="$event.stopPropagation()">
                   <div class="relative inline-block text-left">
                     <button
                       type="button"

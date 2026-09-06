@@ -35,9 +35,12 @@ import {
   OfferInternalResponse,
   OfferStatus,
   OfferAiStatus,
-  CONTRACT_TYPES,
 } from '../../../core/models/offer.model';
 import { StatusBadge } from '../../../shared/components/status-badge/status-badge';
+import {
+  CustomDropdown,
+  DropdownItem,
+} from '../../../shared/components/custom-dropdown/custom-dropdown';
 
 export type OfferSortOption = 'NEWEST' | 'OLDEST' | 'TITLE_ASC' | 'SCORE_DESC';
 
@@ -49,10 +52,9 @@ export type OfferSortOption = 'NEWEST' | 'OLDEST' | 'TITLE_ASC' | 'SCORE_DESC';
     RouterModule,
     DatePipe,
     StatusBadge,
+    CustomDropdown,
     LucidePlus,
     LucideSearch,
-    LucideFilter,
-    LucideChevronDown,
     LucideChevronLeft,
     LucideChevronRight,
     LucideMoreVertical,
@@ -86,16 +88,42 @@ export class OffersList implements OnInit, OnDestroy {
   readonly selectedContractType = signal<string>('ALL');
   readonly sortBy = signal<OfferSortOption>('NEWEST');
 
+  readonly statusOptions: readonly DropdownItem[] = [
+    { label: 'Tous les statuts', value: 'ALL' },
+    { label: 'Brouillons', value: 'DRAFT' },
+    { label: 'Actives', value: 'ACTIVE' },
+    { label: 'Clôturées', value: 'CLOSED' },
+  ];
+
+  readonly aiStatusOptions: readonly DropdownItem[] = [
+    { label: 'Toutes les analyses', value: 'ALL' },
+    { label: 'Terminée', value: 'SUCCESS' },
+    { label: 'En cours', value: 'PENDING' },
+    { label: 'Bloquée', value: 'STALLED' },
+    { label: 'Échec', value: 'FAILED' },
+  ];
+
+  readonly contractOptions: readonly DropdownItem[] = [
+    { label: 'Tous les contrats', value: 'ALL' },
+    { label: 'CDI', value: 'CDI' },
+    { label: 'CDD', value: 'CDD' },
+    { label: 'Stage', value: 'Stage' },
+    { label: 'Autre', value: 'Autre' },
+  ];
+
+  readonly sortOptions: readonly DropdownItem[] = [
+    { label: 'Plus récentes', value: 'NEWEST' },
+    { label: 'Plus anciennes', value: 'OLDEST' },
+    { label: 'Titre (A à Z)', value: 'TITLE_ASC' },
+    { label: 'Score min décroissant', value: 'SCORE_DESC' },
+  ];
+
   // Pagination
   readonly currentPage = signal(1);
   readonly pageSizes = [10, 25, 50];
   readonly pageSize = signal(10);
 
   // Dropdowns state
-  readonly isStatusDropdownOpen = signal(false);
-  readonly isAiStatusDropdownOpen = signal(false);
-  readonly isContractDropdownOpen = signal(false);
-  readonly isSortDropdownOpen = signal(false);
   readonly activeActionOfferId = signal<string | null>(null);
 
   // Toast
@@ -208,10 +236,6 @@ export class OffersList implements OnInit, OnDestroy {
   }
 
   closeAllDropdowns() {
-    this.isStatusDropdownOpen.set(false);
-    this.isAiStatusDropdownOpen.set(false);
-    this.isContractDropdownOpen.set(false);
-    this.isSortDropdownOpen.set(false);
     this.activeActionOfferId.set(null);
   }
 
@@ -244,28 +268,24 @@ export class OffersList implements OnInit, OnDestroy {
     this.currentPage.set(1);
   }
 
-  selectStatus(status: 'ALL' | OfferStatus) {
-    this.selectedStatus.set(status);
+  selectStatus(status: string) {
+    this.selectedStatus.set(status as 'ALL' | OfferStatus);
     this.currentPage.set(1);
-    this.isStatusDropdownOpen.set(false);
   }
 
-  selectAiStatus(status: 'ALL' | OfferAiStatus) {
-    this.selectedAiStatus.set(status);
+  selectAiStatus(status: string) {
+    this.selectedAiStatus.set(status as 'ALL' | OfferAiStatus);
     this.currentPage.set(1);
-    this.isAiStatusDropdownOpen.set(false);
   }
 
   selectContractType(type: string) {
     this.selectedContractType.set(type);
     this.currentPage.set(1);
-    this.isContractDropdownOpen.set(false);
   }
 
-  selectSort(option: OfferSortOption) {
-    this.sortBy.set(option);
+  selectSort(option: string) {
+    this.sortBy.set(option as OfferSortOption);
     this.currentPage.set(1);
-    this.isSortDropdownOpen.set(false);
   }
 
   setPageSize(size: number) {
@@ -279,35 +299,7 @@ export class OffersList implements OnInit, OnDestroy {
     }
   }
 
-  // --- Toggle Dropdowns ---
-
-  toggleStatusDropdown(e: Event) {
-    e.stopPropagation();
-    const cur = this.isStatusDropdownOpen();
-    this.closeAllDropdowns();
-    this.isStatusDropdownOpen.set(!cur);
-  }
-
-  toggleAiStatusDropdown(e: Event) {
-    e.stopPropagation();
-    const cur = this.isAiStatusDropdownOpen();
-    this.closeAllDropdowns();
-    this.isAiStatusDropdownOpen.set(!cur);
-  }
-
-  toggleContractDropdown(e: Event) {
-    e.stopPropagation();
-    const cur = this.isContractDropdownOpen();
-    this.closeAllDropdowns();
-    this.isContractDropdownOpen.set(!cur);
-  }
-
-  toggleSortDropdown(e: Event) {
-    e.stopPropagation();
-    const cur = this.isSortDropdownOpen();
-    this.closeAllDropdowns();
-    this.isSortDropdownOpen.set(!cur);
-  }
+  // --- Action Menu & Handlers ---
 
   toggleActionMenu(offerId: string, e: Event) {
     e.stopPropagation();

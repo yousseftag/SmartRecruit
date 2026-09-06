@@ -118,9 +118,14 @@
         <!-- Description Section -->
         <div class="card p-6 bg-white space-y-4">
           <h3 class="text-lg font-bold text-ink">Description du poste</h3>
-          <div class="text-slate leading-relaxed whitespace-pre-line text-sm md:text-base">
-            {{ off.descriptionMarkdown || 'Aucune description détaillée renseignée.' }}
-          </div>
+          @if (off.descriptionMarkdown) {
+            <div
+              class="prose prose-sm max-w-none text-slate-700 leading-relaxed text-sm md:text-base"
+              [innerHTML]="off.descriptionMarkdown | markdown"
+            ></div>
+          } @else {
+            <p class="text-slate-400 italic text-sm">Aucune description détaillée renseignée.</p>
+          }
         </div>
 
         <!-- Required Skills & Criteria Section (Reordered: Skills -> Coursework -> Languages) -->

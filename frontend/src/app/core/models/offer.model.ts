@@ -1,16 +1,74 @@
-export type ContractType = 'CDI' | 'CDD' | 'Stage' | 'Freelance';
+// ============================================================================
+// NORSYS RECRUITMENT CONFIGURATION & PRESETS (EASY EDIT SECTION)
+// ============================================================================
+
+export type ContractType = 'CDI' | 'CDD' | 'Stage' | 'Autre';
 
 export interface ContractTypeOption {
   value: ContractType;
   label: string;
 }
 
+/** Types de contrats disponibles pour Norsys */
 export const CONTRACT_TYPES: ContractTypeOption[] = [
   { value: 'CDI', label: 'CDI (Durée Indéterminée)' },
   { value: 'CDD', label: 'CDD (Durée Déterminée)' },
   { value: 'Stage', label: 'Stage' },
-  { value: 'Freelance', label: 'Freelance / Indépendant' },
+  { value: 'Autre', label: 'Autre' },
 ];
+
+/** Villes et modalités de travail cibles pour Norsys Maroc */
+export const COMMON_LOCATIONS: readonly string[] = [
+  'Agadir',
+  'Marrakech',
+  'Full Remote / Télétravail 100%',
+  'Hybride - Agadir',
+  'Hybride - Marrakech',
+];
+
+/** Langues courantes requises */
+export const COMMON_LANGUAGES: readonly string[] = ['Français', 'Anglais', 'Français & Anglais'];
+
+/** Diplômes et niveaux académiques courants */
+export const COMMON_DEGREES: readonly string[] = [
+  'Bac+2 (BTS, DUT, DEUG)',
+  'Bac+3 (Licence, Bachelor)',
+  "Bac+5 (Master, Diplôme d'Ingénieur)",
+  "Diplôme d'Ingénieur d'État",
+  'Master en Informatique / Ingénierie Logicielle',
+  'Master en Systèmes & Réseaux / Cybersécurité',
+  'Master en Data Science / Intelligence Artificielle',
+  'Master en Management / Commerce',
+  'Doctorat / PhD',
+];
+
+/** Compétences techniques courantes (suggestions rapides) */
+export const COMMON_TECH_SKILLS: readonly string[] = [
+  'Java',
+  'Spring Boot',
+  'Angular',
+  'TypeScript',
+  'React',
+  'Node.js',
+  'Python',
+  'Docker',
+  'Kubernetes',
+  'PostgreSQL',
+  'MongoDB',
+  'RabbitMQ',
+  'Kafka',
+  'Git',
+  'CI/CD',
+  'AWS',
+  'Azure',
+  'GCP',
+  'Linux',
+  'REST APIs',
+];
+
+// ============================================================================
+// DTOs & BACKEND DATA CONTRACTS
+// ============================================================================
 
 export type OfferStatus = 'DRAFT' | 'ACTIVE' | 'CLOSED';
 export type OfferAiStatus = 'PENDING' | 'STALLED' | 'SUCCESS' | 'FAILED';

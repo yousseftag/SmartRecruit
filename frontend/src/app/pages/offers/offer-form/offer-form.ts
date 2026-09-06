@@ -16,10 +16,13 @@ import {
   CategoryWeights,
   ContractType,
   CONTRACT_TYPES,
+  COMMON_LOCATIONS,
   CreateOfferRequest,
   OfferInternalResponse,
 } from '../../../core/models/offer.model';
 import { WeightedCriteriaGrid } from '../../../shared/components/weighted-criteria-grid/weighted-criteria-grid';
+import { MarkdownEditor } from '../../../shared/components/markdown-editor/markdown-editor';
+import { CustomDropdown } from '../../../shared/components/custom-dropdown/custom-dropdown';
 
 @Component({
   selector: 'app-offer-form',
@@ -29,6 +32,8 @@ import { WeightedCriteriaGrid } from '../../../shared/components/weighted-criter
     FormsModule,
     RouterModule,
     WeightedCriteriaGrid,
+    MarkdownEditor,
+    CustomDropdown,
     LucideArrowLeft,
     LucideSave,
     LucideAlertTriangle,
@@ -44,6 +49,13 @@ export class OfferForm implements OnInit {
   private offerService = inject(OfferService);
 
   readonly contractTypeOptions = CONTRACT_TYPES;
+  readonly commonLocations = COMMON_LOCATIONS;
+
+  onLocationChange(loc: string) {
+    const current = { ...this.criteria() };
+    current.localization = loc;
+    this.criteria.set(current);
+  }
 
   // Edit Mode state
   readonly isEditMode = signal(false);

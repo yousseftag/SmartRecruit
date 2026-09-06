@@ -1,52 +1,95 @@
 -- V5__seed_data.sql
 
--- 1. Create a Recruiter User 
+-- 1. Create a Recruiter User (Preserving required test user and mock author)
 INSERT INTO app_user (id, keycloak_sub, username, first_name, last_name, email, role)
 VALUES 
-('11111111-1111-1111-1111-111111111111', 'recruiter-sub-123', 'recruiter', 'John', 'Recruiter', 'recruiter@smartrecruit.com', 'RECRUITER')
+('11111111-1111-1111-1111-111111111111', 'recruiter-sub-123', 'recruiter', 'John', 'Recruteur', 'recruiter@smartrecruit.com', 'RECRUITER')
 ON CONFLICT (email) DO NOTHING;
 
--- 2. Create 3 Distinct Job Offers
-INSERT INTO offer (id, created_by, updated_by, title, description_markdown, status, category_weights, category_criteria, min_score, duration_months, contract_type)
+-- 2. Create 3 Distinct Job Offers (French, Markdown, Curated Norsys Locations & Criteria)
+INSERT INTO offer (id, created_by, updated_by, title, description_markdown, status, category_weights, category_criteria, min_score, duration_months, contract_type, extracted_requirements)
 VALUES 
 (
   '22222222-2222-2222-2222-222222222222', 
   '11111111-1111-1111-1111-111111111111', 
   '11111111-1111-1111-1111-111111111111',
-  'Senior Full-Stack Developer', 
-  'Norsys Afrique recherche un Développeur Full-Stack Senior passionné pour rejoindre notre équipe à Agadir. Vous développerez avec Spring Boot, Angular et PostgreSQL.', 
+  'Développeur Full-Stack Senior Java / Angular', 
+  '### Contexte & Mission
+Norsys Afrique renforce son centre d''excellence à **Agadir** et recrute un(e) **Développeur Full-Stack Senior Java / Angular**. Vous intégrerez une équipe passionnée et agile en charge de la conception et du développement de plateformes métiers critiques pour de grands comptes internationaux.
+
+### Responsabilités principales
+- Concevoir des architectures microservices modulaires et résilientes avec **Spring Boot 3** et Java 21.
+- Développer des interfaces utilisateur réactives, modernes et performantes sous **Angular 17+** (Signals, Tailwind CSS).
+- Garantir la modélisation, l''optimisation des requêtes et l''intégrité des bases de données relationnelles **PostgreSQL**.
+- Participer activement à la conteneurisation **Docker**, à l''industrialisation des pipelines CI/CD et aux revues de code rigoureuses.
+- Accompagner et mentorer les développeurs juniors au sein de la squad dans un esprit de Software Craftsmanship.
+
+### Profil recherché
+- Formation supérieure : **Bac+5** en informatique (Master ou Diplôme d''Ingénieur d''État).
+- Minimum **3 ans d''expérience** avérée sur la stack Java / Spring Boot et Angular en production.
+- Excellente maîtrise du **Français** et très bon niveau en **Anglais technique**.
+- Sens prononcé de la qualité logicielle (tests automatisés, Clean Architecture, principes SOLID).', 
   'ACTIVE', 
-  '{"skills": 30, "experience": 30, "coursework": 15, "languages": 10, "localization": 15}',
-  '{"skills": ["java", "spring boot", "angular", "postgresql"], "experience": 36, "coursework": ["bac+5", "master"], "languages": ["English", "French"], "localization": "Agadir"}', 
+  '{"skills": 30, "experience": 25, "coursework": 15, "languages": 15, "localization": 15}',
+  '{"skills": ["Java", "Spring Boot", "Angular", "PostgreSQL", "Docker"], "skill_weights": {"Java": 25, "Spring Boot": 25, "Angular": 25, "PostgreSQL": 15, "Docker": 10}, "experience": 36, "coursework": ["Bac+5 (Master, Diplôme d''Ingénieur)", "Diplôme d''Ingénieur d''État"], "languages": ["Français", "Anglais"], "localization": "Agadir"}', 
   80,
   null, 
-  'CDI'
+  'CDI',
+  '{"missing_from_criteria": ["Docker", "Git", "CI/CD"], "insights": "Le profil nécessite une solide maîtrise des architectures découplées, des bonnes pratiques de Clean Code et des méthodologies agiles."}'
 ),
 (
   '33333333-3333-3333-3333-333333333333', 
   '11111111-1111-1111-1111-111111111111', 
   '11111111-1111-1111-1111-111111111111',
-  'Stage: Data Scientist (NLP / LLM)', 
-  'Rejoignez notre équipe R&D pour concevoir le moteur d''extraction et de matching intelligent des CVs avec FastAPI, PyTorch et Transformers.', 
+  'Stage PFE : Data Scientist & Ingénieur IA (NLP / LLM)', 
+  '### Contexte du Stage
+Au sein du laboratoire d''innovation technologique de Norsys à **Marrakech**, vous participerez activement au développement de la nouvelle génération d''outils d''analyse sémantique automatique et de matching de profils par Intelligence Artificielle.
+
+### Missions confiées
+- Concevoir et entraîner des modèles de traitement automatique du langage naturel (NLP) et d''extraction d''entités (NER).
+- Développer des microservices d''inférence asynchrones et haute performance avec **FastAPI** et **PyTorch**.
+- Évaluer, affiner et intégrer des modèles de fondation ouverts via l''écosystème **HuggingFace** et Transformers.
+- Mettre en place des métriques d''évaluation quantitatives et qualitatives des algorithmes de matching.
+
+### Profil requis
+- Étudiant en dernière année d''école d''ingénieurs ou Master 2 spécialisé en Data Science / Intelligence Artificielle (**Bac+5**).
+- Solides compétences en programmation **Python** et frameworks de Deep Learning.
+- Excellente maîtrise du **Français** et bon niveau en **Anglais**.
+- Stage conventionné de 6 mois avec forte opportunité de recrutement en CDI à l''issue.', 
   'ACTIVE', 
-  '{"skills": 40, "experience": 10, "coursework": 25, "languages": 15, "localization": 10}',
-  '{"skills": ["python", "pytorch", "fastapi", "huggingface", "spacy"], "experience": 0, "coursework": ["bac+5", "engineering"], "languages": ["English", "French"], "localization": "Casablanca"}', 
+  '{"skills": 35, "experience": 10, "coursework": 25, "languages": 15, "localization": 15}',
+  '{"skills": ["Python", "PyTorch", "FastAPI", "Transformers", "HuggingFace"], "skill_weights": {"Python": 30, "PyTorch": 25, "FastAPI": 20, "Transformers": 15, "HuggingFace": 10}, "experience": 0, "coursework": ["Bac+5 (Master, Diplôme d''Ingénieur)", "Master en Data Science / Intelligence Artificielle"], "languages": ["Français", "Anglais"], "localization": "Marrakech"}', 
   70,
   6, 
-  'Stage'
+  'Stage',
+  '{"missing_from_criteria": ["Scikit-Learn", "Git"], "insights": "Stage pré-embauche orienté R&D NLP, intégration de LLMs et déploiement d''APIs d''inférence légères."}'
 ),
 (
   '44444444-4444-4444-4444-444444444444', 
   '11111111-1111-1111-1111-111111111111', 
   '11111111-1111-1111-1111-111111111111',
-  'DevOps & Cloud Engineer', 
-  'Recherche d''un ingénieur DevOps pour orchestrer nos pipelines CI/CD, clusters Kubernetes et infrastructure cloud AWS.', 
+  'Ingénieur Cloud & DevOps', 
+  '### Mission
+Norsys recrute un(e) **Ingénieur(e) Cloud & DevOps** en **Télétravail complet (Full Remote 100%)** pour piloter l''industrialisation, la résilience et la sécurité de ses infrastructures cloud.
+
+### Vos responsabilités
+- Automatiser le provisionnement d''environnements cloud sur **AWS** via **Terraform** (Infrastructure as Code).
+- Déployer, superviser et maintenir des clusters **Kubernetes** en haute disponibilité.
+- Élaborer et optimiser des pipelines CI/CD industriels avec GitLab CI et conteneurs **Docker**.
+- Mettre en place des stratégies complètes d''observabilité, de monitoring et de gestion des alertes (Prometheus, Grafana).
+
+### Compétences & Profil
+- Diplôme d''ingénieur ou Master universitaire spécialisé (**Bac+5**).
+- Au moins **2 ans d''expérience** réussie sur un rôle similaire d''automatisation DevOps / Cloud.
+- Maîtrise confirmée de Docker, Kubernetes, Terraform et des services fondamentaux AWS.
+- Autonomie, rigueur méthodologique et excellente communication écrite et orale en Français.', 
   'ACTIVE', 
   '{"skills": 35, "experience": 25, "coursework": 15, "languages": 10, "localization": 15}',
-  '{"skills": ["docker", "kubernetes", "aws", "terraform", "ci/cd"], "experience": 24, "coursework": ["bac+5", "master"], "languages": ["English", "French"], "localization": "Rabat"}', 
+  '{"skills": ["Docker", "Kubernetes", "AWS", "Terraform", "CI/CD"], "skill_weights": {"Docker": 20, "Kubernetes": 25, "AWS": 25, "Terraform": 15, "CI/CD": 15}, "experience": 24, "coursework": ["Bac+5 (Master, Diplôme d''Ingénieur)", "Diplôme d''Ingénieur d''État"], "languages": ["Français", "Anglais"], "localization": "Full Remote / Télétravail 100%"}', 
   75,
   null, 
-  'CDI'
+  'CDI',
+  '{"missing_from_criteria": ["Ansible", "Linux", "Prometheus"], "insights": "Exigence forte sur les compétences Infrastructure as Code (Terraform) et l''orchestration de conteneurs Kubernetes."}'
 );
 
 -- ====================================================================
@@ -73,11 +116,11 @@ VALUES (
       "phone": "+212661122334",
       "current_job_title": "Lead Développeur Java / Angular"
     },
-    "description_markdown": "Ingénieur Full-Stack avec 4 ans d''expérience spécialisé sur l''écosystème Java/Spring Boot et Angular. Passionné par l''architecture microservices et la qualité logicielle.",
+    "description_markdown": "Ingénieur Full-Stack expérimenté avec plus de 4 ans d''expertise dans la conception d''applications d''entreprise robustes sous Java / Spring Boot et Angular. Adepte des pratiques Clean Code, de l''architecture microservices et des méthodologies agiles.",
     "skills": ["Java", "Spring Boot", "Angular", "PostgreSQL", "Docker", "Git", "Clean Architecture"],
     "experience": 48,
-    "coursework": ["Bac+5", "Master Informatique", "Ingénieur d''État"],
-    "languages": ["French", "English", "Arabic"],
+    "coursework": ["Bac+5 (Master, Diplôme d''Ingénieur)", "Diplôme d''Ingénieur d''État"],
+    "languages": ["Français", "Anglais"],
     "localization": "Agadir"
   }',
   NOW() - INTERVAL '2 days',
@@ -93,20 +136,20 @@ VALUES (
   'SHORTLISTED', 
   88.50, 
   true, 
-  '{"skills": 28.5, "experience": 30.0, "coursework": 15.0, "languages": 10.0, "localization": 15.0}', 
+  '{"skills": 26.50, "experience": 24.00, "coursework": 14.00, "languages": 11.00, "localization": 13.00}', 
   '{
     "matched_criteria": {
-      "skills": ["java", "spring boot", "angular", "postgresql"],
-      "experience": 48,
-      "coursework": ["bac+5", "master"],
-      "languages": ["English", "French"],
+      "skills": ["Java", "Spring Boot", "Angular", "PostgreSQL", "Docker"],
+      "experience": true,
+      "coursework": ["Bac+5 (Master, Diplôme d''Ingénieur)", "Diplôme d''Ingénieur d''État"],
+      "languages": ["Français", "Anglais"],
       "localization": "Agadir"
     },
     "strengths": [
-      "Excellente maîtrise technique sur la stack cible Spring Boot / Angular",
-      "4 ans d''expérience validée en environnement Agile",
-      "Diplôme Bac+5 Ingénieur d''État parfaitement aligné",
-      "Réside actuellement à Agadir (disponibilité immédiate)"
+      "Excellente maîtrise technique de la stack cible Spring Boot et Angular",
+      "4 ans d''expérience validée en environnement Agile et microservices",
+      "Diplôme d''Ingénieur d''État parfaitement aligné avec les exigences",
+      "Réside actuellement à Agadir (disponibilité immédiate pour le site)"
     ],
     "weaknesses": []
   }',
@@ -134,11 +177,11 @@ VALUES (
       "phone": "+212662233445",
       "current_job_title": "Développeuse Web Junior"
     },
-    "description_markdown": "Développeuse débutante passionnée par le développement front-end basique (HTML, CSS, PHP).",
+    "description_markdown": "Développeuse junior passionnée par l''intégration web moderne, le responsive design et les applications front-end légères (HTML, CSS, JavaScript, PHP).",
     "skills": ["HTML", "CSS", "JavaScript", "PHP", "MySQL"],
     "experience": 6,
-    "coursework": ["Bac+2", "BTS Informatique"],
-    "languages": ["French", "Arabic"],
+    "coursework": ["Bac+2 (BTS, DUT, DEUG)"],
+    "languages": ["Français"],
     "localization": "Marrakech"
   }',
   NOW() - INTERVAL '3 days',
@@ -154,22 +197,23 @@ VALUES (
   'REJECTED', 
   46.00, 
   false, 
-  '{"skills": 12.0, "experience": 8.0, "coursework": 8.0, "languages": 8.0, "localization": 10.0}', 
+  '{"skills": 10.00, "experience": 8.00, "coursework": 8.00, "languages": 10.00, "localization": 10.00}', 
   '{
     "matched_criteria": {
-      "skills": ["javascript"],
-      "experience": 6,
-      "coursework": ["bac+2"],
-      "languages": ["French"],
-      "localization": "Marrakech"
+      "skills": ["JavaScript"],
+      "experience": false,
+      "coursework": [],
+      "languages": ["Français"],
+      "localization": null
     },
     "strengths": [
-      "Bonnes bases en intégration web et PHP"
+      "Bonnes bases fondamentales en développement web et intégration frontend"
     ],
     "weaknesses": [
-      "Compétences requises manquantes : Java, Spring Boot, Angular, PostgreSQL",
-      "Expérience insuffisante (6 mois vs 36 mois demandés)",
-      "Localisation différente (Marrakech vs Agadir demandée)"
+      "Compétences clés de l''offre absentes du profil : Java, Spring Boot, Angular, PostgreSQL",
+      "Expérience professionnelle inférieure au seuil attendu (6 mois vs 36 mois requis)",
+      "Niveau d''études inférieur au prérequis (Bac+2 vs Bac+5 demandé)",
+      "Localisée à Marrakech alors que le poste est basé à Agadir"
     ]
   }',
   NOW() - INTERVAL '3 days',
@@ -196,12 +240,12 @@ VALUES (
       "phone": "+212663344556",
       "current_job_title": "Élève Ingénieur IA / NLP"
     },
-    "description_markdown": "Étudiant en dernière année d''école d''ingénieurs, passionné par le traitement automatique du langage naturel (NLP) et les architectures Transformers.",
+    "description_markdown": "Élève ingénieur en dernière année d''école d''ingénieurs, passionné par le traitement automatique du langage naturel (NLP), les LLMs et les architectures Transformers. Auteur de projets académiques d''extraction automatique d''informations.",
     "skills": ["Python", "PyTorch", "Transformers", "FastAPI", "HuggingFace", "Scikit-Learn"],
     "experience": 0,
-    "coursework": ["Bac+5", "Élève Ingénieur", "Master Recherche IA"],
-    "languages": ["English", "French", "Arabic"],
-    "localization": "Casablanca"
+    "coursework": ["Bac+5 (Master, Diplôme d''Ingénieur)", "Master en Data Science / Intelligence Artificielle"],
+    "languages": ["Français", "Anglais"],
+    "localization": "Marrakech"
   }',
   NOW() - INTERVAL '1 day',
   NOW() - INTERVAL '1 day' + INTERVAL '9 seconds'
@@ -216,21 +260,24 @@ VALUES (
   'INTERVIEWING', 
   74.00, 
   true, 
-  '{"skills": 32.0, "experience": 8.0, "coursework": 20.0, "languages": 10.0, "localization": 4.0}', 
+  '{"skills": 28.00, "experience": 8.00, "coursework": 18.00, "languages": 10.00, "localization": 10.00}', 
   '{
     "matched_criteria": {
-      "skills": ["python", "pytorch", "fastapi", "huggingface"],
-      "experience": 0,
-      "coursework": ["bac+5", "engineering"],
-      "languages": ["English", "French"],
-      "localization": "Casablanca"
+      "skills": ["Python", "PyTorch", "Transformers", "FastAPI", "HuggingFace"],
+      "experience": true,
+      "coursework": ["Bac+5 (Master, Diplôme d''Ingénieur)"],
+      "languages": ["Français", "Anglais"],
+      "localization": "Marrakech"
     },
     "strengths": [
-      "Maîtrise avancée de Python, PyTorch et Transformers",
-      "Projets universitaires pertinents en extraction d''entités nommées (NER)",
-      "Excellente maîtrise de l''anglais technique"
+      "Maîtrise remarquable de l''écosystème Python, PyTorch et Transformers",
+      "Projets académiques concrets sur l''extraction d''entités nommées (NER) et LLMs",
+      "Parfait alignement académique Bac+5 en Data Science / IA",
+      "Basé à Marrakech, proximité directe avec le centre R&D"
     ],
-    "weaknesses": []
+    "weaknesses": [
+      "Première expérience professionnelle (stage de fin d''études)"
+    ]
   }',
   NOW() - INTERVAL '1 day',
   NOW() - INTERVAL '1 day' + INTERVAL '9 seconds'
@@ -256,12 +303,12 @@ VALUES (
       "phone": "+212664455667",
       "current_job_title": "Ingénieur DevOps & Cloud AWS"
     },
-    "description_markdown": "Expert en automatisation d''infrastructure (IaC), orchestration Kubernetes et pipelines GitLab CI/CD.",
-    "skills": ["Docker", "Kubernetes", "AWS", "Terraform", "CI/CD", "Ansible", "Linux", "Prometheus"],
+    "description_markdown": "Ingénieur Cloud & DevOps chevronné avec 3 ans d''expérience en conception d''infrastructures cloud-native sous AWS. Expert en automatisation Terraform, gestion de clusters Kubernetes et pipelines CI/CD industriels.",
+    "skills": ["Docker", "Kubernetes", "AWS", "Terraform", "CI/CD", "Linux", "Prometheus", "Ansible"],
     "experience": 36,
-    "coursework": ["Bac+5", "Ingénieur d''État Réseaux & Systèmes"],
-    "languages": ["French", "English", "Arabic"],
-    "localization": "Rabat"
+    "coursework": ["Bac+5 (Master, Diplôme d''Ingénieur)", "Diplôme d''Ingénieur d''État"],
+    "languages": ["Français", "Anglais"],
+    "localization": "Full Remote / Télétravail 100%"
   }',
   NOW() - INTERVAL '4 days',
   NOW() - INTERVAL '4 days' + INTERVAL '6 seconds'
@@ -276,19 +323,20 @@ VALUES (
   'HIRED', 
   91.00, 
   true, 
-  '{"skills": 33.0, "experience": 24.0, "coursework": 15.0, "languages": 9.0, "localization": 10.0}', 
+  '{"skills": 32.00, "experience": 24.00, "coursework": 14.00, "languages": 9.00, "localization": 12.00}', 
   '{
     "matched_criteria": {
-      "skills": ["docker", "kubernetes", "aws", "terraform", "ci/cd"],
-      "experience": 36,
-      "coursework": ["bac+5", "master"],
-      "languages": ["English", "French"],
-      "localization": "Rabat"
+      "skills": ["Docker", "Kubernetes", "AWS", "Terraform", "CI/CD"],
+      "experience": true,
+      "coursework": ["Bac+5 (Master, Diplôme d''Ingénieur)"],
+      "languages": ["Français", "Anglais"],
+      "localization": "Full Remote / Télétravail 100%"
     },
     "strengths": [
-      "Profil senior complet correspondant exactement aux exigences de l''offre",
-      "Certification AWS Solutions Architect Associate validée",
-      "Réside à Rabat, ville du poste"
+      "Profil senior couvrant 100% des compétences cibles DevOps et Cloud",
+      "Certification AWS Solutions Architect validée",
+      "Expérience confirmée sur Kubernetes en production",
+      "Habitué au travail collaboratif en télétravail complet"
     ],
     "weaknesses": []
   }',
@@ -296,17 +344,17 @@ VALUES (
   NOW() - INTERVAL '4 days' + INTERVAL '6 seconds'
 );
 
--- Candidate 5: Bob Jones (Public Ingestion -> PENDING, in-flight extraction)
+-- Candidate 5: Ayoub Chraibi (Public Ingestion -> PENDING, in-flight extraction)
 INSERT INTO candidate (id, first_name, last_name, email, phone)
-VALUES ('50000000-0000-0000-0000-000000000005', 'Bob', 'Jones', 'bob.jones@example.com', '+212665566778');
+VALUES ('50000000-0000-0000-0000-000000000005', 'Ayoub', 'Chraibi', 'ayoub.chraibi@example.com', '+212665566778');
 
 INSERT INTO cv_file (id, candidate_id, storage_key, original_filename, checksum_sha256, extraction_status, extracted_data, uploaded_at, processed_at)
 VALUES (
   '51000000-0000-0000-0000-000000000005', 
   '50000000-0000-0000-0000-000000000005', 
   'resumes/51000000-0000-0000-0000-000000000005.pdf', 
-  'CV_Bob_Jones.pdf', 
-  'hash_bob_pending_5', 
+  'CV_Ayoub_Chraibi_FullStack.pdf', 
+  'hash_ayoub_pending_5', 
   'PENDING', 
   null,
   NOW() - INTERVAL '2 minutes',
@@ -328,17 +376,17 @@ VALUES (
   null
 );
 
--- Candidate 6: Alice Smith (AI Extraction FAILED, Has Contact Info -> Red Badge & Retry action)
+-- Candidate 6: Salma Bennani (AI Extraction FAILED, Has Contact Info -> Red Badge & Retry action)
 INSERT INTO candidate (id, first_name, last_name, email, phone)
-VALUES ('60000000-0000-0000-0000-000000000006', 'Alice', 'Smith', 'alice.smith@example.com', '+212666677889');
+VALUES ('60000000-0000-0000-0000-000000000006', 'Salma', 'Bennani', 'salma.bennani@example.com', '+212666677889');
 
 INSERT INTO cv_file (id, candidate_id, storage_key, original_filename, checksum_sha256, extraction_status, extracted_data, uploaded_at, processed_at)
 VALUES (
   '61000000-0000-0000-0000-000000000006', 
   '60000000-0000-0000-0000-000000000006', 
   'resumes/61000000-0000-0000-0000-000000000006.pdf', 
-  'CV_Alice_Smith_Scanned.pdf', 
-  'hash_alice_failed_6', 
+  'CV_Salma_Bennani_Scan.pdf', 
+  'hash_salma_failed_6', 
   'FAILED', 
   null,
   NOW() - INTERVAL '30 minutes',
@@ -369,7 +417,7 @@ VALUES (
   '71000000-0000-0000-0000-000000000007', 
   '70000000-0000-0000-0000-000000000007', 
   'resumes/71000000-0000-0000-0000-000000000007.pdf', 
-  'Corrupted_Document_Scan.pdf', 
+  'Scan_Document_Illisible.pdf', 
   'hash_ghost_corrupted_7', 
   'FAILED', 
   null,

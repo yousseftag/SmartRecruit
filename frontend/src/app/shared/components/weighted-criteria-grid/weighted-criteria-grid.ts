@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   LucidePlus,
+  LucideMinus,
   LucideX,
   LucideCheck,
   LucideAlertTriangle,
@@ -14,7 +15,15 @@ import {
   LucideMapPin,
   LucideBriefcase,
 } from '@lucide/angular';
-import { CategoryWeights, CategoryCriteria } from '../../../core/models/offer.model';
+import {
+  CategoryWeights,
+  CategoryCriteria,
+  COMMON_DEGREES,
+  COMMON_LANGUAGES,
+  COMMON_LOCATIONS,
+  COMMON_TECH_SKILLS,
+} from '../../../core/models/offer.model';
+import { CustomDropdown } from '../custom-dropdown/custom-dropdown';
 
 @Component({
   selector: 'app-weighted-criteria-grid',
@@ -22,7 +31,9 @@ import { CategoryWeights, CategoryCriteria } from '../../../core/models/offer.mo
   imports: [
     CommonModule,
     FormsModule,
+    CustomDropdown,
     LucidePlus,
+    LucideMinus,
     LucideX,
     LucideCheck,
     LucideAlertTriangle,
@@ -61,6 +72,12 @@ export class WeightedCriteriaGrid {
 
   /** Emits whether total weight is valid (exactly 100) */
   readonly sumValid = output<boolean>();
+
+  // Common keyword presets for dropdowns
+  readonly commonDegrees = COMMON_DEGREES;
+  readonly commonLanguages = COMMON_LANGUAGES;
+  readonly commonLocations = COMMON_LOCATIONS;
+  readonly commonTechSkills = COMMON_TECH_SKILLS;
 
   // Temporary inputs for chip adding
   newSkillName = signal<string>('');
@@ -107,6 +124,15 @@ export class WeightedCriteriaGrid {
     if (this.readOnly()) return;
     const current = { ...this.weights() };
     current[category] = Math.max(0, Math.min(100, Number(value) || 0));
+    this.weights.set(current);
+  }
+
+  // Stepper helper: increments / decrements weight by delta (e.g. ±5%)
+  adjustWeight(category: keyof CategoryWeights, delta: number) {
+    if (this.readOnly()) return;
+    const current = { ...this.weights() };
+    const currentVal = Number(current[category]) || 0;
+    current[category] = Math.max(0, Math.min(100, currentVal + delta));
     this.weights.set(current);
   }
 
@@ -270,6 +296,55 @@ export class WeightedCriteriaGrid {
     if (this.readOnly()) return;
     const currentCrit = { ...this.criteria() };
     currentCrit.localization = loc;
+    this.criteria.set(currentCrit);
+  }
+
+  // --- Preset Selection Handlers ---
+
+  selectDegree(degree: string) {
+    if (this.readOnly() || !degree) return;
+    const currentCrit = { ...this.criteria() };
+    const coursework = [...(currentCrit.coursework || [])];
+    if (!coursework.includes(degree)) {
+      coursework.push(degree);
+    }
+    currentCrit.coursework = coursework;
+    this.criteria.set(currentCrit);
+  }
+
+  selectLanguage(lang: string) {
+    if (this.readOnly() || !lang) return;
+    const currentCrit = { ...this.criteria() };
+    const languages = [...(currentCrit.languages || [])];
+    if (!languages.includes(lang)) {
+      languages.push(lang);
+    }
+    currentCrit.languages = languages;
+    this.criteria.set(currentCrit);
+  }
+
+  selectLocation(loc: string) {
+    if (this.readOnly() || !loc) return;
+    const currentCrit = { ...this.criteria() };
+    currentCrit.localization = loc;
+    this.criteria.set(currentCrit);
+  }
+
+  quickAddSkill(skill: string) {
+    if (this.readOnly() || !skill) return;
+    const currentCrit = { ...this.criteria() };
+    const skills = [...(currentCrit.skills || [])];
+    const skillWeights = { ...(currentCrit.skill_weights || {}) };
+
+    if (!skills.includes(skill)) {
+      skills.push(skill);
+    }
+    if (!skillWeights[skill]) {
+      skillWeights[skill] = 3;
+    }
+
+    currentCrit.skills = skills;
+    currentCrit.skill_weights = skillWeights;
     this.criteria.set(currentCrit);
   }
 }
