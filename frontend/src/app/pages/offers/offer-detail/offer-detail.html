@@ -1,1 +1,419 @@
-<p>offer-detail works!</p>
+<div class="max-w-7xl 2xl:max-w-[1500px] mx-auto px-4 sm:px-6 py-8 space-y-6">
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="flex flex-col justify-center items-center h-64 gap-3">
+      <div class="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue"></div>
+      <span class="text-xs font-semibold text-slate">Chargement de l'offre d'emploi...</span>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (isError()) {
+    <div class="card bg-red-50 text-red-700 p-6 border border-red-200 shadow-xs">
+      <h3 class="font-bold text-base mb-1">Offre d'emploi introuvable</h3>
+      <p class="text-xs text-red-600 mb-4">
+        Impossible de charger les données de cette offre ou celle-ci n'existe plus.
+      </p>
+      <a
+        routerLink="/hr/offers"
+        class="btn btn-outline text-xs font-bold text-red border-red hover:bg-red-50 inline-flex items-center gap-1"
+      >
+        <svg lucideArrowLeft class="w-4 h-4" size="16"></svg>
+        <span>Retour à la liste des offres</span>
+      </a>
+    </div>
+  }
+
+  <!-- Main Detail View -->
+  @if (!isLoading() && !isError() && offer(); as o) {
+    <!-- Top Back Link -->
+    <div class="flex items-center justify-between">
+      <a
+        routerLink="/hr/offers"
+        class="text-xs font-semibold text-slate hover:text-blue inline-flex items-center gap-1.5 transition-colors"
+      >
+        <svg lucideArrowLeft class="w-4 h-4" size="16"></svg>
+        <span>Retour aux offres</span>
+      </a>
+
+      <!-- Quick action on top (Candidates link if active/closed) -->
+      @if (o.status !== 'DRAFT') {
+        <button
+          type="button"
+          (click)="viewCandidates()"
+          class="text-xs font-semibold text-blue hover:text-blue-d inline-flex items-center gap-1.5 transition-colors"
+        >
+          <svg lucideUsers class="w-4 h-4" size="16"></svg>
+          <span>Voir les candidatures reçues &rarr;</span>
+        </button>
+      }
+    </div>
+
+    <!-- Header Card with Dual Badges & Actions -->
+    <div class="card p-6 bg-white border border-line shadow-xs">
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <!-- Title & Badges -->
+        <div class="space-y-3">
+          <div class="flex flex-wrap items-center gap-2.5">
+            <!-- Lifecycle Status Badge -->
+            <app-status-badge [status]="o.status"></app-status-badge>
+
+            <!-- AI Status Badge -->
+            <app-status-badge [status]="o.offerAiStatus"></app-status-badge>
+
+            <!-- Contract & Duration Pill -->
+            <span
+              class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold"
+            >
+              {{ o.contractType || 'CDI' }}
+              @if (o.durationMonths) {
+                • {{ o.durationMonths }} mois
+              }
+            </span>
+
+            <!-- Location Pill -->
+            <span
+              class="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-semibold flex items-center gap-1"
+            >
+              <svg lucideMapPin class="w-3 h-3 text-slate-400" size="12"></svg>
+              <span>{{ o.categoryCriteria?.localization || 'Casablanca' }}</span>
+            </span>
+          </div>
+
+          <h1 class="text-2xl font-bold text-ink tracking-tight">{{ o.title }}</h1>
+
+          <div class="flex flex-wrap items-center gap-4 text-xs text-slate">
+            <span class="flex items-center gap-1">
+              <svg lucideCalendar class="w-3.5 h-3.5" size="14"></svg>
+              Créée le {{ o.createdAt | date: 'dd MMMM yyyy' }}
+            </span>
+            <span class="flex items-center gap-1">
+              <svg lucideClock class="w-3.5 h-3.5" size="14"></svg>
+              Mise à jour le {{ o.updatedAt | date: 'dd/MM/yyyy à HH:mm' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- State Machine Actions Toolbar -->
+        @if (canManage()) {
+          <div class="flex flex-wrap items-center gap-2.5 lg:self-center">
+            <!-- DRAFT Actions -->
+            @if (o.status === 'DRAFT') {
+              <!-- Edit Button -->
+              <a
+                [routerLink]="['/hr/offers', o.id, 'edit']"
+                class="px-3.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-1.5 transition shadow-sm"
+              >
+                <svg lucidePencil class="w-3.5 h-3.5 text-blue" size="14"></svg>
+                <span>Modifier</span>
+              </a>
+
+              <!-- Reprocess AI Button -->
+              @if (!isAiPending()) {
+                <button
+                  type="button"
+                  (click)="reprocessOffer()"
+                  [disabled]="isActionInProgress()"
+                  class="px-3.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-1.5 transition shadow-sm"
+                  title="Relancer l'extraction et la vectorisation IA"
+                >
+                  <svg lucideRefreshCw class="w-3.5 h-3.5 text-slate-500" size="14"></svg>
+                  <span>Relancer l'IA</span>
+                </button>
+              }
+
+              <!-- Publish Button (Requires AI SUCCESS) -->
+              <button
+                type="button"
+                (click)="publishOffer()"
+                [disabled]="o.offerAiStatus !== 'SUCCESS' || isActionInProgress()"
+                class="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 transition shadow-sm"
+                [title]="
+                  o.offerAiStatus === 'SUCCESS'
+                    ? 'Publier l\'offre pour les candidats'
+                    : 'L\'analyse IA doit réussir avant de pouvoir publier'
+                "
+              >
+                <svg lucideCheckCircle2 class="w-4 h-4" size="16"></svg>
+                <span>Publier l'offre</span>
+              </button>
+            }
+
+            <!-- ACTIVE Actions -->
+            @if (o.status === 'ACTIVE') {
+              <button
+                type="button"
+                (click)="viewCandidates()"
+                class="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 flex items-center gap-1.5 transition shadow-sm"
+              >
+                <svg lucideUsers class="w-4 h-4" size="16"></svg>
+                <span>Voir les candidatures</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="closeOffer()"
+                [disabled]="isActionInProgress()"
+                class="px-3.5 py-2 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-xs font-semibold text-rose-700 flex items-center gap-1.5 transition shadow-sm"
+              >
+                <svg lucideXCircle class="w-4 h-4 text-rose-600" size="16"></svg>
+                <span>Clôturer l'offre</span>
+              </button>
+            }
+
+            <!-- CLOSED Actions -->
+            @if (o.status === 'CLOSED') {
+              <button
+                type="button"
+                (click)="viewCandidates()"
+                class="px-3.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 flex items-center gap-1.5 transition shadow-sm"
+              >
+                <svg lucideUsers class="w-4 h-4 text-slate-500" size="16"></svg>
+                <span>Candidatures passées</span>
+              </button>
+
+              <button
+                type="button"
+                (click)="reopenOffer()"
+                [disabled]="isActionInProgress()"
+                class="px-4 py-2 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 flex items-center gap-1.5 transition shadow-sm"
+              >
+                <svg lucideRotateCcw class="w-4 h-4" size="16"></svg>
+                <span>Réouvrir l'offre</span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Live AI Analysis Banner (when PENDING) -->
+    @if (isAiPending()) {
+      <div
+        class="p-5 bg-blue-50/80 border border-blue-200 rounded-xl shadow-sm flex items-center gap-4 animate-pulse"
+      >
+        <div
+          class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0 shadow-md"
+        >
+          <svg lucideSparkles class="w-5 h-5 animate-spin" size="20"></svg>
+        </div>
+        <div class="flex-1 text-xs">
+          <p class="font-bold text-blue-950 text-sm">Traitement IA en cours...</p>
+          <p class="text-blue-800 mt-0.5">
+            L'algorithme NLP analyse la description du poste, identifie les exigences implicites et
+            pré-calibre l'espace vectoriel. Cette page se mettra à jour automatiquement.
+          </p>
+        </div>
+      </div>
+    }
+
+    <!-- AI Extraction Results Card (when SUCCESS and has requirements) -->
+    @if (o.offerAiStatus === 'SUCCESS' && o.extractedRequirements) {
+      <div
+        class="bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-violet-50/70 border border-indigo-100 rounded-xl p-6 shadow-sm space-y-4"
+      >
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <div
+              class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-sm"
+            >
+              <svg lucideSparkles class="w-4 h-4" size="18"></svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-indigo-950">Insights & Analyse Sémantique IA</h3>
+              <p class="text-xs text-indigo-700/80">
+                Extraction automatique issue du traitement du descriptif de poste
+              </p>
+            </div>
+          </div>
+          <span
+            class="px-2.5 py-1 rounded-md bg-white/80 border border-indigo-200 text-indigo-800 text-[11px] font-bold shadow-2xs"
+          >
+            Vectorisation Validée
+          </span>
+        </div>
+
+        <!-- Missing / Secondary skills identified by AI -->
+        @if (missingSkills().length > 0) {
+          <div class="p-3.5 bg-white/80 border border-indigo-100 rounded-lg space-y-2">
+            <span class="text-xs font-semibold text-indigo-900 block">
+              💡 Compétences secondaires détectées dans la description (non saisies dans les
+              critères obligatoires) :
+            </span>
+            <div class="flex flex-wrap gap-1.5">
+              @for (skill of missingSkills(); track skill) {
+                <span
+                  class="px-2.5 py-1 rounded-md bg-indigo-100/70 text-indigo-900 text-xs font-medium border border-indigo-200"
+                >
+                  + {{ skill }}
+                </span>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- AI Semantic Insights note -->
+        @if (aiInsights()) {
+          <div
+            class="text-xs text-indigo-900/90 leading-relaxed bg-white/60 p-3 rounded-lg border border-indigo-100/60"
+          >
+            <strong>Synthèse IA :</strong> {{ aiInsights() }}
+          </div>
+        }
+      </div>
+    }
+
+    <!-- AI Failed / Stalled Warning Card -->
+    @if (o.offerAiStatus === 'FAILED' || o.offerAiStatus === 'STALLED') {
+      <div
+        class="p-5 bg-rose-50 border border-rose-200 rounded-xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+      >
+        <div class="flex items-start gap-3">
+          <svg lucideAlertTriangle class="w-5 h-5 text-rose-600 shrink-0 mt-0.5" size="20"></svg>
+          <div class="text-xs text-rose-900">
+            <p class="font-bold text-sm">
+              L'analyse IA de l'offre n'a pas pu aboutir ({{ o.offerAiStatus }}).
+            </p>
+            <p class="mt-0.5">
+              L'offre ne peut pas être publiée tant que l'analyse n'est pas finalisée avec succès.
+              Vous pouvez relancer le traitement immédiatement.
+            </p>
+          </div>
+        </div>
+
+        @if (canManage() && o.status === 'DRAFT') {
+          <button
+            type="button"
+            (click)="reprocessOffer()"
+            [disabled]="isActionInProgress()"
+            class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition shrink-0 shadow-sm"
+          >
+            <svg lucideRefreshCw class="w-3.5 h-3.5" size="14"></svg>
+            <span>Relancer l'analyse</span>
+          </button>
+        }
+      </div>
+    }
+
+    <!-- Main Content Layout (2 Columns) -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left Column: Description & Read-Only Criteria Grid (2 cols) -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Job Description Card -->
+        <div class="card p-6 bg-white border border-line shadow-xs space-y-4">
+          <div class="flex items-center gap-2 pb-3 border-b border-line">
+            <svg lucideFileText class="w-4 h-4 text-blue" size="18"></svg>
+            <h3 class="text-sm font-bold text-ink">Description du Poste</h3>
+          </div>
+
+          @if (o.descriptionMarkdown) {
+            <div
+              class="prose prose-sm max-w-none text-xs text-slate-800 leading-relaxed"
+              [innerHTML]="o.descriptionMarkdown | markdown"
+            ></div>
+          } @else {
+            <p class="text-xs text-slate-400 italic">
+              Aucune description détaillée n'a été fournie pour cette offre.
+            </p>
+          }
+        </div>
+
+        <!-- Read-Only Weighted Criteria Grid (Shared Component) -->
+        <div>
+          <app-weighted-criteria-grid
+            [readOnly]="true"
+            [weights]="o.categoryWeights"
+            [criteria]="o.categoryCriteria || {}"
+          ></app-weighted-criteria-grid>
+        </div>
+      </div>
+
+      <!-- Right Column: Sidebar KPI & Metadata (1 col) -->
+      <div class="space-y-6">
+        <!-- Score Threshold Gauge Card (Shared Component) -->
+        <div class="card p-6 bg-white border border-line shadow-xs space-y-4 text-center">
+          <div class="flex items-center justify-between pb-3 border-b border-line">
+            <h3 class="text-xs font-bold text-slate uppercase tracking-wider">
+              Seuil d'Éligibilité IA
+            </h3>
+            <span class="text-xs font-bold text-blue">{{ o.minScore ?? 70 }}%</span>
+          </div>
+
+          <div class="py-2 flex justify-center">
+            <app-score-gauge [score]="o.minScore ?? 70" [showSummary]="false"></app-score-gauge>
+          </div>
+
+          <p class="text-[11px] text-slate-500 leading-normal">
+            Les candidats dont le score calculé est supérieur ou égal à
+            <strong>{{ o.minScore ?? 70 }}%</strong> seront automatiquement considérés comme
+            qualifiés.
+          </p>
+        </div>
+
+        <!-- Administrative Details Card -->
+        <div class="card p-6 bg-white border border-line shadow-xs space-y-4">
+          <h3
+            class="text-xs font-bold text-slate uppercase tracking-wider pb-3 border-b border-line"
+          >
+            Détails de l'Offre
+          </h3>
+
+          <div class="space-y-3 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-slate">Type de contrat :</span>
+              <span class="font-bold text-ink">{{ o.contractType || 'CDI' }}</span>
+            </div>
+
+            @if (o.durationMonths) {
+              <div class="flex items-center justify-between">
+                <span class="text-slate">Durée :</span>
+                <span class="font-bold text-ink">{{ o.durationMonths }} mois</span>
+              </div>
+            }
+
+            <div class="flex items-center justify-between">
+              <span class="text-slate">Localisation :</span>
+              <span class="font-bold text-ink">{{
+                o.categoryCriteria?.localization || 'Casablanca'
+              }}</span>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <span class="text-slate">Expérience exigée :</span>
+              <span class="font-bold text-ink">{{ experienceLabel() }}</span>
+            </div>
+
+            <div class="pt-2 border-t border-line space-y-2">
+              <div class="flex items-center justify-between text-[11px] text-slate">
+                <span>Créée le :</span>
+                <span>{{ o.createdAt | date: 'dd/MM/yyyy' }}</span>
+              </div>
+              <div class="flex items-center justify-between text-[11px] text-slate">
+                <span>Dernière mise à jour :</span>
+                <span>{{ o.updatedAt | date: 'dd/MM/yyyy à HH:mm' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Floating Toast Notification -->
+  @if (toastMessage()) {
+    <div
+      class="fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 transition-all duration-300 animate-in fade-in slide-in-from-bottom-5"
+      [ngClass]="{
+        'bg-emerald-600 text-white': toastType() === 'success',
+        'bg-rose-600 text-white': toastType() === 'error',
+      }"
+    >
+      @if (toastType() === 'success') {
+        <svg lucideCheck class="w-4 h-4" size="16"></svg>
+      } @else {
+        <svg lucideAlertTriangle class="w-4 h-4" size="16"></svg>
+      }
+      <span>{{ toastMessage() }}</span>
+    </div>
+  }
+</div>

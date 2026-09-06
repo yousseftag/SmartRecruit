@@ -7,11 +7,19 @@ import { OfferService } from '../../../core/services/offer.service';
 import { OfferPublicResponse } from '../../../core/models/offer.model';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ExperienceFormatPipe } from '../../../shared/pipes/experience-format.pipe';
+import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
 @Component({
   selector: 'app-career-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, FileDropzone, ReactiveFormsModule, ExperienceFormatPipe],
+  imports: [
+    CommonModule,
+    RouterModule,
+    FileDropzone,
+    ReactiveFormsModule,
+    ExperienceFormatPipe,
+    MarkdownPipe,
+  ],
   templateUrl: './career-detail.html',
 })
 export class CareerDetail implements OnInit {

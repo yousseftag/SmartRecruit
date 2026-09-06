@@ -27,6 +27,11 @@ When a recruiter creates or updates a job offer, Spring Boot sends the criteria 
     },
     "category_criteria": {
       "skills": ["java", "js", "spring"],
+      "skill_weights": {
+        "java": 5,
+        "spring": 4,
+        "js": 2
+      },
       "experience": 12,
       "coursework": ["bac+5", "master"],
       "languages": ["English", "French"],
@@ -38,6 +43,9 @@ When a recruiter creates or updates a job offer, Spring Boot sends the criteria 
   }
 }
 ```
+
+> **Note on `skill_weights` (Optional):**  
+> `skill_weights` is an optional map specifying individual importance ratings (1 to 5) for skills listed in `skills`. If present, the AI scoring engine weights matched skills accordingly (e.g., finding Java contributes more to the skills score than JS). If omitted, all skills are treated with equal weighting. This ensures 100% backward compatibility.
 
 ### Response (From AI to Spring Boot)
 ```json

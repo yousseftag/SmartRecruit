@@ -1,10 +1,10 @@
 package com.smartrecruit.backend.modules.offer.mappers;
 
-import com.smartrecruit.backend.modules.auth.dtos.AppUserResponse;
 import com.smartrecruit.backend.modules.offer.dtos.OfferInternalResponse;
 import com.smartrecruit.backend.modules.offer.dtos.OfferPublicResponse;
 import com.smartrecruit.backend.modules.offer.dtos.OfferPublicSummaryResponse;
 import com.smartrecruit.backend.modules.offer.entities.Offer;
+import java.util.UUID;
 
 public class OfferMapper {
 
@@ -35,16 +35,17 @@ public class OfferMapper {
   public static OfferInternalResponse toInternalDto(Offer offer) {
     if (offer == null) return null;
 
-    AppUserResponse createdByResponse = null;
-    if (offer.getCreatedBy() != null) {
-      createdByResponse = new AppUserResponse(offer.getCreatedBy().getId());
-    }
+    UUID createdBy = offer.getCreatedBy() != null ? offer.getCreatedBy().getId() : null;
+    UUID updatedBy = offer.getUpdatedBy() != null ? offer.getUpdatedBy().getId() : null;
+
     return new OfferInternalResponse(
         offer.getId(),
-        createdByResponse,
+        createdBy,
+        updatedBy,
         offer.getTitle(),
         offer.getDescriptionMarkdown(),
         offer.getStatus(),
+        offer.getOfferAiStatus(),
         offer.getCategoryWeights(),
         offer.getCategoryCriteria(),
         offer.getMinScore(),

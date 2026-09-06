@@ -58,6 +58,29 @@ export class StatusBadge {
           pulsing: false,
         };
 
+      // Offer Lifecycle Statuses
+      case 'DRAFT':
+        return {
+          label: 'Brouillon',
+          classes: 'bg-slate-100 text-slate-700 border border-slate-200 font-medium',
+          dotClass: 'bg-slate-400',
+          pulsing: false,
+        };
+      case 'ACTIVE':
+        return {
+          label: 'Active',
+          classes: 'bg-green-bg text-green border border-green/30 font-semibold',
+          dotClass: 'bg-green',
+          pulsing: false,
+        };
+      case 'CLOSED':
+        return {
+          label: 'Clôturée',
+          classes: 'bg-slate-100 text-muted border border-line',
+          dotClass: 'bg-faint',
+          pulsing: false,
+        };
+
       default:
         return {
           label: this.status() || 'Inconnu',

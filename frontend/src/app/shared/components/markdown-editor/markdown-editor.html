@@ -1,0 +1,197 @@
+<div class="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-xs">
+  <!-- Toolbar Header -->
+  <div
+    class="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-50/80 border-b border-slate-200"
+  >
+    <!-- Formatting Shortcuts -->
+    <div class="flex flex-wrap items-center gap-1">
+      <button
+        type="button"
+        (click)="applyFormat('bold')"
+        class="p-1.5 rounded hover:bg-slate-200 text-slate-700 transition"
+        title="Gras (**texte**)"
+      >
+        <svg lucideBold class="w-4 h-4" size="16"></svg>
+      </button>
+
+      <button
+        type="button"
+        (click)="applyFormat('italic')"
+        class="p-1.5 rounded hover:bg-slate-200 text-slate-700 transition"
+        title="Italique (*texte*)"
+      >
+        <svg lucideItalic class="w-4 h-4" size="16"></svg>
+      </button>
+
+      <div class="w-px h-4 bg-slate-300 mx-1"></div>
+
+      <button
+        type="button"
+        (click)="applyFormat('h2')"
+        class="px-2 py-1 rounded hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
+        title="Titre H2 (## Titre)"
+      >
+        H2
+      </button>
+
+      <button
+        type="button"
+        (click)="applyFormat('h3')"
+        class="px-2 py-1 rounded hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
+        title="Sous-titre H3 (### Titre)"
+      >
+        H3
+      </button>
+
+      <div class="w-px h-4 bg-slate-300 mx-1"></div>
+
+      <button
+        type="button"
+        (click)="applyFormat('ul')"
+        class="p-1.5 rounded hover:bg-slate-200 text-slate-700 transition"
+        title="Liste à puces (- élément)"
+      >
+        <svg lucideList class="w-4 h-4" size="16"></svg>
+      </button>
+
+      <button
+        type="button"
+        (click)="applyFormat('ol')"
+        class="p-1.5 rounded hover:bg-slate-200 text-slate-700 transition"
+        title="Liste numérotée (1. élément)"
+      >
+        <svg lucideListOrdered class="w-4 h-4" size="16"></svg>
+      </button>
+
+      <button
+        type="button"
+        (click)="applyFormat('quote')"
+        class="p-1.5 rounded hover:bg-slate-200 text-slate-700 transition"
+        title="Citation (> texte)"
+      >
+        <svg lucideQuote class="w-4 h-4" size="16"></svg>
+      </button>
+
+      <button
+        type="button"
+        (click)="applyFormat('code')"
+        class="p-1.5 rounded hover:bg-slate-200 text-slate-700 transition"
+        title="Code (`code`)"
+      >
+        <svg lucideCode class="w-4 h-4" size="16"></svg>
+      </button>
+    </div>
+
+    <!-- View Mode Toggles (Éditeur, Aperçu, Côte à côte) -->
+    <div class="flex items-center bg-slate-200/80 p-0.5 rounded-lg text-xs font-medium">
+      <button
+        type="button"
+        (click)="setViewMode('edit')"
+        class="px-2.5 py-1 rounded-md flex items-center gap-1.5 transition"
+        [ngClass]="{
+          'bg-white text-slate-900 shadow-xs font-semibold': viewMode() === 'edit',
+          'text-slate-600 hover:text-slate-900': viewMode() !== 'edit',
+        }"
+      >
+        <svg lucidePencil class="w-3.5 h-3.5" size="14"></svg>
+        <span>Éditeur</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="setViewMode('preview')"
+        class="px-2.5 py-1 rounded-md flex items-center gap-1.5 transition"
+        [ngClass]="{
+          'bg-white text-slate-900 shadow-xs font-semibold': viewMode() === 'preview',
+          'text-slate-600 hover:text-slate-900': viewMode() !== 'preview',
+        }"
+      >
+        <svg lucideEye class="w-3.5 h-3.5" size="14"></svg>
+        <span>Aperçu direct</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="setViewMode('split')"
+        class="px-2.5 py-1 rounded-md hidden md:flex items-center gap-1.5 transition"
+        [ngClass]="{
+          'bg-white text-slate-900 shadow-xs font-semibold': viewMode() === 'split',
+          'text-slate-600 hover:text-slate-900': viewMode() !== 'split',
+        }"
+        title="Afficher l'éditeur et l'aperçu côte à côte"
+      >
+        <svg lucideColumns2 class="w-3.5 h-3.5" size="14"></svg>
+        <span>Côte à côte</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="p-3 bg-white">
+    <!-- Mode 1: Edit only -->
+    @if (viewMode() === 'edit') {
+      <textarea
+        #textareaRef
+        rows="12"
+        [ngModel]="value()"
+        (ngModelChange)="value.set($event)"
+        placeholder="Rédigez la description en Markdown... Utilisez les boutons de la barre d'outils pour formater rapidement votre texte."
+        class="w-full p-3 text-xs font-mono bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none resize-y leading-relaxed text-slate-800"
+      ></textarea>
+    }
+
+    <!-- Mode 2: Preview only -->
+    @if (viewMode() === 'preview') {
+      <div
+        class="min-h-[280px] p-4 bg-slate-50/50 border border-slate-200 rounded-lg overflow-y-auto"
+      >
+        <div [innerHTML]="renderedHtml()"></div>
+      </div>
+    }
+
+    <!-- Mode 3: Split view (Side-by-side) -->
+    @if (viewMode() === 'split') {
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Editor Column -->
+        <div class="space-y-1.5">
+          <div
+            class="flex items-center justify-between text-[11px] font-semibold text-slate-400 px-1"
+          >
+            <span>MARKDOWN SOURCE</span>
+            <span>Édition dynamique</span>
+          </div>
+          <textarea
+            #textareaRef
+            rows="14"
+            [ngModel]="value()"
+            (ngModelChange)="value.set($event)"
+            placeholder="Rédigez ici votre description..."
+            class="w-full p-3 text-xs font-mono bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none resize-y leading-relaxed text-slate-800"
+          ></textarea>
+        </div>
+
+        <!-- Live Preview Column -->
+        <div class="space-y-1.5">
+          <div
+            class="flex items-center justify-between text-[11px] font-semibold text-slate-400 px-1"
+          >
+            <span>APERÇU EN DIRECT</span>
+            <span class="text-blue-600 font-medium">Synchronisation instantanée</span>
+          </div>
+          <div
+            class="h-[338px] p-4 bg-slate-50/50 border border-slate-200 rounded-lg overflow-y-auto"
+          >
+            <div [innerHTML]="renderedHtml()"></div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Footer Info -->
+  <div
+    class="px-3.5 py-1.5 bg-slate-50/50 border-t border-slate-100 flex items-center justify-end text-[11px] text-slate-400"
+  >
+    <span>{{ (value() || '').length }} caractères</span>
+  </div>
+</div>

@@ -24,6 +24,7 @@ spring:
     baseline-on-migrate: true
     out-of-order: true
     clean-disabled: true
+    ignore-migration-patterns: "*:missing"
   
   # JPA Configuration
   jpa:
@@ -100,5 +101,7 @@ app:
       chars: ${APP_SECURITY_PASSWORD_CHARS:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789}
   cv-ingestion:
     stall-threshold-minutes: ${CV_STALL_THRESHOLD_MINUTES:5}
+  offer-ai:
+    stall-threshold-minutes: ${OFFER_STALL_THRESHOLD_MINUTES:2}
   ai-simulation:
     enabled: ${AI_SIMULATION_ENABLED:true}
