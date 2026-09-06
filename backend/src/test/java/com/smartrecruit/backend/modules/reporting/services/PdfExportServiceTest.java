@@ -13,6 +13,7 @@ import com.smartrecruit.backend.modules.reporting.enums.ReportingPeriod;
 import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -146,7 +147,7 @@ class PdfExportServiceTest {
   @Test
   void exportExecutiveReport_WhenTenCandidatesProvided_ShouldRenderFullLeaderboard()
       throws IOException {
-    List<CandidateReportRowDto> tenCandidates = new java.util.ArrayList<>();
+    List<CandidateReportRowDto> tenCandidates = new ArrayList<>();
     for (int i = 1; i <= 10; i++) {
       tenCandidates.add(
           new CandidateReportRowDto(

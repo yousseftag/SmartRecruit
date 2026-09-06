@@ -24,6 +24,7 @@ import com.smartrecruit.backend.modules.reporting.dtos.ScoreDistributionDto;
 import com.smartrecruit.backend.modules.reporting.enums.ReportingPeriod;
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -50,9 +51,6 @@ public class PdfExportService {
   private static final Color COLOR_INK = new Color(15, 23, 42); // #0F172A
   private static final Color COLOR_CARD_BG = new Color(248, 250, 252); // #F8FAFC
   private static final Color COLOR_BORDER = new Color(226, 232, 240); // #E2E8F0
-  private static final Color COLOR_BRAND = new Color(37, 99, 235); // #2563EB
-  private static final Color COLOR_GREEN = new Color(22, 163, 74); // #16A34A
-  private static final Color COLOR_RED = new Color(220, 38, 38); // #DC2626
   private static final Color COLOR_WHITE = Color.WHITE;
 
   // Typography
@@ -80,10 +78,6 @@ public class PdfExportService {
   private static final Font FONT_TD = FontFactory.getFont(FontFactory.HELVETICA, 7.5f, COLOR_INK);
   private static final Font FONT_TD_BOLD =
       FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, COLOR_INK);
-  private static final Font FONT_TD_GREEN =
-      FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, COLOR_GREEN);
-  private static final Font FONT_TD_RED =
-      FontFactory.getFont(FontFactory.HELVETICA_BOLD, 7.5f, COLOR_RED);
   private static final Font FONT_FOOTER =
       FontFactory.getFont(FontFactory.HELVETICA, 7.5f, COLOR_SLATE);
 
@@ -129,7 +123,7 @@ public class PdfExportService {
 
       document.close();
       return outputStream.toByteArray();
-    } catch (DocumentException | java.io.IOException e) {
+    } catch (DocumentException | IOException e) {
       log.error("Failed to generate executive PDF report", e);
       throw new IllegalStateException("Failed to generate PDF report", e);
     }
