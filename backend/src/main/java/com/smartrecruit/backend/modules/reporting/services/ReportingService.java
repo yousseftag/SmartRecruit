@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ReportingService {
 
-  private static final int DEFAULT_PREVIEW_LIMIT = 6;
+  private static final int DEFAULT_PREVIEW_LIMIT = 10;
 
   private final ReportingRepository reportingRepository;
   private final ObjectMapper objectMapper = new ObjectMapper();
