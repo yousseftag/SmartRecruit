@@ -1,4 +1,4 @@
--- V4__dashboard_dummy_data.sql
+-- V8__dashboard_dummy_data.sql
 -- Bulk insert of dummy data for Dashboard testing using generate_series and deterministic UUIDs
 
 -- 1. Insert 10 Users
@@ -32,9 +32,10 @@ WITH offer_base AS (
         (i % 2 = 0) as is_updated
     FROM generate_series(1, 15) i
 )
-INSERT INTO offer (id, created_by, updated_by, title, description_markdown, status, category_weights, min_score, created_at, updated_at)
+INSERT INTO offer (id, created_by, updated_by, title, description_markdown, status, offer_ai_status, category_weights, min_score, created_at, updated_at)
 SELECT 
     id, created_by, updated_by, title, description_markdown, status,
+    CASE WHEN status = 'DRAFT' THEN 'PENDING' ELSE 'SUCCESS' END,
     '{"skills": 20, "experience": 20, "coursework": 20, "languages": 20, "localization": 20}',
     70,
     c_time,
