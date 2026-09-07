@@ -68,7 +68,7 @@ class DashboardServiceTest {
     assertEquals(10, stats.newApplications());
     assertEquals(20, stats.activeCandidates());
     assertEquals(90.0, stats.cvExtractionRate()); // 9/10
-    assertEquals(80.0, stats.aiValidationRate()); // 8/10
+    assertEquals((8.0 / 9.0) * 100, stats.aiValidationRate(), 0.001); // 8/9
     assertEquals(40.0, stats.hiringSuccessRate()); // 2/(2+3)
   }
 

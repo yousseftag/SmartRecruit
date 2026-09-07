@@ -9,8 +9,8 @@ The top section features 5 core metric cards calculated from the entire database
 *   **Active Offers (`activeOffers`)**: The total count of job offers that are currently in the `PUBLISHED` state. It gives an immediate sense of the recruiter's active workload.
 *   **New Applications (`newApplications`)**: The total count of candidate applications currently sitting in the `NEW` state across all offers. These are profiles awaiting human review.
 *   **AI Performance (`aiValidationRate` & `cvExtractionRate`)**: 
-    *   **CV Extraction Rate**: The percentage of `NEW` applications where the AI successfully parsed the CV into structured data (JSON).
-    *   **Validation Rate**: The percentage of `NEW` applications where the candidate's score exceeded the minimum threshold defined for the job offer (represented by `passed_min_score = true`).
+    *   **CV Extraction Rate**: The percentage of `NEW` applications where the AI successfully parsed the CV into structured data (`(newExtractedCvs / newApplications) * 100`).
+    *   **Validation Rate**: The percentage of successfully parsed `NEW` applications whose score exceeded the job offer's minimum threshold (`(newPassedAi / newExtractedCvs) * 100`). Only candidates with an extracted score are evaluated, avoiding double-penalization for unextracted or in-flight documents.
 *   **Applications in Process (`activeCandidates`)**: The total count of applications that are actively moving through the pipeline (e.g., `SHORTLISTED`, `INTERVIEWING`, `OFFER_SENT`). This excludes `NEW`, `HIRED`, and `REJECTED` applications.
 *   **Hiring Funnel (`hiringSuccessRate`)**: Displays the raw number of `HIRED` vs `REJECTED` candidates. It calculates the success rate as: `(HIRED) / (HIRED + REJECTED) * 100`.
 

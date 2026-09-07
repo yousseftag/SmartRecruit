@@ -50,7 +50,7 @@ public class DashboardService {
     long rejectedCandidates = ((Number) row[6]).longValue();
 
     double aiValidationRate =
-        newApplications > 0 ? ((double) newPassedAi / newApplications) * 100 : 0.0;
+        newExtractedCvs > 0 ? ((double) newPassedAi / newExtractedCvs) * 100 : 0.0;
     double cvExtractionRate =
         newApplications > 0 ? ((double) newExtractedCvs / newApplications) * 100 : 0.0;
 
