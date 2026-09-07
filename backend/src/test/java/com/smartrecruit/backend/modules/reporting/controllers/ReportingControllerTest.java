@@ -226,6 +226,59 @@ class ReportingControllerTest {
   }
 
   @Test
+  void exportExcel_WithTimezoneQueryParam_ShouldReturn200() throws Exception {
+    UUID offerId = UUID.randomUUID();
+    Offer mockOffer = new Offer();
+    mockOffer.setTitle("Senior Cloud Architect");
+
+    byte[] fakeExcel = new byte[] {80, 75, 3, 4};
+    when(reportingService.getRankedCandidates(eq(offerId), eq(ReportingPeriod.LAST_90_DAYS), eq(0)))
+        .thenReturn(mockCandidates);
+    when(offerRepository.findById(offerId)).thenReturn(Optional.of(mockOffer));
+    when(excelExportService.exportRankedCandidates(
+            eq(mockCandidates), eq("Senior Cloud Architect"), eq(ZoneId.of("Africa/Casablanca"))))
+        .thenReturn(fakeExcel);
+
+    mockMvc
+        .perform(
+            get("/api/v1/reporting/export/excel")
+                .param("offerId", offerId.toString())
+                .param("period", "90d")
+                .param("timezone", "Africa/Casablanca")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_VIEWER"))))
+        .andExpect(status().isOk())
+        .andExpect(content().bytes(fakeExcel));
+  }
+
+  @Test
+  void exportPdf_WithTimezoneQueryParam_ShouldReturn200() throws Exception {
+    UUID offerId = UUID.randomUUID();
+    Offer mockOffer = new Offer();
+    mockOffer.setTitle("Tech Lead Spring Boot");
+
+    byte[] fakePdf = new byte[] {37, 80, 68, 70};
+    when(reportingService.getDashboardReport(eq(offerId), eq(ReportingPeriod.THIS_YEAR)))
+        .thenReturn(mockReport);
+    when(offerRepository.findById(offerId)).thenReturn(Optional.of(mockOffer));
+    when(pdfExportService.exportExecutiveReport(
+            eq(mockReport),
+            eq("Tech Lead Spring Boot"),
+            eq(ReportingPeriod.THIS_YEAR),
+            eq(ZoneId.of("Africa/Casablanca"))))
+        .thenReturn(fakePdf);
+
+    mockMvc
+        .perform(
+            get("/api/v1/reporting/export/pdf")
+                .param("offerId", offerId.toString())
+                .param("period", "1y")
+                .param("timezone", "Africa/Casablanca")
+                .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_RECRUITER"))))
+        .andExpect(status().isOk())
+        .andExpect(content().bytes(fakePdf));
+  }
+
+  @Test
   void reportingEndpoints_WithoutAuthentication_ShouldReturn401Unauthorized() throws Exception {
     mockMvc.perform(get("/api/v1/reporting/stats")).andExpect(status().isUnauthorized());
   }

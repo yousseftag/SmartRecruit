@@ -304,10 +304,12 @@ Returns an array of `CandidateReportRowDto` matching the schema shown above in `
 
 Streams a structured Excel workbook.
 
-#### Query Parameters
-- `offerId` *(UUID, optional)*
-- `period` *(String, optional, default: `"ALL"`)*
-- `limit` *(int, optional, default: `0`)*
+#### Query Parameters & Headers
+- `offerId` *(UUID, optional)*: Filter by job position.
+- `period` *(String, optional, default: `"ALL"`)*: Analytical timeframe.
+- `limit` *(int, optional, default: `0`)*: Maximum candidate rows (0 for unpaged).
+- `timezone` *(String, optional)*: Client timezone identifier (e.g. `"Africa/Casablanca"`).
+- `X-Timezone` *(Header, optional)*: Alternative client timezone header.
 
 #### Response Headers
 - `Content-Type`: `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`
@@ -319,9 +321,11 @@ Streams a structured Excel workbook.
 
 Streams an executive summary PDF report.
 
-#### Query Parameters
-- `offerId` *(UUID, optional)*
-- `period` *(String, optional, default: `"ALL"`)*
+#### Query Parameters & Headers
+- `offerId` *(UUID, optional)*: Filter by job position.
+- `period` *(String, optional, default: `"ALL"`)*: Analytical timeframe.
+- `timezone` *(String, optional)*: Client timezone identifier (e.g. `"Africa/Casablanca"`).
+- `X-Timezone` *(Header, optional)*: Alternative client timezone header.
 
 #### Response Headers
 - `Content-Type`: `application/pdf`

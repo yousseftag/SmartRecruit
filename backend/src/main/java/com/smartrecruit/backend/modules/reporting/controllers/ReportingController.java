@@ -99,12 +99,15 @@ public class ReportingController {
       @RequestParam(required = false) UUID offerId,
       @RequestParam(required = false, defaultValue = "ALL") String period,
       @RequestParam(required = false, defaultValue = "0") int limit,
+      @RequestParam(required = false) String timezone,
       @RequestHeader(value = "X-Timezone", required = false) String timezoneHeader) {
     ReportingPeriod reportingPeriod = ReportingPeriod.fromString(period);
     List<CandidateReportRowDto> candidates =
         reportingService.getRankedCandidates(offerId, reportingPeriod, limit);
     String campaignTitle = resolveCampaignTitle(offerId);
-    ZoneId zoneId = resolveZoneId(timezoneHeader);
+    String effectiveTimezone =
+        (timezone != null && !timezone.isBlank()) ? timezone : timezoneHeader;
+    ZoneId zoneId = resolveZoneId(effectiveTimezone);
     byte[] excelBytes =
         excelExportService.exportRankedCandidates(candidates, campaignTitle, zoneId);
     String slug = toSlug(campaignTitle);
@@ -127,12 +130,15 @@ public class ReportingController {
   public ResponseEntity<byte[]> exportPdf(
       @RequestParam(required = false) UUID offerId,
       @RequestParam(required = false, defaultValue = "ALL") String period,
+      @RequestParam(required = false) String timezone,
       @RequestHeader(value = "X-Timezone", required = false) String timezoneHeader) {
     ReportingPeriod reportingPeriod = ReportingPeriod.fromString(period);
     ReportingDashboardResponseDto report =
         reportingService.getDashboardReport(offerId, reportingPeriod);
     String campaignTitle = resolveCampaignTitle(offerId);
-    ZoneId zoneId = resolveZoneId(timezoneHeader);
+    String effectiveTimezone =
+        (timezone != null && !timezone.isBlank()) ? timezone : timezoneHeader;
+    ZoneId zoneId = resolveZoneId(effectiveTimezone);
     byte[] pdfBytes =
         pdfExportService.exportExecutiveReport(report, campaignTitle, reportingPeriod, zoneId);
     String slug = toSlug(campaignTitle);
@@ -145,10 +151,10 @@ public class ReportingController {
         .body(pdfBytes);
   }
 
-  private ZoneId resolveZoneId(String timezoneHeader) {
-    if (timezoneHeader != null && !timezoneHeader.isBlank()) {
+  private ZoneId resolveZoneId(String timezoneStr) {
+    if (timezoneStr != null && !timezoneStr.isBlank()) {
       try {
-        return ZoneId.of(timezoneHeader.trim());
+        return ZoneId.of(timezoneStr.trim());
       } catch (Exception ignored) {
       }
     }

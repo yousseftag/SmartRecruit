@@ -8,6 +8,11 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class SmartrecruitBackendApplication {
 
+  @jakarta.annotation.PostConstruct
+  public void init() {
+    java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("UTC"));
+  }
+
   public static void main(String[] args) {
     SpringApplication.run(SmartrecruitBackendApplication.class, args);
   }

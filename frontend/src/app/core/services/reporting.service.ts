@@ -43,6 +43,10 @@ export class ReportingService {
     if (limit && limit > 0) {
       params = params.set('limit', limit.toString());
     }
+    const timeZone = Intl?.DateTimeFormat?.().resolvedOptions?.().timeZone;
+    if (timeZone) {
+      params = params.set('timezone', timeZone);
+    }
     return this.http.get(`${this.apiUrl}/export/excel`, {
       params,
       headers: this.buildHeaders(),
@@ -54,7 +58,11 @@ export class ReportingService {
    * Streams a formatted executive synthesis PDF report for download.
    */
   downloadPdf(offerId?: string, period?: string): Observable<Blob> {
-    const params = this.buildQueryParams(offerId, period);
+    let params = this.buildQueryParams(offerId, period);
+    const timeZone = Intl?.DateTimeFormat?.().resolvedOptions?.().timeZone;
+    if (timeZone) {
+      params = params.set('timezone', timeZone);
+    }
     return this.http.get(`${this.apiUrl}/export/pdf`, {
       params,
       headers: this.buildHeaders(),
