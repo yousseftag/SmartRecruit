@@ -101,14 +101,6 @@ export const routes: Routes = [
         data: { roles: [UserRole.HR_ADMIN] },
       },
       {
-        path: 'settings/general',
-        loadComponent: () =>
-          import('./pages/settings/general-settings/general-settings').then(
-            (c) => c.GeneralSettings,
-          ),
-        data: { roles: [UserRole.HR_ADMIN] },
-      },
-      {
         path: 'settings/templates',
         loadComponent: () =>
           import('./pages/settings/template-settings/template-settings').then(

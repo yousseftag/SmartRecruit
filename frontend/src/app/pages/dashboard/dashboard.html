@@ -1,14 +1,6 @@
-<div class="page-container max-w-screen-2xl mx-auto px-4 md:px-8 py-8 space-y-6">
-  <!-- Page Header -->
-  <div class="flex justify-between items-center mb-6">
-    <div>
-      <h1 class="text-2xl font-bold text-ink">Dashboard Générale (KPIs,Activité récente ...)</h1>
-      <p class="text-sm text-slate">Vue d'ensemble de votre activité de recrutement.</p>
-    </div>
-  </div>
-
-  <!-- 1. KPIs Section (5 cards) -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+<div class="page-container w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+  <!-- 1. KPIs Section (6 cards) -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
     @if (!isLoadingKpis && kpis) {
       <!-- KPI 1 — Active Offers -->
       <div
@@ -30,9 +22,7 @@
         class="bg-white rounded-lg shadow-sm border border-line p-4 flex items-center justify-between"
       >
         <div>
-          <p class="text-xs font-medium text-slate uppercase tracking-wider">
-            Candidatures à Examiner
-          </p>
+          <p class="text-xs font-medium text-slate uppercase tracking-wider">À Traiter</p>
           <p class="text-2xl font-bold text-ink mt-1">{{ kpis.newApplications }}</p>
         </div>
         <div
@@ -45,42 +35,56 @@
         </div>
       </div>
 
-      <!-- KPI 3 — AI Validation & Extraction -->
+      <!-- KPI 3 — Profils Admissibles IA -->
       <div
         class="bg-white rounded-lg shadow-sm border border-line p-4 flex items-center justify-between relative overflow-hidden"
       >
-        <div
-          class="absolute -right-6 -top-6 w-24 h-24 bg-indigo-50 dark:bg-indigo-950/20 rounded-full opacity-50 blur-xl"
-        ></div>
-        <div class="relative z-10">
-          <p class="text-xs font-medium text-slate uppercase tracking-wider">Performance IA</p>
-          <div class="flex items-baseline gap-2 mt-1">
+        <div>
+          <p class="text-xs font-medium text-slate uppercase tracking-wider">Profils Admissibles</p>
+          <div class="flex items-baseline gap-1.5 mt-1">
             <p class="text-2xl font-bold text-indigo-700 dark:text-indigo-400">
               {{ kpis.aiValidationRate | number: '1.0-1' }}%
             </p>
-            <p class="text-xs text-indigo-500 dark:text-indigo-300 font-medium">Validés</p>
           </div>
-          <p
-            class="text-sm font-semibold text-emerald-700 dark:text-emerald-300 mt-1 bg-emerald-50 dark:bg-emerald-950/50 inline-block px-2 py-0.5 rounded border border-transparent dark:border-emerald-800/40"
-          >
-            Extraction rate: {{ kpis.cvExtractionRate | number: '1.0-1' }}%
+          <p class="text-[11px] text-indigo-500 dark:text-indigo-400 font-medium mt-0.5">
+            Score ≥ seuil requis
           </p>
         </div>
         <div
-          class="relative z-10 h-10 w-10 rounded-full bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center"
+          class="h-10 w-10 rounded-full bg-indigo-50 dark:bg-indigo-950/40 flex items-center justify-center shrink-0"
         >
           <svg lucideSparkles class="text-indigo-600 dark:text-indigo-400 w-5 h-5"></svg>
         </div>
       </div>
 
-      <!-- KPI 4 — Active Candidates -->
+      <!-- KPI 4 — Succès d'Extraction CV -->
+      <div
+        class="bg-white rounded-lg shadow-sm border border-line p-4 flex items-center justify-between relative overflow-hidden"
+      >
+        <div>
+          <p class="text-xs font-medium text-slate uppercase tracking-wider">Extraction CVs</p>
+          <div class="flex items-baseline gap-1.5 mt-1">
+            <p class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+              {{ kpis.cvExtractionRate | number: '1.0-1' }}%
+            </p>
+          </div>
+          <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">
+            Analysés sans erreur
+          </p>
+        </div>
+        <div
+          class="h-10 w-10 rounded-full bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center shrink-0"
+        >
+          <svg lucideFileCheck class="text-emerald-600 dark:text-emerald-400 w-5 h-5"></svg>
+        </div>
+      </div>
+
+      <!-- KPI 5 — Active Candidates -->
       <div
         class="bg-white rounded-lg shadow-sm border border-line p-4 flex items-center justify-between"
       >
         <div>
-          <p class="text-xs font-medium text-slate uppercase tracking-wider">
-            Candidatures en Processus
-          </p>
+          <p class="text-xs font-medium text-slate uppercase tracking-wider">En Processus</p>
           <p class="text-2xl font-bold text-ink mt-1">{{ kpis.activeCandidates }}</p>
         </div>
         <div
@@ -90,7 +94,7 @@
         </div>
       </div>
 
-      <!-- KPI 5 — Hiring Pipeline -->
+      <!-- KPI 6 — Hiring Pipeline -->
       <div
         class="bg-white rounded-lg shadow-sm border border-line p-4 flex items-center justify-between"
       >
@@ -114,7 +118,7 @@
       </div>
     } @else {
       <!-- Skeletons -->
-      @for (i of [1, 2, 3, 4, 5]; track i) {
+      @for (i of [1, 2, 3, 4, 5, 6]; track i) {
         <div class="bg-white rounded-lg shadow-sm border border-line p-4 animate-pulse h-[104px]">
           <div class="flex justify-between items-center h-full">
             <div class="space-y-3 w-1/2">

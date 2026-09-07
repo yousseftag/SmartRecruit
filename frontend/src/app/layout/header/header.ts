@@ -1,6 +1,6 @@
 import { Component, OnInit, signal, computed, HostListener, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, NavigationEnd, Event as RouterEvent } from '@angular/router';
+import { Router, RouterModule, NavigationEnd, Event as RouterEvent } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import {
   LucideUser,
@@ -8,8 +8,11 @@ import {
   LucideLogOut,
   LucideKey,
   LucideCircleCheck,
+  LucideGlobe,
+  LucideExternalLink,
 } from '@lucide/angular';
 import { AuthService } from '../../core/auth/auth.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { EditProfile } from '../../pages/edit-profile/edit-profile';
 
 @Component({
@@ -17,17 +20,21 @@ import { EditProfile } from '../../pages/edit-profile/edit-profile';
   standalone: true,
   imports: [
     CommonModule,
+    RouterModule,
     EditProfile,
     LucideUser,
     LucideMoon,
     LucideLogOut,
     LucideKey,
     LucideCircleCheck,
+    LucideGlobe,
+    LucideExternalLink,
   ],
   templateUrl: './header.html',
 })
 export class Header implements OnInit {
   private authService = inject(AuthService);
+  private themeService = inject(ThemeService);
   private router = inject(Router);
 
   // User Profile Reactive Signals
@@ -60,7 +67,7 @@ export class Header implements OnInit {
 
   // UI State
   readonly isDropdownOpen = signal<boolean>(false);
-  readonly isDarkMode = signal<boolean>(false);
+  readonly isDarkMode = this.themeService.isDarkMode;
   readonly pageTitle = signal<string>('Tableau de bord');
 
   // Profile Modal State
@@ -72,39 +79,72 @@ export class Header implements OnInit {
     this.authService.profileUpdated.subscribe(() => {
       this.authService.syncAuthState();
     });
-
-    const savedMode = localStorage.getItem('darkMode');
-    if (savedMode === 'true') {
-      this.isDarkMode.set(true);
-      document.documentElement.classList.add('dark');
-    }
   }
 
   // Subscribes to router events to dynamically update the page title based on the current active route.
   private setupRouterListener() {
-    const routeTitles: Record<string, string> = {
-      '/hr/dashboard': 'Tableau de bord',
-      '/hr/offers': 'Offres',
-      '/hr/candidates/import': 'Importation de CVs',
-      '/hr/candidates': 'Candidats',
-      '/hr/workflow': 'Workflow',
-      '/hr/reporting': 'Reporting',
-      '/hr/administration': 'Administration',
-      '/hr/settings': 'Paramètres',
-    };
-
-    this.updateTitle(this.router.url, routeTitles);
+    this.updateTitle(this.router.url);
 
     this.router.events
       .pipe(filter((event: RouterEvent): event is NavigationEnd => event instanceof NavigationEnd))
       .subscribe((event: NavigationEnd) => {
-        this.updateTitle(event.urlAfterRedirects, routeTitles);
+        this.updateTitle(event.urlAfterRedirects);
       });
   }
 
-  private updateTitle(url: string, routeTitles: Record<string, string>) {
-    const matchingRoute = Object.keys(routeTitles).find((route) => url.startsWith(route));
-    this.pageTitle.set(matchingRoute ? routeTitles[matchingRoute] : 'Tableau de bord');
+  private updateTitle(url: string) {
+    const cleanUrl = url.split('?')[0].split('#')[0];
+
+    if (cleanUrl === '/hr/offers/new') {
+      this.pageTitle.set("Créer une offre d'emploi");
+      return;
+    }
+    if (/^\/hr\/offers\/[^/]+\/edit$/.test(cleanUrl)) {
+      this.pageTitle.set("Modifier l'offre d'emploi");
+      return;
+    }
+    if (/^\/hr\/offers\/[^/]+$/.test(cleanUrl)) {
+      this.pageTitle.set("Détails de l'offre d'emploi");
+      return;
+    }
+    if (cleanUrl === '/hr/offers') {
+      this.pageTitle.set("Offres d'emploi");
+      return;
+    }
+    if (cleanUrl === '/hr/candidates/import') {
+      this.pageTitle.set('Importer des CVs');
+      return;
+    }
+    if (/^\/hr\/candidates\/[^/]+$/.test(cleanUrl)) {
+      this.pageTitle.set('Profil du candidat');
+      return;
+    }
+    if (cleanUrl === '/hr/candidates') {
+      this.pageTitle.set('Gestion des candidatures');
+      return;
+    }
+    if (cleanUrl === '/hr/workflow') {
+      this.pageTitle.set('Workflow de recrutement');
+      return;
+    }
+    if (cleanUrl === '/hr/reporting') {
+      this.pageTitle.set('Rapports & Statistiques');
+      return;
+    }
+    if (cleanUrl === '/hr/settings/templates') {
+      this.pageTitle.set("Modèles d'emails");
+      return;
+    }
+    if (cleanUrl === '/hr/administration') {
+      this.pageTitle.set('Gestion des utilisateurs');
+      return;
+    }
+    if (cleanUrl === '/hr/dashboard' || cleanUrl === '/hr' || cleanUrl === '') {
+      this.pageTitle.set('Tableau de bord');
+      return;
+    }
+
+    this.pageTitle.set('Tableau de bord');
   }
 
   toggleDropdown(event: Event) {
@@ -121,15 +161,7 @@ export class Header implements OnInit {
 
   toggleDarkMode(event: Event) {
     event.stopPropagation();
-    this.isDarkMode.update((val) => !val);
-
-    if (this.isDarkMode()) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('darkMode', 'true');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('darkMode', 'false');
-    }
+    this.themeService.toggleDarkMode();
   }
 
   manageAccount() {

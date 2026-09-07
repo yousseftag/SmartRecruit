@@ -12,6 +12,7 @@ import {
   LucideUser,
   LucideUsers,
   LucidePencil,
+  LucideFileCheck,
 } from '@lucide/angular';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
@@ -34,6 +35,7 @@ import { DashboardStats, PriorityOffer, Activity } from '../../core/models/dashb
     LucideUser,
     LucideUsers,
     LucidePencil,
+    LucideFileCheck,
     BaseChartDirective,
   ],
   templateUrl: './dashboard.html',

@@ -9,9 +9,10 @@ import {
   LucideGitMerge,
   LucideChartColumnBig,
   LucideShieldCheck,
-  LucideSettings,
   LucideUpload,
   LucideMail,
+  LucideGlobe,
+  LucideExternalLink,
 } from '@lucide/angular';
 import { NavItem } from './models/nav-item.model';
 import { AuthService } from '../../core/auth/auth.service';
@@ -20,7 +21,7 @@ import { UserRole } from '../../core/models/user.model';
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, RouterModule, LucideDynamicIcon],
+  imports: [CommonModule, RouterModule, LucideDynamicIcon, LucideGlobe, LucideExternalLink],
   templateUrl: './sidebar.html',
 })
 export class Sidebar {
@@ -56,12 +57,6 @@ export class Sidebar {
       icon: LucideShieldCheck,
       roles: [UserRole.HR_ADMIN],
     },
-    {
-      label: 'Paramètres',
-      route: '/hr/settings/general',
-      icon: LucideSettings,
-      roles: [UserRole.HR_ADMIN],
-    },
   ];
 
   isRouteActive(route: string): boolean {
@@ -71,9 +66,6 @@ export class Sidebar {
     }
     if (route === '/hr/candidates') {
       return current.startsWith('/hr/candidates') && !current.startsWith('/hr/candidates/import');
-    }
-    if (route === '/hr/settings/general') {
-      return current === '/hr/settings/general';
     }
     if (route === '/hr/settings/templates') {
       return current.startsWith('/hr/settings/templates');
