@@ -1,24 +1,13 @@
-<div class="page page-wide" style="width: 100%">
-  <div
-    class="page-head"
-    style="
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      margin-bottom: 24px;
-    "
-  >
-    <div>
-      <h1 class="h1">Gestion des Utilisateurs</h1>
-      <p class="subtitle">Gérez les comptes, rôles et accès de votre équipe.</p>
-    </div>
-    <div>
-      <button class="btn btn-primary flex items-center gap-2" (click)="openCreateModal()">
-        <svg lucidePlus size="16"></svg>
-        <span>Ajouter un compte</span>
-      </button>
-    </div>
+<div class="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-4">
+  <!-- Actions Bar -->
+  <div class="flex items-center justify-end">
+    <button
+      class="btn btn-primary flex items-center gap-2 text-xs shadow-sm"
+      (click)="openCreateModal()"
+    >
+      <svg lucidePlus size="16"></svg>
+      <span>Ajouter un compte</span>
+    </button>
   </div>
 
   <div class="card card-pad-lg" style="width: 100%">
@@ -395,7 +384,7 @@
     style="
       background: var(--amber-bg, #fef3c7);
       color: var(--amber-d, #b45309);
-      border-color: #fcd34d;
+      border-color: var(--border);
     "
   >
     <svg lucideAlertTriangle size="18"></svg>
@@ -406,7 +395,11 @@
 @if (errorToastMessage()) {
   <div
     class="toast-notification"
-    style="background: var(--red-bg, #fef2f2); color: var(--red-d, #dc2626); border-color: #fecaca"
+    style="
+      background: var(--red-bg, #fef2f2);
+      color: var(--red-d, #dc2626);
+      border-color: var(--border);
+    "
   >
     <svg lucideXCircle size="18"></svg>
     <span>{{ errorToastMessage() }}</span>

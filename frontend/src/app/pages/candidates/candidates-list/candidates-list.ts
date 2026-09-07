@@ -467,11 +467,19 @@ export class CandidatesList implements OnInit, OnDestroy {
       };
     }
 
-    if (app.totalScore === null) {
+    if (app.extractionStatus === 'PENDING') {
       return {
         text: 'Extraction en cours...',
         isGhost: true,
         isPending: true,
+      };
+    }
+
+    if (app.extractionStatus === 'FAILED' || app.extractionStatus === 'STALLED') {
+      return {
+        text: 'Échec d’extraction',
+        isGhost: true,
+        isPending: false,
       };
     }
 

@@ -88,20 +88,92 @@
 
 /* ---- Dark Mode Overrides ---- */
 .dark {
-  --color-bg: #0f172a;
+  /* Core surfaces */
+  --color-bg: #0b0f19;
   --color-white: #1e293b;
   --color-ink: #f8fafc;
   --color-slate: #94a3b8;
   --color-muted: #cbd5e1;
   --color-faint: #64748b;
   --color-line: #334155;
-  --color-line-2: #1e293b;
+  --color-line-2: #243042;
   --color-border: #334155;
+
+  /* Inverted Slate Scale for Seamless Dark Mode */
+  --color-slate-50: #1e293b;
+  --color-slate-100: #253346;
+  --color-slate-200: #334155;
+  --color-slate-300: #475569;
+  --color-slate-400: #64748b;
+  --color-slate-500: #94a3b8;
+  --color-slate-600: #cbd5e1;
+  --color-slate-700: #e2e8f0;
+  --color-slate-800: #f1f5f9;
+  --color-slate-900: #f8fafc;
+  --color-slate-950: #ffffff;
+
+  /* Colored Tints in Dark Mode (no bright pastel backgrounds) */
+  --color-blue-50: rgba(37, 99, 235, 0.15);
+  --color-blue-100: rgba(37, 99, 235, 0.25);
+  --color-blue-200: rgba(37, 99, 235, 0.35);
+  --color-blue-600: #60a5fa;
+  --color-blue-700: #93c5fd;
+  --color-blue-800: #bfdbfe;
   --color-blue-tint: #1e293b;
-  --color-blue-50: #1e293b;
-  --color-blue-100: rgba(37, 99, 235, 0.2);
+
+  --color-indigo-50: rgba(99, 102, 241, 0.15);
+  --color-indigo-100: rgba(99, 102, 241, 0.25);
+  --color-indigo-200: rgba(99, 102, 241, 0.35);
+  --color-indigo-600: #818cf8;
+  --color-indigo-700: #a5b4fc;
+  --color-indigo-800: #c7d2fe;
+
+  --color-emerald-50: rgba(16, 185, 129, 0.15);
+  --color-emerald-100: rgba(16, 185, 129, 0.25);
+  --color-emerald-200: rgba(16, 185, 129, 0.35);
+  --color-emerald-600: #34d399;
+  --color-emerald-700: #6ee7b7;
+  --color-emerald-800: #a7f3d0;
+
   --color-green-bg: rgba(5, 150, 105, 0.2);
+  --color-green: #34d399;
+
+  --color-amber-bg: rgba(217, 119, 6, 0.2);
+  --color-amber-50: rgba(217, 119, 6, 0.15);
+  --color-amber-100: rgba(217, 119, 6, 0.25);
+  --color-amber-200: rgba(217, 119, 6, 0.35);
+  --color-amber-600: #fbbf24;
+  --color-amber-700: #fcd34d;
+  --color-amber-800: #fde68a;
+
   --color-red-bg: rgba(239, 68, 68, 0.2);
+  --color-red-50: rgba(239, 68, 68, 0.15);
+  --color-red-100: rgba(239, 68, 68, 0.25);
+  --color-red-200: rgba(239, 68, 68, 0.35);
+  --color-red: #f87171;
+  --color-red-d: #ef4444;
+
+  --color-purple-50: rgba(168, 85, 247, 0.15);
+  --color-purple-100: rgba(168, 85, 247, 0.25);
+  --color-purple-200: rgba(168, 85, 247, 0.35);
+  --color-purple-600: #c084fc;
+  --color-purple-700: #d8b4fe;
+  --color-purple-800: #e9d5ff;
+
+  --color-rose-50: rgba(244, 63, 94, 0.15);
+  --color-rose-100: rgba(244, 63, 94, 0.25);
+  --color-rose-200: rgba(244, 63, 94, 0.35);
+  --color-rose-600: #fb7185;
+  --color-rose-700: #fda4af;
+  --color-rose-800: #fecdd3;
+
+  --color-orange-50: rgba(249, 115, 22, 0.15);
+  --color-orange-100: rgba(249, 115, 22, 0.25);
+  --color-orange-700: #fdba74;
+
+  --color-teal-50: rgba(20, 184, 166, 0.15);
+  --color-teal-100: rgba(20, 184, 166, 0.25);
+  --color-teal-700: #5eead4;
 
   /* Legacy dark mode overrides */
   --bg: var(--color-bg);
@@ -118,6 +190,52 @@
   --blue-100: var(--color-blue-100);
   --green-bg: var(--color-green-bg);
   --red-bg: var(--color-red-bg);
+}
+
+/* ---- Dark Mode Component Adaptations ---- */
+.dark input,
+.dark textarea,
+.dark select {
+  color-scheme: dark;
+}
+
+.dark .prose {
+  color: #cbd5e1;
+}
+.dark .prose p,
+.dark .prose li,
+.dark .prose span {
+  color: #cbd5e1;
+}
+.dark .prose h1,
+.dark .prose h2,
+.dark .prose h3,
+.dark .prose h4,
+.dark .prose strong {
+  color: #f8fafc;
+}
+.dark .prose code {
+  background: #0f172a;
+  color: #93c5fd;
+}
+.dark .prose blockquote {
+  color: #94a3b8;
+  border-left-color: #334155;
+}
+.dark .prose a {
+  color: #60a5fa;
+}
+
+/* Scrollbars in Dark Mode */
+.dark ::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 6px;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }
 
 @layer base {
@@ -214,7 +332,7 @@
     width: 38px;
     height: 38px;
     border-radius: 11px;
-    background: #e8f0fe;
+    background: var(--blue-100);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -255,7 +373,7 @@
     transition: background 0.12s;
   }
   .nav-item:hover {
-    background: #f5f7fa;
+    background: var(--line-2);
     color: var(--slate);
   }
   .nav-item i {
@@ -282,9 +400,9 @@
   .pro-card {
     margin: 8px 18px 14px;
     padding: 16px;
-    border: 1px solid #e8eef7;
+    border: 1px solid var(--line);
     border-radius: 14px;
-    background: #fbfcfe;
+    background: var(--bg);
   }
   .pro-card .t {
     font-size: 13.5px;
@@ -306,7 +424,7 @@
   .avatar {
     border-radius: 50%;
     object-fit: cover;
-    background: #e2e8f0;
+    background: var(--line-2);
   }
   .avatar-38 {
     width: 38px;
@@ -324,7 +442,7 @@
     height: 10px;
     border-radius: 50%;
     background: #22c55e;
-    border: 2px solid #fff;
+    border: 2px solid var(--white);
   }
   .side-user .nm {
     font-size: 13.5px;
@@ -426,7 +544,7 @@
   .crumbs .sep {
     width: 15px;
     height: 15px;
-    color: #cbd5e1;
+    color: var(--faint);
   }
   .crumb {
     font-size: 14px;
@@ -630,7 +748,7 @@
   .badge-outline-green {
     background: var(--green-bg);
     color: var(--green);
-    border: 1px solid #bbebd3;
+    border: 1px solid var(--border);
     padding: 5px 13px;
   }
   .pill {
@@ -802,7 +920,7 @@
     width: 5px;
     height: 5px;
     border-radius: 50%;
-    background: #cbd5e1;
+    background: var(--faint);
   }
   .cell {
     font-size: 13.5px;
@@ -996,12 +1114,12 @@
     border-radius: 20px;
     font-size: 13px;
     font-weight: 500;
-    color: #334155;
+    color: var(--slate);
     background: var(--line-2);
   }
   .chip-blue {
     padding: 7px 15px;
-    border: 1px solid #cdd9ec;
+    border: 1px solid var(--line);
     border-radius: 20px;
     font-size: 13px;
     font-weight: 600;
@@ -1119,8 +1237,8 @@
     margin-top: 6px;
   }
   .promo-dashed {
-    background: #fff;
-    border: 1.5px dashed #d8dee8;
+    background: var(--white);
+    border: 1.5px dashed var(--line);
   }
 
   /* ---- profile / scoring ---- */
@@ -1148,7 +1266,7 @@
   .bar-track {
     height: 7px;
     border-radius: 5px;
-    background: #dbeafe;
+    background: var(--line);
     overflow: hidden;
   }
   .bar-fill {
@@ -1181,11 +1299,11 @@
 
   /* ---- upload / progress ---- */
   .dropzone {
-    border: 2px dashed #cdd9ec;
+    border: 2px dashed var(--line);
     border-radius: var(--r-lg);
     padding: 48px;
     text-align: center;
-    background: #fbfcff;
+    background: var(--bg);
   }
   .dropzone .cloud {
     width: 74px;
@@ -1304,13 +1422,13 @@
     opacity: 0.4;
   }
   .kan-empty {
-    border: 1.5px dashed #dbe2ec;
+    border: 1.5px dashed var(--line);
     border-radius: 14px;
     padding: 34px 14px;
     text-align: center;
     font-size: 13px;
     font-style: italic;
-    color: #a3aec0;
+    color: var(--faint);
   }
   .tag {
     display: inline-block;
@@ -1616,7 +1734,7 @@
     color: var(--green, #059669);
     padding: 16px 24px;
     border-radius: 8px;
-    border: 1px solid #bbebd3;
+    border: 1px solid var(--border);
     display: flex;
     align-items: center;
     gap: 12px;
@@ -1648,7 +1766,7 @@
     border-radius: var(--r);
     margin-bottom: 20px;
     font-size: 14px;
-    border: 1px solid #bbebd3;
+    border: 1px solid var(--border);
   }
   .alert-error {
     background: var(--red-bg);
@@ -1657,7 +1775,7 @@
     border-radius: var(--r);
     margin-bottom: 20px;
     font-size: 14px;
-    border: 1px solid #fecaca;
+    border: 1px solid var(--border);
   }
   .input-disabled {
     background: var(--bg);
