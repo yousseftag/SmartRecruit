@@ -1,4 +1,4 @@
--- V6__email_templates.sql
+-- V5__email_templates.sql
 -- Creates email_template table for customizable recruitment email templates
 
 CREATE TABLE email_template (

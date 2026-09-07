@@ -101,8 +101,8 @@
       "enabled": true,
       "email": "admin@smartrecruit.com",
       "emailVerified": true,
-      "firstName": "Admin",
-      "lastName": "RH",
+      "firstName": "Sophie",
+      "lastName": "El Amrani",
       "credentials": [
         {
           "type": "password",
@@ -118,15 +118,16 @@
           "view-profile",
           "manage-account"
         ]
-      }
+      },
+      "id": "1540bed8-f2d3-49d7-b1ce-96fad68983e6"
     },
     {
       "username": "recruteur",
       "enabled": true,
-      "email": "recruteur@smartrecruit.com",
+      "email": "zineb.hadafi@smartrecruit.com",
       "emailVerified": true,
-      "firstName": "Test",
-      "lastName": "Recruteur",
+      "firstName": "Zineb",
+      "lastName": "HADAFI",
       "credentials": [
         {
           "type": "password",
@@ -142,15 +143,16 @@
           "view-profile",
           "manage-account"
         ]
-      }
+      },
+      "id": "87aa1b2a-d4eb-4511-9dde-eff680db0d17"
     },
     {
       "username": "viewer",
       "enabled": true,
       "email": "viewer@smartrecruit.com",
       "emailVerified": true,
-      "firstName": "Test",
-      "lastName": "Viewer",
+      "firstName": "Leila",
+      "lastName": "Mansouri",
       "credentials": [
         {
           "type": "password",
@@ -166,31 +168,8 @@
           "view-profile",
           "manage-account"
         ]
-      }
-    },
-    {
-      "username": "testuser",
-      "enabled": true,
-      "emailVerified": false,
-      "requiredActions": [
-        "UPDATE_PROFILE"
-      ],
-      "credentials": [
-        {
-          "type": "password",
-          "value": "testuser",
-          "temporary": false
-        }
-      ],
-      "realmRoles": [
-        "VIEWER"
-      ],
-      "clientRoles": {
-        "account": [
-          "view-profile",
-          "manage-account"
-        ]
-      }
+      },
+      "id": "d61d5724-ef0b-492e-adbc-e242417a7bb0"
     }
   ]
 }
