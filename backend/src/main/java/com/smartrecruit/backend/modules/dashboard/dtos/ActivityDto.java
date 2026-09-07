@@ -1,6 +1,6 @@
 package com.smartrecruit.backend.modules.dashboard.dtos;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record ActivityDto(
     String type,
@@ -8,4 +8,4 @@ public record ActivityDto(
     String targetName,
     String fromStatus,
     String toStatus,
-    LocalDateTime occurredAt) {}
+    Instant occurredAt) {}

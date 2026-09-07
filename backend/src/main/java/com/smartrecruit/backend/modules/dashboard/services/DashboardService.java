@@ -8,7 +8,6 @@ import com.smartrecruit.backend.modules.offer.entities.Offer;
 import com.smartrecruit.backend.modules.offer.repositories.OfferRepository;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
@@ -96,8 +95,16 @@ public class DashboardService {
               String targetName = (String) row[2];
               String fromStatus = (String) row[3];
               String toStatus = (String) row[4];
-              LocalDateTime occurredAt =
-                  ((Instant) row[5]).atZone(ZoneOffset.UTC).toLocalDateTime();
+              Instant occurredAt;
+              if (row[5] instanceof Instant inst) {
+                occurredAt = inst;
+              } else if (row[5] instanceof java.time.OffsetDateTime odt) {
+                occurredAt = odt.toInstant();
+              } else if (row[5] instanceof java.sql.Timestamp ts) {
+                occurredAt = ts.toInstant();
+              } else {
+                occurredAt = Instant.now();
+              }
               return new ActivityDto(type, user, targetName, fromStatus, toStatus, occurredAt);
             })
         .collect(Collectors.toList());

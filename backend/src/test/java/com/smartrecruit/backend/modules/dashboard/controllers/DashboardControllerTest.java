@@ -14,7 +14,7 @@ import com.smartrecruit.backend.modules.dashboard.dtos.DashboardStatsDto;
 import com.smartrecruit.backend.modules.dashboard.dtos.PriorityOfferDto;
 import com.smartrecruit.backend.modules.dashboard.services.DashboardService;
 import com.smartrecruit.backend.security.JwtAuthConverter;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -75,7 +75,7 @@ class DashboardControllerTest {
 
   @Test
   void getRecentActivities_WithViewerRole_ShouldReturn200AndListJson() throws Exception {
-    LocalDateTime now = LocalDateTime.now();
+    Instant now = Instant.now();
     ActivityDto mockActivity =
         new ActivityDto(
             "STATUS_CHANGE", "Sarah Recruiter", "Alice Green", "NEW", "SHORTLISTED", now);

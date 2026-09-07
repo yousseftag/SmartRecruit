@@ -107,7 +107,7 @@ class DashboardServiceTest {
     ActivityDto dto = activities.get(0);
     assertEquals("STATUS_CHANGE", dto.type());
     assertEquals("System", dto.user());
-    assertEquals(now.atZone(ZoneOffset.UTC).toLocalDateTime(), dto.occurredAt());
+    assertEquals(now, dto.occurredAt());
   }
 
   @Test
@@ -192,7 +192,7 @@ class DashboardServiceTest {
     assertEquals("Alice Smith", first.targetName());
     assertEquals("NEW", first.fromStatus());
     assertEquals("INTERVIEWING", first.toStatus());
-    assertEquals(now.atZone(ZoneOffset.UTC).toLocalDateTime(), first.occurredAt());
+    assertEquals(now, first.occurredAt());
 
     ActivityDto second = activities.get(1);
     assertEquals("APPLICATION_CREATED", second.type());
@@ -200,6 +200,6 @@ class DashboardServiceTest {
     assertEquals("Bob Johnson", second.targetName());
     assertEquals(null, second.fromStatus());
     assertEquals("NEW", second.toStatus());
-    assertEquals(tenMinutesAgo.atZone(ZoneOffset.UTC).toLocalDateTime(), second.occurredAt());
+    assertEquals(tenMinutesAgo, second.occurredAt());
   }
 }
