@@ -38,11 +38,11 @@
             <input id="password-confirm" name="password-confirm" type="password" class="input" required autocomplete="new-password">
         </div>
 
-        <div style="display: flex; gap: 12px; margin-top: 20px;">
+        <div style="display: flex; justify-content: center; gap: 12px; margin-top: 20px;">
             <#if isAppInitiatedAction?? && isAppInitiatedAction>
-                <button type="submit" name="cancel-aia" value="true" class="btn" style="flex: 1; background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;" formnovalidate>Annuler</button>
+                <button type="submit" name="cancel-aia" value="true" class="btn" style="background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;" formnovalidate>Annuler</button>
             </#if>
-            <button type="submit" class="btn btn-primary" style="flex: 2;">Mettre à jour le mot de passe</button>
+            <button type="submit" class="btn btn-primary">Mettre à jour le mot de passe</button>
         </div>
     </form>
 </div>

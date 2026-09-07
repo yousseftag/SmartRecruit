@@ -41,11 +41,11 @@
             <input id="email" name="email" type="email" class="input" value="${emailVal}" placeholder="votre.email@exemple.com" required>
         </div>
 
-        <div style="display: flex; gap: 12px; margin-top: 24px;">
+        <div style="display: flex; justify-content: center; gap: 12px; margin-top: 24px;">
             <#if isAppInitiatedAction?? && isAppInitiatedAction>
-                <button type="submit" name="cancel-aia" value="true" class="btn" style="flex: 1; background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;" formnovalidate>Annuler</button>
+                <button type="submit" name="cancel-aia" value="true" class="btn" style="background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;" formnovalidate>Annuler</button>
             </#if>
-            <button type="submit" class="btn btn-primary" style="flex: 2;">Enregistrer et continuer</button>
+            <button type="submit" class="btn btn-primary">Enregistrer et continuer</button>
         </div>
     </form>
 </div>
