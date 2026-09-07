@@ -10,7 +10,7 @@ import com.smartrecruit.backend.modules.reporting.dtos.CandidateReportRowDto;
 import com.smartrecruit.backend.modules.reporting.dtos.ReportingDashboardResponseDto;
 import com.smartrecruit.backend.modules.reporting.enums.ReportingPeriod;
 import com.smartrecruit.backend.modules.reporting.repositories.ReportingRepository;
-import java.time.OffsetDateTime;
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
@@ -114,7 +114,7 @@ class ReportingServiceTest {
   void getRankedCandidates_ShouldMapCandidatesWithRankAndAdmissibility() {
     UUID applicationId = UUID.randomUUID();
     UUID candidateId = UUID.randomUUID();
-    OffsetDateTime appliedAt = OffsetDateTime.now(ZoneOffset.UTC);
+    Instant appliedAtInstant = Instant.now();
     String categoryScoresJson = "{\"technical\": 95, \"experience\": 90}";
 
     // Row mapping: applicationId, candidateId, firstName, lastName, email, phone, offerTitle,
@@ -132,7 +132,7 @@ class ReportingServiceTest {
           92.50,
           true,
           "INTERVIEWING",
-          appliedAt,
+          appliedAtInstant,
           categoryScoresJson
         };
 
@@ -154,6 +154,8 @@ class ReportingServiceTest {
     assertEquals(92.50, row.totalScore());
     assertTrue(row.isAdmissible());
     assertEquals(ApplicationStatus.INTERVIEWING, row.status());
+    assertNotNull(row.appliedAt());
+    assertEquals(appliedAtInstant.atOffset(ZoneOffset.UTC), row.appliedAt());
     assertNotNull(row.categoryScores());
     assertEquals(95, row.categoryScores().get("technical"));
   }
