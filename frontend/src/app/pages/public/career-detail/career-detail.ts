@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, ActivatedRoute } from '@angular/router';
+import { LucideLock } from '@lucide/angular';
 import { FileDropzone } from '../../../shared/components/file-dropzone/file-dropzone';
 import { ApplicationService } from '../../../core/services/application.service';
 import { OfferService } from '../../../core/services/offer.service';
@@ -19,6 +20,7 @@ import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
     ReactiveFormsModule,
     ExperienceFormatPipe,
     MarkdownPipe,
+    LucideLock,
   ],
   templateUrl: './career-detail.html',
 })

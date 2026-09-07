@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { LucideLock } from '@lucide/angular';
 import { OfferService } from '../../../core/services/offer.service';
 import {
   OfferPublicSummaryResponse,
@@ -12,7 +13,7 @@ import { ExperienceFormatPipe } from '../../../shared/pipes/experience-format.pi
 @Component({
   selector: 'app-careers-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, DatePipe, ExperienceFormatPipe],
+  imports: [CommonModule, RouterModule, DatePipe, ExperienceFormatPipe, LucideLock],
   templateUrl: './careers-list.html',
 })
 export class CareersList implements OnInit {

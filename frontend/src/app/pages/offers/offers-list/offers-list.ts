@@ -27,6 +27,8 @@ import {
   LucideRotateCcw,
   LucideCheck,
   LucideAlertTriangle,
+  LucideGlobe,
+  LucideExternalLink,
 } from '@lucide/angular';
 import { Subscription, interval } from 'rxjs';
 import { OfferService } from '../../../core/services/offer.service';
@@ -67,6 +69,8 @@ export type OfferSortOption = 'NEWEST' | 'OLDEST' | 'TITLE_ASC' | 'SCORE_DESC';
     LucideRotateCcw,
     LucideCheck,
     LucideAlertTriangle,
+    LucideGlobe,
+    LucideExternalLink,
   ],
   templateUrl: './offers-list.html',
 })
