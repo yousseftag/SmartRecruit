@@ -9,6 +9,7 @@ import com.smartrecruit.backend.modules.reporting.services.ExcelExportService;
 import com.smartrecruit.backend.modules.reporting.services.PdfExportService;
 import com.smartrecruit.backend.modules.reporting.services.ReportingService;
 import java.text.Normalizer;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -17,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -96,12 +98,15 @@ public class ReportingController {
   public ResponseEntity<byte[]> exportExcel(
       @RequestParam(required = false) UUID offerId,
       @RequestParam(required = false, defaultValue = "ALL") String period,
-      @RequestParam(required = false, defaultValue = "0") int limit) {
+      @RequestParam(required = false, defaultValue = "0") int limit,
+      @RequestHeader(value = "X-Timezone", required = false) String timezoneHeader) {
     ReportingPeriod reportingPeriod = ReportingPeriod.fromString(period);
     List<CandidateReportRowDto> candidates =
         reportingService.getRankedCandidates(offerId, reportingPeriod, limit);
     String campaignTitle = resolveCampaignTitle(offerId);
-    byte[] excelBytes = excelExportService.exportRankedCandidates(candidates, campaignTitle);
+    ZoneId zoneId = resolveZoneId(timezoneHeader);
+    byte[] excelBytes =
+        excelExportService.exportRankedCandidates(candidates, campaignTitle, zoneId);
     String slug = toSlug(campaignTitle);
 
     return ResponseEntity.ok()
@@ -121,13 +126,15 @@ public class ReportingController {
   @GetMapping("/export/pdf")
   public ResponseEntity<byte[]> exportPdf(
       @RequestParam(required = false) UUID offerId,
-      @RequestParam(required = false, defaultValue = "ALL") String period) {
+      @RequestParam(required = false, defaultValue = "ALL") String period,
+      @RequestHeader(value = "X-Timezone", required = false) String timezoneHeader) {
     ReportingPeriod reportingPeriod = ReportingPeriod.fromString(period);
     ReportingDashboardResponseDto report =
         reportingService.getDashboardReport(offerId, reportingPeriod);
     String campaignTitle = resolveCampaignTitle(offerId);
+    ZoneId zoneId = resolveZoneId(timezoneHeader);
     byte[] pdfBytes =
-        pdfExportService.exportExecutiveReport(report, campaignTitle, reportingPeriod);
+        pdfExportService.exportExecutiveReport(report, campaignTitle, reportingPeriod, zoneId);
     String slug = toSlug(campaignTitle);
 
     return ResponseEntity.ok()
@@ -136,6 +143,16 @@ public class ReportingController {
             "attachment; filename=\"rapport-synthese-" + slug + ".pdf\"")
         .contentType(MediaType.APPLICATION_PDF)
         .body(pdfBytes);
+  }
+
+  private ZoneId resolveZoneId(String timezoneHeader) {
+    if (timezoneHeader != null && !timezoneHeader.isBlank()) {
+      try {
+        return ZoneId.of(timezoneHeader.trim());
+      } catch (Exception ignored) {
+      }
+    }
+    return ZoneId.systemDefault();
   }
 
   private String resolveCampaignTitle(UUID offerId) {

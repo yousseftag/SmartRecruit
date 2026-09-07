@@ -1,5 +1,6 @@
 package com.smartrecruit.backend.modules.reporting.controllers;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -26,6 +27,7 @@ import com.smartrecruit.backend.modules.reporting.services.PdfExportService;
 import com.smartrecruit.backend.modules.reporting.services.ReportingService;
 import com.smartrecruit.backend.security.JwtAuthConverter;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
@@ -156,7 +158,7 @@ class ReportingControllerTest {
         .thenReturn(mockCandidates);
     when(offerRepository.findById(offerId)).thenReturn(Optional.of(mockOffer));
     when(excelExportService.exportRankedCandidates(
-            eq(mockCandidates), eq("Senior Cloud Architect")))
+            eq(mockCandidates), eq("Senior Cloud Architect"), any(ZoneId.class)))
         .thenReturn(fakeExcel);
 
     mockMvc
@@ -164,6 +166,7 @@ class ReportingControllerTest {
             get("/api/v1/reporting/export/excel")
                 .param("offerId", offerId.toString())
                 .param("period", "90d")
+                .header("X-Timezone", "Africa/Casablanca")
                 .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_VIEWER"))))
         .andExpect(status().isOk())
         .andExpect(
@@ -190,7 +193,10 @@ class ReportingControllerTest {
         .thenReturn(mockReport);
     when(offerRepository.findById(offerId)).thenReturn(Optional.of(mockOffer));
     when(pdfExportService.exportExecutiveReport(
-            eq(mockReport), eq("Tech Lead Spring Boot"), eq(ReportingPeriod.THIS_YEAR)))
+            eq(mockReport),
+            eq("Tech Lead Spring Boot"),
+            eq(ReportingPeriod.THIS_YEAR),
+            any(ZoneId.class)))
         .thenReturn(fakePdf);
 
     mockMvc
@@ -198,6 +204,7 @@ class ReportingControllerTest {
             get("/api/v1/reporting/export/pdf")
                 .param("offerId", offerId.toString())
                 .param("period", "1y")
+                .header("X-Timezone", "Africa/Casablanca")
                 .with(jwt().authorities(new SimpleGrantedAuthority("ROLE_RECRUITER"))))
         .andExpect(status().isOk())
         .andExpect(

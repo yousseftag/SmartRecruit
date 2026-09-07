@@ -45,6 +45,7 @@ export class ReportingService {
     }
     return this.http.get(`${this.apiUrl}/export/excel`, {
       params,
+      headers: this.buildHeaders(),
       responseType: 'blob',
     });
   }
@@ -56,6 +57,7 @@ export class ReportingService {
     const params = this.buildQueryParams(offerId, period);
     return this.http.get(`${this.apiUrl}/export/pdf`, {
       params,
+      headers: this.buildHeaders(),
       responseType: 'blob',
     });
   }
@@ -84,5 +86,10 @@ export class ReportingService {
       params = params.set('period', period);
     }
     return params;
+  }
+
+  private buildHeaders(): Record<string, string> {
+    const timeZone = Intl?.DateTimeFormat?.().resolvedOptions?.().timeZone;
+    return timeZone ? { 'X-Timezone': timeZone } : {};
   }
 }

@@ -4,6 +4,7 @@ import com.smartrecruit.backend.modules.application.enums.ApplicationStatus;
 import com.smartrecruit.backend.modules.reporting.dtos.CandidateReportRowDto;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +72,20 @@ public class ExcelExportService {
    */
   public byte[] exportRankedCandidates(
       List<CandidateReportRowDto> candidates, String campaignTitle) {
+    return exportRankedCandidates(candidates, campaignTitle, ZoneId.systemDefault());
+  }
+
+  /**
+   * Generates a fully-styled Excel workbook containing the ranked candidate dataset.
+   *
+   * @param candidates Pre-ranked candidate rows from ReportingService.
+   * @param campaignTitle Optional campaign or offer title for metadata display.
+   * @param zoneId Timezone to format timestamps in (defaults to systemDefault if null).
+   * @return Raw byte array of the valid .xlsx file.
+   */
+  public byte[] exportRankedCandidates(
+      List<CandidateReportRowDto> candidates, String campaignTitle, ZoneId zoneId) {
+    ZoneId targetZone = zoneId != null ? zoneId : ZoneId.systemDefault();
     try (XSSFWorkbook workbook = new XSSFWorkbook();
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
 
@@ -94,7 +109,7 @@ public class ExcelExportService {
       if (candidates == null || candidates.isEmpty()) {
         createEmptyStateRow(sheet, styles.emptyStyle);
       } else {
-        populateDataRows(sheet, candidates, styles);
+        populateDataRows(sheet, candidates, styles, targetZone);
       }
 
       autoSizeColumns(sheet, HEADERS.length);
@@ -134,7 +149,7 @@ public class ExcelExportService {
   }
 
   private void populateDataRows(
-      Sheet sheet, List<CandidateReportRowDto> candidates, StyleBundle styles) {
+      Sheet sheet, List<CandidateReportRowDto> candidates, StyleBundle styles, ZoneId targetZone) {
     for (int i = 0; i < candidates.size(); i++) {
       CandidateReportRowDto candidate = candidates.get(i);
       Row row = sheet.createRow(i + 1);
@@ -168,10 +183,12 @@ public class ExcelExportService {
       cellOffer.setCellValue(candidate.offerTitle() != null ? candidate.offerTitle() : "-");
       cellOffer.setCellStyle(rowStyle.leftStyle);
 
-      // 5. Date Candidature
+      // 5. Date Candidature (formatted in target timezone)
       Cell cellDate = row.createCell(5);
       cellDate.setCellValue(
-          candidate.appliedAt() != null ? candidate.appliedAt().format(DATE_FORMATTER) : "-");
+          candidate.appliedAt() != null
+              ? candidate.appliedAt().atZoneSameInstant(targetZone).format(DATE_FORMATTER)
+              : "-");
       cellDate.setCellStyle(rowStyle.centerStyle);
 
       // 6. Statut

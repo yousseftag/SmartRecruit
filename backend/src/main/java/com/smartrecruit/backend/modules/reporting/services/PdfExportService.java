@@ -25,7 +25,8 @@ import com.smartrecruit.backend.modules.reporting.enums.ReportingPeriod;
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
@@ -91,7 +92,24 @@ public class PdfExportService {
    */
   public byte[] exportExecutiveReport(
       ReportingDashboardResponseDto report, String campaignTitle, ReportingPeriod period) {
+    return exportExecutiveReport(report, campaignTitle, period, ZoneId.systemDefault());
+  }
 
+  /**
+   * Generates a corporate executive PDF report stream for a recruitment campaign.
+   *
+   * @param report Complete dashboard data payload (KPIs, funnel, distribution, top candidates).
+   * @param campaignTitle Title of the targeted job offer or campaign name.
+   * @param period Analytical period filter.
+   * @param zoneId Timezone to format generation timestamp in (defaults to systemDefault if null).
+   * @return Valid PDF document as a byte array.
+   */
+  public byte[] exportExecutiveReport(
+      ReportingDashboardResponseDto report,
+      String campaignTitle,
+      ReportingPeriod period,
+      ZoneId zoneId) {
+    ZoneId targetZone = zoneId != null ? zoneId : ZoneId.systemDefault();
     ReportingDashboardResponseDto safeReport =
         report != null ? report : createEmptyFallbackReport();
     String safeTitle =
@@ -115,7 +133,7 @@ public class PdfExportService {
 
       document.open();
 
-      addHeaderBlock(document, safeTitle, safePeriod);
+      addHeaderBlock(document, safeTitle, safePeriod, targetZone);
       addKpiGrid(document, safeReport.kpis());
       addFunnelAndDistributionSection(
           document, safeReport.funnel(), safeReport.scoreDistribution());
@@ -129,7 +147,8 @@ public class PdfExportService {
     }
   }
 
-  private void addHeaderBlock(Document document, String title, ReportingPeriod period)
+  private void addHeaderBlock(
+      Document document, String title, ReportingPeriod period, ZoneId targetZone)
       throws DocumentException {
     PdfPTable headerTable = new PdfPTable(new float[] {55f, 45f});
     headerTable.setWidthPercentage(100f);
@@ -170,7 +189,9 @@ public class PdfExportService {
     Paragraph pDate = new Paragraph();
     pDate.setAlignment(Element.ALIGN_RIGHT);
     pDate.add(new Phrase("Généré le : ", FONT_HEADER_META_LABEL));
-    pDate.add(new Phrase(OffsetDateTime.now().format(DATE_TIME_FORMATTER), FONT_HEADER_META_VALUE));
+    pDate.add(
+        new Phrase(
+            ZonedDateTime.now(targetZone).format(DATE_TIME_FORMATTER), FONT_HEADER_META_VALUE));
     metaCell.addElement(pDate);
 
     headerTable.addCell(metaCell);

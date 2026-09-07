@@ -12,6 +12,7 @@ import com.smartrecruit.backend.modules.reporting.dtos.ScoreDistributionDto;
 import com.smartrecruit.backend.modules.reporting.enums.ReportingPeriod;
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -191,5 +192,29 @@ class PdfExportServiceTest {
     assertTrue(reader.getNumberOfPages() >= 1);
     assertEquals("Rapport Exécutif - Campagne Top 10", reader.getInfo().get("Title"));
     reader.close();
+  }
+
+  @Test
+  void exportExecutiveReport_WithCustomTimezone_ShouldGenerateValidPdf() throws IOException {
+    ReportingDashboardResponseDto emptyReport =
+        new ReportingDashboardResponseDto(
+            new CampaignStatsDto(0, 0, 0.0, 0.0, 0.0, 0, 0.0, 0, 0.0, 0),
+            Collections.emptyList(),
+            new ScoreDistributionDto(0, 0, 0, 0),
+            Collections.emptyList());
+
+    byte[] pdfBytes =
+        pdfExportService.exportExecutiveReport(
+            emptyReport,
+            "Campagne Casablanca",
+            ReportingPeriod.ALL,
+            ZoneId.of("Africa/Casablanca"));
+
+    assertNotNull(pdfBytes);
+    assertTrue(pdfBytes.length > 0);
+    assertEquals('%', (char) pdfBytes[0]);
+    assertEquals('P', (char) pdfBytes[1]);
+    assertEquals('D', (char) pdfBytes[2]);
+    assertEquals('F', (char) pdfBytes[3]);
   }
 }

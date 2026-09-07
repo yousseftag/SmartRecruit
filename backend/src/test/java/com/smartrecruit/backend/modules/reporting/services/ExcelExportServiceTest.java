@@ -7,6 +7,7 @@ import com.smartrecruit.backend.modules.reporting.dtos.CandidateReportRowDto;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
@@ -103,7 +104,8 @@ class ExcelExportServiceTest {
             Map.of("technical", 45, "experience", 40));
 
     byte[] excelBytes =
-        excelExportService.exportRankedCandidates(List.of(candidate1, candidate2), "Campagne Java");
+        excelExportService.exportRankedCandidates(
+            List.of(candidate1, candidate2), "Campagne Java", ZoneOffset.UTC);
 
     assertNotNull(excelBytes);
     assertTrue(excelBytes.length > 0);
@@ -152,6 +154,37 @@ class ExcelExportServiceTest {
       assertEquals(40.0, row2.getCell(10).getNumericCellValue(), 0.01);
       assertEquals("-", row2.getCell(11).getStringCellValue());
       assertEquals("-", row2.getCell(12).getStringCellValue());
+    }
+  }
+
+  @Test
+  void exportRankedCandidates_WithCustomTimezone_ShouldFormatDateInTargetTimezone()
+      throws IOException {
+    OffsetDateTime utcTimestamp = OffsetDateTime.of(2026, 9, 7, 11, 42, 0, 0, ZoneOffset.UTC);
+    CandidateReportRowDto candidate =
+        new CandidateReportRowDto(
+            1,
+            UUID.randomUUID(),
+            UUID.randomUUID(),
+            "Kenza Mounir",
+            "k.mounir@email.com",
+            null,
+            "DevOps Engineer",
+            88.0,
+            true,
+            ApplicationStatus.INTERVIEWING,
+            utcTimestamp,
+            Collections.emptyMap());
+
+    // In Africa/Casablanca (UTC+1), 11:42 UTC becomes 12:42
+    byte[] excelBytes =
+        excelExportService.exportRankedCandidates(
+            List.of(candidate), "Campagne DevOps", ZoneId.of("Africa/Casablanca"));
+
+    try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(excelBytes))) {
+      Sheet sheet = workbook.getSheetAt(0);
+      Row row1 = sheet.getRow(1);
+      assertEquals("2026-09-07 12:42", row1.getCell(5).getStringCellValue());
     }
   }
 
