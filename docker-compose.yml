@@ -22,7 +22,7 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
 
   minio:
-    image: minio/minio
+    image: quay.io/minio/minio:latest
     container_name: smartrecruit-minio
     ports:
       - "9000:9000"

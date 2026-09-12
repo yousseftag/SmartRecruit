@@ -49,7 +49,7 @@ backend_test:
   services:
     - name: postgres:16-alpine
       alias: postgres
-    - name: minio/minio:latest
+    - name: quay.io/minio/minio:latest
       alias: minio
       command: ["server", "/data"]
     - name: rabbitmq:3-management-alpine
