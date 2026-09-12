@@ -1,93 +1,81 @@
 # SmartRecruit
 
+![Java](https://img.shields.io/badge/Java-21-ED8B00?style=flat-square&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.1-6DB33F?style=flat-square&logo=springboot&logoColor=white)
+![Angular](https://img.shields.io/badge/Angular-21-DD0031?style=flat-square&logo=angular&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![Keycloak](https://img.shields.io/badge/Keycloak-24-008AAA?style=flat-square&logo=keycloak&logoColor=white)
+![RabbitMQ](https://img.shields.io/badge/RabbitMQ-3-FF6600?style=flat-square&logo=rabbitmq&logoColor=white)
+![MinIO](https://img.shields.io/badge/MinIO-S3-C72E49?style=flat-square&logo=minio&logoColor=white)
 
+An intelligent HR recruitment platform that automates CV processing, weighted AI scoring, candidate pipeline management, and campaign reporting.
 
-## Getting started
+Built for **Norsys Afrique** — Angular 21 frontend · Spring Boot 4.1 backend · external AI engine (contracted, simulated locally).
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Overview
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
+```mermaid
+flowchart LR
+    Users(["Candidates & HR"]) --> Angular["Angular 21\n:4200"]
+    Angular -->|REST + JWT| Spring["Spring Boot 4.1\n:8080"]
+    Angular -.->|OIDC| Keycloak["Keycloak 24\n:8081"]
+    Spring <-->|JDBC| Postgres[("PostgreSQL 16\n:5432")]
+    Spring <-->|files| MinIO[("MinIO\n:9000")]
+    Spring <-->|tasks / results| RabbitMQ["RabbitMQ\n:5672"]
+    RabbitMQ <-->|tasks / results| AI["FastAPI AI engine\n:8000 (not in repo)"]
 ```
-cd existing_repo
-git remote add origin https://git.norsys-afrique.ma/smartrecruit/smartrecruit.git
-git branch -M main
-git push -uf origin main
+
+The AI engine is external; local runs use in-JVM simulators over the same RabbitMQ flow (`AI_SIMULATION_ENABLED=true`). See the full [component map](docs/03-architecture/README.md).
+
+**Stack:** Angular 21 · Spring Boot 4.1 / Java 21 · PostgreSQL 16 · Keycloak 24 · RabbitMQ · MinIO — full detail in the [backend](docs/03-architecture/backend.md) and [frontend](docs/03-architecture/frontend.md) architecture.
+
+## Quick Start
+
+```bash
+# 1. Start infrastructure
+docker compose up -d
+
+# 2. Backend  → http://localhost:8080
+cd backend && ./mvnw spring-boot:run
+
+# 3. Frontend → http://localhost:4200
+cd frontend && pnpm install && pnpm start
 ```
 
-## Integrate with your tools
+Default login: **`admin` / `admin`** (`HR_ADMIN`). Full setup, ports, and credentials: [Getting Started](docs/02-getting-started.md).
 
-- [ ] [Set up project integrations](https://git.norsys-afrique.ma/smartrecruit/smartrecruit/-/settings/integrations)
+## Screenshots
 
-## Collaborate with your team
+<table>
+  <tr>
+    <td width="50%"><img src="docs/assets/00-careers-portal.png" width="100%" alt="Public careers portal — offer listing"></td>
+    <td width="50%"><img src="docs/assets/01-dashboard-kpis.png" width="100%" alt="Dashboard KPIs and 7-day chart"></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/assets/02-offer-detail-criteria.png" width="100%" alt="Offer detail — weighted criteria and AI status"></td>
+    <td width="50%"><img src="docs/assets/03-cv-import-progress.png" width="100%" alt="CV bulk import — per-file progress panel"></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/assets/04-candidate-profile.png" width="100%" alt="Candidate profile — AI score and criteria validation"></td>
+    <td width="50%"><img src="docs/assets/05-reporting-charts.png" width="100%" alt="Reporting — funnel and score distribution"></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/assets/06-workflow-board.png" width="100%" alt="Kanban workflow board"></td>
+    <td width="50%"><a href="docs/assets/07-cv-pipeline-async.mp4"><img src="docs/assets/07-cv-pipeline-async-poster.png" width="100%" alt="Async CV extraction pipeline demo"></a></td>
+  </tr>
+</table>
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+*Click the last thumbnail to play the async CV pipeline demo (MP4, 52 s). Full list: [asset index](docs/assets/README.md).*
 
-## Test and Deploy
+## Documentation
 
-Use the built-in continuous integration in GitLab.
+Start at the [documentation home](docs/README.md). Common entry points:
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
-
-***
-
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+| Topic | Guide |
+|-------|-------|
+| Project context, roles, scope | [Overview](docs/01-overview.md) |
+| Run the full stack | [Getting Started](docs/02-getting-started.md) |
+| System design | [Architecture](docs/03-architecture/README.md) |
+| Features | [CV Ingestion](docs/04-features/cv-ingestion.md) · [Reporting](docs/04-features/reporting.md) |
+| REST API | [API Reference](docs/06-api/reference.md) |
+| Contributing | [Git workflow](CONTRIBUTING.md) |

@@ -1,91 +1,45 @@
 # SmartRecruit Backend
 
-This is the Spring Boot backend for the SmartRecruit application. It serves as the **sole gateway** to the database, orchestrating authentication, storage, and asynchronous AI tasks.
+Spring Boot 4.1 / Java 21 REST API — the sole gateway to PostgreSQL, orchestrating Keycloak authentication, MinIO file storage, and asynchronous RabbitMQ AI tasks.
 
-## 🚀 Getting Started
+---
 
-### 1. Start Local Infrastructure
-Before running the Spring Boot application, you must start the required databases and brokers. These are defined at the **root** of the project repository.
+## Quick Start
 
+### 1. Start Infrastructure
 ```bash
-# Navigate to the project root
-cd ../
-
-# Start the infrastructure in the background
+# From project root:
 docker compose up -d
 ```
-This spins up:
-- **PostgreSQL (pgvector)**: `localhost:5432`
-- **RabbitMQ**: `localhost:5672` (Management UI at [`localhost:15672`](http://localhost:15672))
-- **MinIO (S3 Storage)**: `localhost:9000` (Console at [`localhost:9001`](http://localhost:9001))
-- **Keycloak (Auth)**: [`localhost:8081`](http://localhost:8081)
-- **Mailpit (Local Email Catcher)**: `localhost:8025` (Web UI at [`localhost:8025`](http://localhost:8025))
 
 ### 2. Run the Application
-You can run the application directly from your IDE, or via Maven:
 ```bash
 ./mvnw spring-boot:run
 ```
-Once running, the interactive API documentation (Swagger) is available at:
-👉 [`http://localhost:8080/swagger-ui.html`](http://localhost:8080/swagger-ui.html)
 
----
+- **REST API**: `http://localhost:8080`
+- **Swagger / OpenAPI**: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
 
-## 📦 Core Technologies & Dependencies
-- **Java 21 LTS**: Leveraging Virtual Threads for high-concurrency I/O.
-- **Spring Boot 4.1+**: The core framework.
-- **Flyway**: Strict SQL-based database migrations. *Note: Hibernate `ddl-auto` is set to `validate`. Do not change this; all schema changes must go through Flyway scripts.*
-- **Spring Security (OAuth2)**: Secures endpoints via Keycloak JWT validation.
-- **Spring Boot Quartz**: Handles robust, persistent scheduling for automated candidate follow-ups.
-- **Springdoc OpenAPI**: Automatically generates the Swagger documentation.
-- **Hibernate Types**: Used to map complex `JSONB` database columns (e.g., `category_weights`) to Java Objects.
-
----
-
-## 📂 Architecture & Package Structure
-
-We follow a **Package-by-Feature (Domain-Driven)** architecture. Each module is self-contained with its own internal layers (`controllers`, `services`, `repositories`, `entities`, `dtos`, `mappers`).
-
-```text
-com.smartrecruit.backend
-├── config/            # Security, MinIO, RabbitMQ, Cors configurations
-├── security/          # Keycloak JWT converters, custom role extractors
-├── exceptions/        # GlobalExceptionHandler and Custom Exceptions. Maps to unified ApiErrorResponse.
-├── modules/           # Grouped by feature (Domain-Driven)
-│   ├── auth/          # Users, Roles syncing
-│   ├── offer/         # Job Offers
-│   ├── candidate/     # Candidate profiles, CV files
-│   ├── application/   # Job applications, statuses, scores
-│   └── reporting/     # Dashboard stats, PDF/Excel generators
-└── integration/       # External services integrations (MinIO Storage, RabbitMQ Producers/Consumers, SMTP Email)
+### 3. Run Tests
+```bash
+./mvnw clean test
 ```
 
-### ⚠️ Important Architectural Rules
-1. **Public vs Private Endpoints**: Candidate-facing endpoints (e.g., fetching public offers, submitting a CV) must be explicitly set to `permitAll()` in the `SecurityFilterChain`. Recruiter endpoints must be protected using `@PreAuthorize`.
-2. **No Scoring Module**: Spring Boot **does not** compute scores. Do not create a `scoring` module. The `ScoreBreakdown` entity is simply a data record attached to an Application, so it lives in `modules/application/`.
-3. **Exception Handling**: Always throw specific custom exceptions (e.g., `ResourceNotFoundException`) rather than generic `RuntimeException`s. They are automatically intercepted by `GlobalExceptionHandler` and translated into standard `ApiErrorResponse` JSON payloads.
-4. **Testing Philosophy**: 
-   - **Web Layer**: Test controllers using `@SpringBootTest` and `MockMvc`, but isolate them by mocking the Service layer (`@MockitoBean`).
-   - **Profiles**: Always annotate integration tests with `@ActiveProfiles("test")` to ensure safe configuration overrides.
-   - Run tests via `./mvnw clean test`.
+### 4. Code Formatting
+```bash
+./mvnw spotless:apply
+```
 
 ---
 
-## 🧠 The AI "Fused Flow" (CV Processing)
+## Detailed Documentation
 
-The AI engine (FastAPI) has **no direct database access**. Spring Boot is responsible for gathering the context, triggering the AI, and persisting the results.
+Full documentation lives in the central [`docs/`](../docs/README.md) set:
 
-### 1. File Upload (MinIO & SHA-256)
-When a CV is uploaded (whether single or in a bulk ZIP archive):
-1. Spring Boot calculates the SHA-256 hash of the file.
-2. If the hash does not exist in the DB: Upload the file to MinIO.
-3. If the hash *does* exist: Skip the MinIO upload (but proceed to scoring).
-
-### 2. RabbitMQ Trigger
-Spring Boot publishes a unified payload to RabbitMQ to trigger the AI job. The payload must include:
-- `cv_file_id` & `storage_key` (so FastAPI can download the PDF).
-- `application_id`, `offer_id`, and the offer's `category_weights` & `extracted_requirements` JSON. *(Since FastAPI cannot read the DB, we must provide the grading rubric in the message).*
-
-### 3. Sync Callback Endpoint
-FastAPI will perform extraction, vectorization, and scoring in one asynchronous step. Once finished, it sends an HTTP POST request to the Spring Boot callback endpoint (`/api/v1/internal/cv/sync`).
-This endpoint must accept a massive JSON payload containing *both* the `extracted_data` (to update the CV) and the `category_scores` (to create the `ScoreBreakdown` record) in a single transaction.
+- **[Backend Architecture](../docs/03-architecture/backend.md)** — Package-by-feature layout, design rules
+- **[Database Architecture](../docs/03-architecture/database.md)** — Schema, FK cascades, indexes, Flyway
+- **[Security](../docs/03-architecture/security.md)** — Keycloak OIDC, JIT provisioning, DB-first RBAC
+- **[CV Ingestion & Scoring](../docs/04-features/cv-ingestion.md)** — MinIO deduplication, AMQP queues, state machine
+- **[Offer AI Pipeline](../docs/04-features/offer-ai.md)** — Requirement extraction, state machine, publish gate
+- **[AI Service Contract](../docs/05-integrations/ai-contract.md)** — Payload schemas and `SyncRequestDto` validation
+- **[API Reference](../docs/06-api/reference.md)** — Endpoints, roles, error model
